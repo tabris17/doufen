@@ -1,0 +1,83 @@
+<template class="page">
+    <style scoped>
+        #dashborad {
+            padding: 20px;
+        }
+
+        #dashborad .dl-horizontal>dt {
+            width: 60px;
+        }
+
+        #dashborad .dl-horizontal>dd {
+            margin-left: 80px;
+        }
+    </style>
+    <div class="container-fluid" id="dashborad">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">账号管理</div>
+                    <div class="panel-body">
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">后台服务</div>
+                    <div class="panel-body">
+                        <dl class="dl-horizontal">
+                            <dt>进程数</dt>
+                            <dd>2123</dd>
+                            <dt>状态</dt>
+                            <dd>2123</dd>
+                            <dt>状态asdsadsadsadsadsad</dt>
+                            <dd>2123</dd>
+                        </dl>
+                        <ul class="list-inline list-unstyled">
+                            <li>
+                                <button type="button" class="btn btn-default btn-sm">
+                                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> 设置</button>
+                            </li>
+                            <li>
+                                <button type="button" class="btn btn-default btn-sm">
+                                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> 还原</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">系统状态</div>
+                    <div class="panel-body">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">日志</div>
+            <div class="panel-body">
+                <ul class="list-inline list-unstyled">
+                    <li>
+                        <button type="button" class="btn btn-default btn-sm">
+                            <span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span> 清空</button>
+                    </li>
+                    <li>
+                        <button type="button" class="btn btn-default btn-sm">
+                            <span class="glyphicon glyphicon-copy" aria-hidden="true"></span> 复制</button>
+                    </li>
+                    <li>
+                        <button type="button" class="btn btn-default btn-sm">
+                            <span class="glyphicon glyphicon-floppy-save" aria-hidden="true"></span> 另存为...</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.title = '控制台'
+    </script>
+</template>

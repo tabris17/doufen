@@ -1,0 +1,29 @@
+{
+    "name": "doufen",
+    "version": "0.1.0",
+    "description": "",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "start": "npm run start-service && npm run start-app",
+        "postinstall": "virtualenv .venv && call .venv/Scripts/activate && pip install -r requirements.txt",
+        "start-app": "electron ./src/app/main.js --debug",
+        "start-service": ""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tabris17/doufen.git"
+    },
+    "author": "tabris17",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/tabris17/doufen/issues"
+    },
+    "homepage": "https://github.com/tabris17/doufen#readme",
+    "dependencies": {},
+    "devDependencies": {
+        "electron": "^1.8.4",
+        "electron-builder": "^20.8.0"
+    }
+}

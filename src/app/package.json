@@ -1,0 +1,12 @@
+{
+  "name": "demetery",
+  "version": "0.1.0",
+  "description": "Demetery is a GUI component for doufen",
+  "main": "main.js",
+  "author": "tabris17",
+  "license": "MIT",
+  "homepage": "https://github.com/tabris17/doufen#readme",
+  "dependencies": {
+    "showdown": "^1.8.6"
+  }
+}

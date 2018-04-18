@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="import" href="dashborad.html">
+    <link rel="import" href="about.html">
+    <link rel="import" href="help.html">
+    <link rel="import" href="doumate.html">
+    <link rel="import" href="shuo.html">
+    <link rel="import" href="note.html">
+    <link rel="import" href="photo.html">
+    <link rel="import" href="media.html">
+    <link rel="import" href="book.html">
+    <link rel="import" href="movie.html">
+    <link rel="import" href="music.html">
+    <link rel="import" href="doulist.html">
+    <link rel="import" href="likes.html">
+    <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/theme.css">
+    <script src="../render.js"></script>
+    <script src="../assets/fontawesome-all.min.js"></script>
+</head>
+
+<body>
+    <nav class="top-nav">
+        <ul class="nav-menu">
+            <li><a href="https://www.douban.com/" class="external-link">豆瓣</a></li>
+            <li><a href="https://book.douban.com/" class="external-link">读书</a></li>
+            <li><a href="https://movie.douban.com/" class="external-link">电影</a></li>
+            <li><a href="https://music.douban.com/" class="external-link">音乐</a></li>
+            <li><a href="https://www.douban.com/location" class="external-link">同城</a></li>
+            <li><a href="https://www.douban.com/group" class="external-link">小组</a></li>
+            <li><a href="https://read.douban.com/" class="external-link">阅读</a></li>
+            <li><a href="https://douban.fm/" class="external-link">FM</a></li>
+            <li><a href="https://time.douban.com/" class="external-link">时间</a></li>
+            <li><a href="https://market.douban.com/" class="external-link">市集</a></li>
+        </ul>
+    </nav>
+    <section class="sidebar-layout">
+        <div class="button-open-sidebar">
+            <a class="sidebar-toggler" title="展开菜单栏"><i class="fas fa-angle-double-right"></i></a>
+        </div>
+        <section class="sidebar-nav">
+            <div class="button-close-sidebar">
+                <a title="收起菜单栏" class="sidebar-toggler"><i class="fas fa-times"></i></a>
+            </div>
+            <div class="nav-menu-wrapper">
+                <ul class="nav-menu">
+                    <li><a href="dashborad.html" class="nav-menu-link">控制台</a></li>
+                    <li><a href="doumate.html" class="nav-menu-link">友邻</a></li>
+                    <li><a href="shuo.html" class="nav-menu-link">广播</a></li>
+                    <li><a href="note.html" class="nav-menu-link">日记</a></li>
+                    <li><a href="photo.html" class="nav-menu-link">相册</a></li>
+                    <li><a href="media.html" class="nav-menu-link">书影音</a></li>
+                    <li><a href="doulist.html" class="nav-menu-link">豆列</a></li>
+                    <li><a href="likes.html" class="nav-menu-link">喜欢</a></li>
+                    <li><a href="help.html" class="nav-menu-link">帮助</a></li>
+                    <li><a href="about.html" class="nav-menu-link">关于</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="content" id="content">
+            <!-- content -->
+        </section>
+    </section>
+
+    <script src="../assets/jquery.min.js"></script>
+    <script src="../assets/bootstrap/js/bootstrap.min.js"></script>
+    <script>
+        $('.sidebar-toggler').click((evt) => {
+            evt.preventDefault()
+            $('.sidebar-layout').toggleClass('toggled')
+        })
+        $('.external-link').click((evt) => {
+            evt.preventDefault()
+            system.openLink($(this).attr('href'))
+        })
+        $('.nav-menu-link').click(function(evt) {
+            evt.preventDefault()
+            system.navigate($(this).attr('href'), 'content')
+        })
+        system.navigate('dashborad.html', 'content')
+    </script>
+
+</body>
+
+</html>

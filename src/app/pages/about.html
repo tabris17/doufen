@@ -1,0 +1,49 @@
+<template class="page">
+    <style scoped>
+        #about {
+            padding: 20px;
+            max-width: 500px;
+        }
+
+        #about dt {
+            width: 100px;
+        }
+
+        #about dd {
+            margin-left: 110px;
+        }
+    </style>
+    <div class="container-fluid" id="about">
+        <div class="panel panel-default">
+            <div class="panel-heading">关于软件</div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>版本</dt>
+                    <dd class="version"></dd>
+                    <dt>描述</dt>
+                    <dd class="description"></dd>
+                    <dt>许可协议</dt>
+                    <dd class="license"></dd>
+                    <dt>作者</dt>
+                    <dd class="author"></dd>
+                    <dt>主页</dt>
+                    <dd class="homepage"></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <script>
+        ((electron, module) => {
+            document.title = '关于'
+            const { version, description, license, author, homepage } = system.shared('package')
+            $('#about .version').text(version)
+            $('#about .description').text(description)
+            $('#about .license').text(license)
+            $('#about .author').text(author)
+            $('<a href="' + homepage + '">' + homepage + '</a>').appendTo($('#about .homepage')).click((evt) => {
+                evt.preventDefault()
+                system.openLink(homepage)
+            })
+        })(system.require('electron'), 'about')
+    </script>
+</template>
