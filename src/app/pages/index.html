@@ -17,6 +17,8 @@
     <link rel="import" href="music.html">
     <link rel="import" href="doulist.html">
     <link rel="import" href="likes.html">
+    <link rel="import" href="account.html">
+    <link rel="import" href="settings.html">
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/theme.css">
     <script src="../render.js"></script>
@@ -48,16 +50,16 @@
             </div>
             <div class="nav-menu-wrapper">
                 <ul class="nav-menu">
-                    <li><a href="dashborad.html" class="nav-menu-link">控制台</a></li>
-                    <li><a href="doumate.html" class="nav-menu-link">友邻</a></li>
-                    <li><a href="shuo.html" class="nav-menu-link">广播</a></li>
-                    <li><a href="note.html" class="nav-menu-link">日记</a></li>
-                    <li><a href="photo.html" class="nav-menu-link">相册</a></li>
-                    <li><a href="media.html" class="nav-menu-link">书影音</a></li>
-                    <li><a href="doulist.html" class="nav-menu-link">豆列</a></li>
-                    <li><a href="likes.html" class="nav-menu-link">喜欢</a></li>
-                    <li><a href="help.html" class="nav-menu-link">帮助</a></li>
-                    <li><a href="about.html" class="nav-menu-link">关于</a></li>
+                    <li><a href="dashborad.html" class="navigate-link">控制台</a></li>
+                    <li><a href="doumate.html" class="navigate-link">友邻</a></li>
+                    <li><a href="shuo.html" class="navigate-link">广播</a></li>
+                    <li><a href="note.html" class="navigate-link">日记</a></li>
+                    <li><a href="photo.html" class="navigate-link">相册</a></li>
+                    <li><a href="media.html" class="navigate-link">书影音</a></li>
+                    <li><a href="doulist.html" class="navigate-link">豆列</a></li>
+                    <li><a href="likes.html" class="navigate-link">喜欢</a></li>
+                    <li><a href="help.html" class="navigate-link">帮助</a></li>
+                    <li><a href="about.html" class="navigate-link">关于</a></li>
                 </ul>
             </div>
         </section>
@@ -74,11 +76,10 @@
             evt.preventDefault()
             $('.sidebar-layout').toggleClass('toggled')
         })
-        $('.external-link').click((evt) => {
+        $(document).on('click', '.external-link', function(evt) {
             evt.preventDefault()
             system.openLink($(this).attr('href'))
-        })
-        $('.nav-menu-link').click(function(evt) {
+        }).on('click', '.navigate-link', function(evt) {
             evt.preventDefault()
             system.navigate($(this).attr('href'), 'content')
         })

@@ -1,7 +1,7 @@
 const path = require('path')
 const { ArgumentParser } = require('argparse')
-const { app, dialog, ipcMain } = require('electron')
-const { registerWindow } = require('./window')
+const { app, dialog } = require('electron')
+const { registerWindow, getWindow } = require('./window')
 const { package } = require('./shared')
 
 
@@ -33,6 +33,18 @@ function main(argv) {
         }
     );
     let args = argsParser.parseArgs()
+
+    const isDuplicateInstance = app.makeSingleInstance((commandLine, workingDirectory) => {
+        let window = getWindow()
+        if (window) {
+            if (window.isMinimized()) window.restore()
+            window.focus()
+        }
+    })
+    if (isDuplicateInstance) {
+        app.quit()
+    }
+
     if (args.debug) {
         process.env.DEBUG = '1'
     }
@@ -75,10 +87,6 @@ function main(argv) {
                 app.quit()
             }
         }, WAITE_QUIT_TIMEOUT)
-    })
-
-    ipcMain.on('version', (event, arg) => {
-
     })
 }
 

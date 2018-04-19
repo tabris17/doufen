@@ -40,10 +40,7 @@
             $('#about .description').text(description)
             $('#about .license').text(license)
             $('#about .author').text(author)
-            $('<a href="' + homepage + '">' + homepage + '</a>').appendTo($('#about .homepage')).click((evt) => {
-                evt.preventDefault()
-                system.openLink(homepage)
-            })
+            $('#about .homepage').append($('<a>').attr('href', homepage).text(homepage).addClass('external-link'))
         })(system.require('electron'), 'about')
     </script>
 </template>

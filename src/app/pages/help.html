@@ -1,20 +1,43 @@
 <template class="page">
     <style scoped>
-        #help{padding:20px;}
-        #help h1 {font-size:24px; line-height: 36px; font-weight:bold;}
-        #help h2,#help h3 {font-size:20px; line-height: 24px;; font-weight:bold;}
-        #help h4,#help h5,#help h6 {font-size:14px; font-weight:normal;}
+        #help {
+            padding: 20px;
+        }
+
+        #help p {
+            line-height: 22px;
+        }
+
+        #help h1 {
+            font-size: 26px;
+            line-height: 36px;
+            margin: 10px 0 20px 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #help h2,
+        #help h3 {
+            font-size: 20px;
+            line-height: 28px;
+        }
+
+        #help h4,
+        #help h5,
+        #help h6 {
+            font-size: 14px;
+            line-height: 20px;
+        }
     </style>
     <div class="container-fluid" id="help">
         <div class="panel panel-default">
             <div class="panel-heading">帮助</div>
-                <div class="panel-body"></div>
-            </div>
+            <div class="panel-body"></div>
         </div>
+    </div>
     <script>
         ((electron, module) => {
             document.title = '帮助'
-            const { Converter }  = system.require('showdown')
+            const { Converter } = system.require('showdown')
             const fs = system.require('fs')
             const path = system.require('path')
 

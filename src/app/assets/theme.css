@@ -6,9 +6,13 @@ a {
     cursor: pointer;
 }
 
+h1,h2,h3,h4,h5,h6 {
+    font-weight: 500;
+}
+
 body {
     overflow-x: hidden;
-    font: 14px Helvetica, Arial, sans-serif;
+    font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
 }
 
 .sidebar-layout {

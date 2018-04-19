@@ -3,8 +3,8 @@ const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const path = require('path')
 const url = require('url')
 
-const WIN_HEIGHT = 600
-const WIN_WIDTH = 800
+const WIN_HEIGHT = 640
+const WIN_WIDTH = 960
 const WIN_TITLE = '豆坟'
 const WIN_ICON = path.join(__dirname, 'assets/douban.ico')
 

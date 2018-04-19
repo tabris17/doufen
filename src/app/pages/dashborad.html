@@ -4,12 +4,21 @@
             padding: 20px;
         }
 
+        #dashborad .btn-toolbar {
+            margin-bottom: 15px;
+        }
+
+        #dashborad .dl-horizontal {
+            margin-bottom: 0;
+        }
+
         #dashborad .dl-horizontal>dt {
             width: 60px;
         }
 
         #dashborad .dl-horizontal>dd {
             margin-left: 80px;
+            word-break: break-all;
         }
     </style>
     <div class="container-fluid" id="dashborad">
@@ -18,6 +27,16 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">账号管理</div>
                     <div class="panel-body">
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default navigate-link" href="account.html">
+                                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> 新增账号
+                                </button>
+                                <button type="button" class="btn btn-default action-remove-account">
+                                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> 删除
+                                </button>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
@@ -26,33 +45,60 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">后台服务</div>
                     <div class="panel-body">
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default" aria-label="开始" title="开始">
+                                    <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="btn btn-default disabled" aria-label="暂停" title="暂停">
+                                    <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="btn btn-default disabled" aria-label="停止" title="停止">
+                                    <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default navigate-link" href="settings.html">
+                                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> 设置
+                                </button>
+                                <button type="button" class="btn btn-default">
+                                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> 重置
+                                </button>
+                            </div>
+                        </div>
                         <dl class="dl-horizontal">
                             <dt>进程数</dt>
                             <dd>2123</dd>
                             <dt>状态</dt>
                             <dd>2123</dd>
-                            <dt>状态asdsadsadsadsadsad</dt>
+                            <dt>状态 asd sadsa dsads adsad</dt>
                             <dd>2123</dd>
                         </dl>
-                        <ul class="list-inline list-unstyled">
-                            <li>
-                                <button type="button" class="btn btn-default btn-sm">
-                                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> 设置</button>
-                            </li>
-                            <li>
-                                <button type="button" class="btn btn-default btn-sm">
-                                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> 还原</button>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="panel panel-default">
-                    <div class="panel-heading">系统状态</div>
+                    <div class="panel-heading">程序信息</div>
                     <div class="panel-body">
-
+                        <dl class="dl-horizontal">
+                            <dt>程序路径</dt>
+                            <dd class="app-path"></dd>
+                            <dt>内核版本</dt>
+                            <dd class="app-version"></dd>
+                        </dl>
                     </div>
+                    <table class="table app-metrics">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th class="text-right">Memory</th>
+                                <th class="text-right">CPU</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -60,24 +106,48 @@
         <div class="panel panel-default">
             <div class="panel-heading">日志</div>
             <div class="panel-body">
-                <ul class="list-inline list-unstyled">
-                    <li>
-                        <button type="button" class="btn btn-default btn-sm">
-                            <span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span> 清空</button>
-                    </li>
-                    <li>
-                        <button type="button" class="btn btn-default btn-sm">
-                            <span class="glyphicon glyphicon-copy" aria-hidden="true"></span> 复制</button>
-                    </li>
-                    <li>
-                        <button type="button" class="btn btn-default btn-sm">
-                            <span class="glyphicon glyphicon-floppy-save" aria-hidden="true"></span> 另存为...</button>
-                    </li>
-                </ul>
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-default">
+                            <span class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span> 清空
+                        </button>
+                        <button type="button" class="btn btn-default">
+                            <span class="glyphicon glyphicon-copy" aria-hidden="true"></span> 复制
+                        </button>
+                        <button type="button" class="btn btn-default">
+                            <span class="glyphicon glyphicon-floppy-save" aria-hidden="true"></span> 另存为...
+                        </button>
+                    </div>
+                </div>
+                <textarea class="form-control log-output" rows="20" readonly></textarea>
             </div>
         </div>
     </div>
     <script>
-        document.title = '控制台'
+        ((electron, module) => {
+            document.title = '控制台'
+            const { app } = electron.remote
+            $('#dashborad .app-path').text(app.getPath('exe'))
+            $('#dashborad .app-version').text('Chrome: ' + process.versions.chrome + '; Electron: ' + process.versions.electron)
+            let timer = setInterval(() => {
+                let appMetrics = app.getAppMetrics()
+                let appMetricsTable = $('#dashborad .app-metrics>tbody').empty()
+
+                appMetrics.forEach((item) => {
+                    $('<tr>').append(
+                        $('<td>').text(item.pid)
+                    ).append(
+                        $('<td>').text(item.type)
+                    ).append(
+                        $('<td>').attr('align', 'right').text(item.memory.workingSetSize.toLocaleString('en-US') + ' Kb')
+                    ).append(
+                        $('<td>').attr('align', 'right').text(item.cpu.percentCPUUsage.toFixed(2) + '%')
+                    ).appendTo(appMetricsTable)
+                })
+            }, 1000)
+            clearInterval(window.dashboradAppMetricsTimer)
+            window.dashboradAppMetricsTimer = timer
+
+        })(system.require('electron'), 'dashborad')
     </script>
 </template>

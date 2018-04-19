@@ -1,0 +1,36 @@
+<template class="page">
+    <style scoped>
+        #account {
+            padding: 20px;
+        }
+
+        #account webview {
+            height: 620px;
+        }
+    </style>
+    <div class="container-fluid" id="account">
+        <ol class="breadcrumb">
+            <li>
+                <a href="dashborad.html" class="navigate-link">控制台</a>
+            </li>
+            <li class="active">新增账号</li>
+        </ol>
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <strong>提醒！</strong> 原版程序使用豆瓣的网页登录，并不会保存你的密码。请不要在不明来历的程序内输入密码。
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">登录豆瓣账号</div>
+            <div class="panel-body">
+                <webview src="https://www.douban.com/login" class=""></webview>
+            </div>
+        </div>
+    </div>
+    <script>
+        ((electron, module) => {
+            document.title = '新增账号'
+        })(system.require('electron'), 'account')
+    </script>
+</template>
