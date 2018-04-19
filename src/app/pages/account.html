@@ -7,30 +7,80 @@
         #account webview {
             height: 620px;
         }
+
+        #account .loading {
+            display: none;
+            position: absolute;
+            width: 200px;
+            left: 50%;
+            margin: 260px 0 auto -100px;
+        }
+
+        #account .action-refresh {
+            float: right;
+        }
     </style>
     <div class="container-fluid" id="account">
         <ol class="breadcrumb">
             <li>
                 <a href="dashborad.html" class="navigate-link">控制台</a>
             </li>
-            <li class="active">新增账号</li>
+            <li class="active">新增帐号</li>
         </ol>
         <div class="alert alert-warning alert-dismissible" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
-            <strong>提醒！</strong> 原版程序使用豆瓣的网页登录，并不会保存你的密码。请不要在不明来历的程序内输入密码。
+            <strong>注意：</strong>程序使用豆瓣官方网页登录，不会获取和保存你的密码。为了保障你的帐号安全，请从官方渠道下载本软件。
         </div>
         <div class="panel panel-default">
-            <div class="panel-heading">登录豆瓣账号</div>
+            <div class="panel-heading">登录豆瓣帐号
+                <a class="btn btn-default btn-xs action-refresh" href="#" role="button">
+                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> 重新加载
+                </a>
+            </div>
             <div class="panel-body">
-                <webview src="https://www.douban.com/login" class=""></webview>
+                <div class="well well-lg loading">加载中……</div>
+                <webview src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" class="embed-responsive-item" id="douban-account-login"></webview>
             </div>
         </div>
     </div>
     <script>
         ((electron, module) => {
-            document.title = '新增账号'
+            document.title = '新增帐号'
+
+            let $loadingBanner = $('#account .loading')
+            let $loginWebView = $('#douban-account-login').on('did-start-loading', function () {
+                $loadingBanner.css('display', 'block')
+                $(this).css('opacity', '0.1')
+            }).on('did-stop-loading', function () {
+                $loadingBanner.css('display', 'none')
+                $(this).css('opacity', '1')
+            }).on('load-commit', () => {
+                $loginWebView[0].getWebContents().on('did-get-redirect-request', (
+                    evt,
+                    oldURL,
+                    newURL,
+                    isMainFrame,
+                    httpResponseCode,
+                    requestMethod,
+                    referrer,
+                    headers
+                ) => {
+                    console.log(referrer)
+                    console.log(headers)
+                })
+            })
+
+            $loginWebView[0].addEventListener('did-get-redirect-request', (evt) => {
+                //console.log(evt)
+            })
+
+            const DOUBAN_LOGIN_URL = $loginWebView.attr('src')
+            $('#account .action-refresh').click(() => {
+                $loginWebView[0].loadURL(DOUBAN_LOGIN_URL)
+            })
+
         })(system.require('electron'), 'account')
     </script>
 </template>
