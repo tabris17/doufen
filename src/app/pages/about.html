@@ -35,7 +35,7 @@
     <script>
         ((electron, module) => {
             document.title = '关于'
-            const { version, description, license, author, homepage } = system.shared('package')
+            const { version, description, license, author, homepage } = system.shared().package
             $('#about .version').text(version)
             $('#about .description').text(description)
             $('#about .license').text(license)

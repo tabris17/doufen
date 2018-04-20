@@ -1,5 +1,5 @@
 /**
- * used by index.html
+ * render 进程调用的服务
  */
 
 (function(global) {
@@ -21,7 +21,7 @@
             return shell.openExternal(url, options, callback)
         },
 
-        navigate(name, container) {
+        navigate(name, container = "content") {
             let template = templates[name]
             if (!template) {
                 return false
@@ -33,8 +33,11 @@
             return true
         },
 
-        shared(name) {
-            return remote.getGlobal('shared')[name]
+        shared(name = '') {
+            if (name) {
+                return remote.getGlobal('shared').$[name]
+            }
+            return remote.getGlobal('shared')
         }
     }
 

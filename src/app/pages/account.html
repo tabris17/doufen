@@ -41,7 +41,6 @@
             </div>
             <div class="panel-body">
                 <div class="well well-lg loading">加载中……</div>
-                <webview src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" class="embed-responsive-item" id="douban-account-login"></webview>
             </div>
         </div>
     </div>
@@ -49,31 +48,36 @@
         ((electron, module) => {
             document.title = '新增帐号'
 
+            const cookie = system.require('cookie')
+
             let $loadingBanner = $('#account .loading')
-            let $loginWebView = $('#douban-account-login').on('did-start-loading', function () {
+            let $loginWebView = $('<webview>')
+                .attr('src', 'https://www.douban.com/login')
+                .attr('httpreferrer', 'https://www.douban.com/')
+                .attr('partition', 'douban-' + Date.now())
+                .addClass('embed-responsive-item')
+                .appendTo('#account .panel-body')
+
+            let webContents;
+            $loginWebView.on('did-start-loading', function () {
                 $loadingBanner.css('display', 'block')
                 $(this).css('opacity', '0.1')
             }).on('did-stop-loading', function () {
                 $loadingBanner.css('display', 'none')
                 $(this).css('opacity', '1')
             }).on('load-commit', () => {
-                $loginWebView[0].getWebContents().on('did-get-redirect-request', (
-                    evt,
-                    oldURL,
-                    newURL,
-                    isMainFrame,
-                    httpResponseCode,
-                    requestMethod,
-                    referrer,
-                    headers
-                ) => {
-                    console.log(referrer)
-                    console.log(headers)
+                if (webContents) return
+                webContents = $loginWebView[0].getWebContents()
+                webContents.session.webRequest.onSendHeaders({ urls: ['https://*.douban.com/*'] }, (details) => {
+                    let cookies = details.requestHeaders.Cookie
+                    if (!cookies) return
+                    let cookiePairs = cookie.parse(details.requestHeaders.Cookie)
+                    if ('dbcl2' in cookiePairs) {
+                        window.alert('登录成功！', '信息')
+                        system.shared('service.authorization.add')(cookies)
+                        system.navigate('dashborad.html')
+                    }
                 })
-            })
-
-            $loginWebView[0].addEventListener('did-get-redirect-request', (evt) => {
-                //console.log(evt)
             })
 
             const DOUBAN_LOGIN_URL = $loginWebView.attr('src')

@@ -1,3 +1,6 @@
+/**
+ * 创建程序主窗口
+ */
 const isNullOrUndefined = require('util')
 const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const path = require('path')

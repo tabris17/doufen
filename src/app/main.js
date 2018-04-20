@@ -1,8 +1,11 @@
+/**
+ * 主进程代码入口
+ */
 const path = require('path')
 const { ArgumentParser } = require('argparse')
 const { app, dialog } = require('electron')
 const { registerWindow, getWindow } = require('./window')
-const { package } = require('./shared')
+const { package, registerShared } = require('./shared')
 
 
 /**
@@ -10,7 +13,12 @@ const { package } = require('./shared')
  */
 const WAITE_QUIT_TIMEOUT = 1000
 
-function main(argv) {
+/**
+ * 解析命令行参数
+ * 
+ * @param {Array} args 
+ */
+function parseArgs(args) {
     let argsParser = ArgumentParser({
         version: package.version,
         description: package.description,
@@ -23,7 +31,7 @@ function main(argv) {
             defaultValue: false,
             required: false
         }
-    );
+    )
     argsParser.addArgument(
         ['-i', '--hidden'], {
             action: 'storeTrue',
@@ -31,8 +39,64 @@ function main(argv) {
             defaultValue: false,
             required: false
         }
-    );
-    let args = argsParser.parseArgs()
+    )
+    return argsParser.parseArgs(args)
+}
+
+/**
+ * 注册服务
+ */
+function registerSharedServices() {
+    registerShared({
+        // 新增登录授权
+        'service.authorization.add': (s) => { console.log(s) },
+        // 移除登录授权（仅移除）
+        'service.authorization.remove': '',
+        // 所有登录收取列表
+        'service.authorization.all': '',
+        // 删除并注销登录授权（授权不再可用）
+        'service.authorization.destroy': '',
+
+        // 新增代理服务器
+        'service.proxy.add': '',
+        // 移除代理服务器
+        'service.proxy.remove': '',
+        // 所有代理服务器列表
+        'service.proxy.all': '',
+
+        // 服务通知 (COMMET)
+        'service.notify': '',
+
+        // 获取配置
+        'service.settings.get': '',
+        // 写入配置
+        'service.settings.set': '',
+
+        // 服务运行状态查询
+        'service.status.query': '',
+        // 服务心跳检测
+        'service.status.helo': '',
+
+        // 启动工作进程
+        'service.worker.start': '',
+        // 停止工作进程
+        'service.worker.stop': '',
+        // 暂停工作进程
+        'service.worker.pause': '',
+        // 恢复工作进程
+        'service.worker.continue': '',
+        // 所有工作进程列表
+        'service.worker.all': ''
+    })
+}
+
+/**
+ * 程序入口主函数
+ * 
+ * @param {Array} args 
+ */
+function main(args) {
+    let parsedArgs = parseArgs(args)
 
     const isDuplicateInstance = app.makeSingleInstance((commandLine, workingDirectory) => {
         let window = getWindow()
@@ -45,11 +109,11 @@ function main(argv) {
         app.quit()
     }
 
-    if (args.debug) {
+    if (parsedArgs.debug) {
         process.env.DEBUG = '1'
     }
 
-    registerWindow(args.hidden)
+    registerWindow(parsedArgs.hidden)
 
     app.on('all-window-closed', () => {
         if (process.platform !== 'darwin') {
@@ -88,9 +152,11 @@ function main(argv) {
             }
         }, WAITE_QUIT_TIMEOUT)
     })
+
+    registerSharedServices()
 }
 
 
 if (path.resolve(process.argv[1]) === __filename) {
-    main(process.argv)
+    main(process.argv.slice(2))
 }

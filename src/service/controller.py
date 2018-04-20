@@ -8,6 +8,7 @@ class Controller(WebSocketHandler):
     """
     Controller class
     """
+
     def check_origin(self, origin):
         return True
 
@@ -31,5 +32,3 @@ class Controller(WebSocketHandler):
 
     def on_connection_close(self):
         logging.debug('connection close')
-
-
