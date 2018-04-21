@@ -1,5 +1,5 @@
 {
-  "name": "demetery",
+  "name": "graveyard",
   "version": "0.1.0",
   "description": "Demetery is a GUI component for doufen",
   "main": "main.js",
@@ -8,6 +8,7 @@
   "homepage": "https://github.com/tabris17/doufen#readme",
   "dependencies": {
     "cookie": "^0.3.1",
-    "showdown": "^1.8.6"
+    "showdown": "^1.8.6",
+    "ws": "^5.1.1"
   }
 }

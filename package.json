@@ -6,10 +6,11 @@
         "test": "test"
     },
     "scripts": {
-        "start": "npm run start-service && npm run start-app",
-        "postinstall": "virtualenv .venv && call .venv/Scripts/activate && pip install -r requirements.txt",
+        "start": "bash ./scripts/launch.sh",
+        "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt",
         "start-app": "electron ./src/app/main.js --debug",
-        "start-service": ""
+        "start-service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
+        "python-packages": "source ./.venv/Scripts/activate && pip list"
     },
     "repository": {
         "type": "git",

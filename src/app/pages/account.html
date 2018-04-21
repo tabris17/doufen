@@ -73,6 +73,7 @@
                     if (!cookies) return
                     let cookiePairs = cookie.parse(details.requestHeaders.Cookie)
                     if ('dbcl2' in cookiePairs) {
+                        webContents.stop()
                         window.alert('登录成功！', '信息')
                         system.shared('service.authorization.add')(cookies)
                         system.navigate('dashborad.html')

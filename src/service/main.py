@@ -1,30 +1,37 @@
-#!/usr/bin/env python
 # encoding: utf-8
-
-import sys
-import time
-import tornado
 import argparse
 import logging
-from controller import Controller
+import sys
+import time
 
-SERVICE_PORT = 8398
-SERVICE_HOST = '127.0.0.1'
-DATEBASE_CONNECTION = 'mysql://127.0.0.1:8399'
+import tornado
+import handlers
+
+
+PROG_NAME = 'gravekeeper'
+PROG_DESCRIPTION = ''
+PROG_VERSION = '0.1.0'
+DEFAULT_SERVICE_PORT = 8398
+DEFAULT_SERVICE_ADDRESS = '127.0.0.1'
+DEFAULT_DATEBASE = 'graves.db'
+
 
 def parse_args(args):
     """
     parse program arguments
     """
-    parser = argparse.ArgumentParser(description='pixian service')
+    parser = argparse.ArgumentParser(
+        prog=PROG_NAME, description=PROG_DESCRIPTION)
     parser.add_argument('-d', '--debug', action='store_true',
                         default=False, help='print debug information')
-    parser.add_argument('-p', '--port', type=int, default=SERVICE_PORT,
-                        help='specify the port to listen')
-    parser.add_argument('-a', '--address', default=SERVICE_HOST,
-                        metavar='IP', help='specify the address to listen')
-    parser.add_argument('-db', default=DATEBASE_CONNECTION,
-                        metavar='CONNECTION', help='specify the database connection')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + PROG_VERSION)
+    parser.add_argument('-p', '--port', type=int, default=DEFAULT_SERVICE_PORT,
+                        metavar='port', help='specify the port to listen')
+    parser.add_argument('-b', '--bind', default=DEFAULT_SERVICE_ADDRESS,
+                        metavar='address', dest='address', help='specify the IP address to bind')
+    parser.add_argument('-s', '--save', default=DEFAULT_DATEBASE,
+                        metavar='database', dest='database', help='specify the database file')
     return parser.parse_args(args)
 
 
@@ -41,8 +48,9 @@ def main(args):
     )
 
     application = tornado.web.Application([
-        (r'/controller', Controller),
-    ])
+        (r'/', handlers.Main),
+        (r'/notify', handlers.Notifier),
+    ], debug=parsed_args.debug)
     application.listen(parsed_args.port, parsed_args.address)
     logging.debug('start ioloop')
     tornado.ioloop.IOLoop.instance().start()

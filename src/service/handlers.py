@@ -1,12 +1,14 @@
 # encoding: utf-8
-import logging
 import json
+import logging
+
 from tornado.websocket import WebSocketHandler
+from tornado.web import RequestHandler
 
 
-class Controller(WebSocketHandler):
+class Notifier(WebSocketHandler):
     """
-    Controller class
+    用于后台向前台图形程序发送通知
     """
 
     def check_origin(self, origin):
@@ -32,3 +34,12 @@ class Controller(WebSocketHandler):
 
     def on_connection_close(self):
         logging.debug('connection close')
+
+
+class Main(RequestHandler):
+    """
+    主页
+    """
+
+    def get(self):
+        self.write('<h1>{name}</h1>')

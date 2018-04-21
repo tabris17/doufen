@@ -8,10 +8,9 @@ const { registerWindow, getWindow } = require('./window')
 const { package, registerShared } = require('./shared')
 
 
-/**
- * 等待退出程序超时
- */
+
 const WAITE_QUIT_TIMEOUT = 1000
+const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8398/'
 
 /**
  * 解析命令行参数
@@ -27,16 +26,26 @@ function parseArgs(args) {
     argsParser.addArgument(
         ['-d', '--debug'], {
             action: 'storeTrue',
-            help: 'Debug Mode',
+            help: 'Set debug mode on.',
             defaultValue: false,
             required: false
         }
     )
     argsParser.addArgument(
-        ['-i', '--hidden'], {
+        ['-n', '--hidden'], {
             action: 'storeTrue',
-            help: 'Hide application window',
+            help: 'Hide window when the application startup.',
             defaultValue: false,
+            required: false
+        }
+    )
+    argsParser.addArgument(
+        ['-s', '--service'], {
+            action: 'store',
+            metavar: 'url',
+            dest: 'service',
+            help: 'Specify the service url.',
+            defaultValue: DEFAULT_SERVICE_URL,
             required: false
         }
     )
@@ -63,9 +72,6 @@ function registerSharedServices() {
         'service.proxy.remove': '',
         // 所有代理服务器列表
         'service.proxy.all': '',
-
-        // 服务通知 (COMMET)
-        'service.notify': '',
 
         // 获取配置
         'service.settings.get': '',
