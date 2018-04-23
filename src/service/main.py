@@ -39,7 +39,7 @@ def main(args):
     """
     main entry
     """
-    parsed_args = parse_args(args[1:])
+    parsed_args = parse_args(args)
 
     logging.basicConfig(
         level=logging.DEBUG if parsed_args.debug else logging.INFO,
@@ -57,4 +57,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main(sys.argv[1:])
