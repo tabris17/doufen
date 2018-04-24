@@ -1,14 +1,14 @@
 {
-    "name": "doufen",
+    "name": "doufen-platform",
     "version": "0.1.0",
     "description": "",
     "directories": {
         "test": "test"
     },
     "scripts": {
-        "start": "bash ./scripts/launch.sh",
+        "start": "source ./scripts/launch.sh",
         "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt",
-        "start-app": "electron ./src/app/main.js --debug",
+        "start-app": "electron ./src/app --debug",
         "start-service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
         "python-packages": "source ./.venv/Scripts/activate && pip list"
     },

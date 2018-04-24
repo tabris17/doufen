@@ -1,14 +1,11 @@
 {
-  "name": "graveyard",
-  "version": "0.1.0",
-  "description": "Demetery is a GUI component for doufen",
-  "main": "main.js",
-  "author": "tabris17",
-  "license": "MIT",
-  "homepage": "https://github.com/tabris17/doufen#readme",
-  "dependencies": {
-    "cookie": "^0.3.1",
-    "showdown": "^1.8.6",
-    "ws": "^5.1.1"
-  }
+    "name": "doufen-app",
+    "productName": "doufen",
+    "version": "0.1.0",
+    "main": "main.js",
+    "dependencies": {
+        "cookie": "^0.3.1",
+        "showdown": "^1.8.6",
+        "ws": "^5.1.1"
+    }
 }

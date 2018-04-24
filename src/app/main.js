@@ -4,10 +4,11 @@
 const path = require('path')
 const { ArgumentParser } = require('argparse')
 const { app, dialog } = require('electron')
-const { registerWindow, getWindow } = require('./window')
+const { initializeWindow, getMainWindow } = require('./window')
 
 
 const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8398/'
+
 
 /**
  * 解析命令行参数
@@ -16,8 +17,8 @@ const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8398/'
  */
 function parseArgs(args) {
     let argsParser = ArgumentParser({
-        version: package.version,
-        description: package.description,
+        version: app.getVersion(),
+        prog: app.getName(),
         addHelp: true
     })
     argsParser.addArgument(
@@ -42,9 +43,12 @@ function parseArgs(args) {
 }
 
 
-function singleton() {
+/**
+ * 确保程序单例运行
+ */
+function ensureSingleton() {
     const isDuplicateInstance = app.makeSingleInstance((commandLine, workingDirectory) => {
-        let win = getWindow()
+        let win = getMainWindow()
         if (win) {
             if (win.isMinimized()) win.restore()
             win.focus()
@@ -62,12 +66,12 @@ function singleton() {
  * @param {Array} args 
  */
 function main(args) {
-    let parsedArgs = parseArgs(args)
-    if (parsedArgs.debug) {
-        process.env.DEBUG = '1'
-    }
+    ensureSingleton()
 
-    registerWindow()
+    let parsedArgs = parseArgs(args)
+    global.debugMode = parsedArgs.debug
+
+    initializeWindow(parsedArgs.service)
 
     app.on('all-window-closed', () => {
         if (process.platform !== 'darwin') {
@@ -77,6 +81,6 @@ function main(args) {
 }
 
 
-if (path.resolve(process.argv[1]) === __filename) {
+if ([__filename, __dirname].indexOf(path.resolve(process.argv[1]))) {
     main(process.argv.slice(2))
 }

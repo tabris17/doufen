@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            background: linear-gradient(140deg, #072, #edf4ed);
+            overflow: hidden;
+            zoom: 1;
+        }
+
+        .splash {
+            font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            color: white;
+        }
+
+        .splash .brand {
+            display: block;
+            font-size: 50px;
+            line-height: 100px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            top: 50%;
+            margin-top: -50px;
+        }
+
+        .splash .footer {
+            display: block;
+            font-size: 14px;
+            line-height: 28px;
+            width: 100%;
+            text-align: center;
+            position: absolute;
+            bottom: 0;
+            height: 28px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .splash .header {
+            display: block;
+            font-size: 14px;
+            line-height: 28px;
+            width: 100%;
+            text-align: center;
+            height: 28px;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="splash">
+        <p class="header" id="press-any-key" style="display: none;">点击任意键继续</p>
+        <a class="brand">豆坟</a>
+        <p class="footer">版本：
+            <span id="version"></span>
+        </p>
+    </section>
+    <script>
+        const { app, getGlobal } = require('electron').remote
+        document.querySelector('#version').innerText = app.getVersion()
+
+        if (getGlobal('debugMode')) {
+            document.querySelector('#press-any-key').style = 'display: block;'
+            document.body.addEventListener('keydown', () => {
+                window.close()
+            })
+        }
+    </script>
+</body>
+
+</html>
