@@ -1,0 +1,16 @@
+body, html {
+    font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
+}
+
+#nav-logo {
+    font-size: 28px;
+    line-height: 28px;
+}
+
+#nav-logo .icon {
+    margin-right: 12px;
+}
+
+#body-content {
+    padding: 10px;
+}

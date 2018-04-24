@@ -1,12 +1,13 @@
 # encoding: utf-8
 import argparse
 import logging
+import os
 import sys
 import time
 
 import tornado
-import handlers
 
+import handlers
 
 PROG_NAME = 'gravekeeper'
 PROG_DESCRIPTION = ''
@@ -43,15 +44,28 @@ def main(args):
 
     logging.basicConfig(
         level=logging.DEBUG if parsed_args.debug else logging.INFO,
-        format='[%(asctime)s] (%(pathname)s:%(lineno)s) %(name)s:%(levelname)s: %(message)s',
+        format='[%(asctime)s] (%(pathname)s:%(lineno)s) %(name)s[%(levelname)s]: %(message)s',
         datefmt='%m-%d %H:%M'
     )
 
+    base_path = os.path.dirname(__file__)
+    settings = {
+        'autoreload': parsed_args.debug,
+        'debug': parsed_args.debug,
+        'template_path': os.path.join(base_path, 'views'),
+        'static_path': os.path.join(base_path, 'static'),
+        'static_url_prefix': '/static/',
+    }
+
     application = tornado.web.Application([
         (r'/', handlers.Main),
+        (r'/about', handlers.About),
+        (r'/help', handlers.Help),
+        (r'/dashborad', handlers.Dashborad),
         (r'/notify', handlers.Notifier),
-    ], debug=parsed_args.debug)
+    ], **settings)
     application.listen(parsed_args.port, parsed_args.address)
+
     logging.debug('start ioloop')
     tornado.ioloop.IOLoop.instance().start()
 

@@ -5,12 +5,12 @@ const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const path = require('path')
 const url = require('url')
 
-const MAIN_WINDOW_HEIGHT = 594
-const MAIN_WINDOW_WIDTH = 960
+const MAIN_WINDOW_HEIGHT = 580
+const MAIN_WINDOW_WIDTH = 800
 const MAIN_WINDOW_TITLE = '豆坟'
 const APP_ICON = path.join(__dirname, 'app.ico')
-const SPLASH_WINDOW_HEIGHT = 370
-const SPLASH_WINDOW_WIDTH = 600
+const SPLASH_WINDOW_HEIGHT = 309
+const SPLASH_WINDOW_WIDTH = 500
 
 
 let mainWindow
@@ -52,7 +52,10 @@ function createMainWindow(service) {
         minHeight: MAIN_WINDOW_HEIGHT,
         title: MAIN_WINDOW_TITLE,
         show: false,
-        icon: APP_ICON
+        icon: APP_ICON,
+        webPreferences: {
+            preload: path.join(__dirname, 'render.js')
+        }
     })
     win.loadURL(service)
 
@@ -84,9 +87,7 @@ function createMainWindow(service) {
 
     win.on('page-title-updated', (event, title) => {
         event.preventDefault()
-        if (title != '') {
-            win.setTitle(`${MAIN_WINDOW_TITLE} - ${title}`)
-        }
+        win.setTitle(title.trim() ? `${MAIN_WINDOW_TITLE} - ${title}` : MAIN_WINDOW_TITLE)
     })
 
     win.on('minimize', (event) => {

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %} {% end %}</title>
+    <link rel="stylesheet" href="{{ static_url('bulma.min.css') }}">
+    <link rel="stylesheet" href="{{ static_url('theme.css') }}">
+    <script defer src="{{ static_url('fontawesome-all.min.js') }}"></script>
+    <script src="{{ static_url('jquery.min.js') }}"></script>
+</head>
+
+<body>
+    <nav id="nav" class="navbar is-dark">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/" id="nav-logo">
+                <span class="icon">
+                    <i class="fas fa-poo"></i>
+                </span>
+                <span>豆坟</span>
+            </a>
+            <div class="navbar-burger burger" data-target="#nav-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div id="nav-menu" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="/">Home</a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link" href="/documentation/overview/start/">Docs</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item external-link" href="http://www.baidu.com/">Overview</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item" href="/help">帮助</a>
+                        <a class="navbar-item" id="menu-about" href="/about">关于</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <div class="field is-grouped">
+                        <p class="control">
+                            <a class="bd-tw-button button">
+                                <span class="icon">
+                                    <i class="fab fa-twitter"></i>
+                                </span>
+                                <span>Tweet</span>
+                            </a>
+                        </p>
+                        <p class="control">
+                            <a class="button is-primary">
+                                <span class="icon">
+                                    <i class="fas fa-download"></i>
+                                </span>
+                                <span>Download</span>
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="body-content" class="container">
+        {% block content %} {% end %}
+    </section>
+
+    <div class="modal" id="modal-about">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">关于</p>
+                <button class="delete" aria-label="close" data-target="#modal-about"></button>
+            </header>
+            <section class="modal-card-body">
+                <script>
+                    (() => {
+                        const { app } = system.require('electron').remote
+                        document.write(app.getVersion())
+                    })()
+                </script>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success action-close" data-target="#modal-about">确定</button>
+            </footer>
+        </div>
+    </div>
+    <script>
+        $(document).ready(() => {
+            $('.navbar-burger').click(function () {
+                $(this.dataset.target).toggleClass('is-active')
+                $(this).toggleClass('is-active')
+            })
+
+            $('#menu-about').click((event) => {
+                event.preventDefault()
+                $('#modal-about').toggleClass('is-active')
+            })
+
+
+            $(document.body).on('click', 'a.external-link', function(event) {
+                event.preventDefault()
+                system.openLink($(this).attr('href'))
+            }).on('click', '.delete, .action-close', function() {
+                event.preventDefault()
+                $(this.dataset.target).removeClass('is-active')
+            })
+        })
+    </script>
+</body>
+
+</html>

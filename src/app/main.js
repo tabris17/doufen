@@ -81,6 +81,6 @@ function main(args) {
 }
 
 
-if ([__filename, __dirname].indexOf(path.resolve(process.argv[1]))) {
+if ([__filename, __dirname].indexOf(path.resolve(process.argv[1])) > -1) {
     main(process.argv.slice(2))
 }

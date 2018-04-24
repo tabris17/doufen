@@ -36,10 +36,45 @@ class Notifier(WebSocketHandler):
         logging.debug('connection close')
 
 
-class Main(RequestHandler):
+class BaseRequestHandler(RequestHandler):
+    """
+    默认继承
+    """
+
+    pass
+
+
+class Main(BaseRequestHandler):
     """
     主页
     """
 
     def get(self):
-        self.write('<h1>{name}</h1>')
+        self.render('index.html')
+
+
+class Dashborad(BaseRequestHandler):
+    """
+    控制台
+    """
+
+    def get(self):
+        self.render('index.html')
+
+
+class About(BaseRequestHandler):
+    """
+    关于
+    """
+
+    def get(self):
+        self.render('about.html')
+
+
+class Help(BaseRequestHandler):
+    """
+    帮助
+    """
+
+    def get(self):
+        self.render('help.html')
