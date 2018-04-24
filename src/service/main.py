@@ -7,14 +7,14 @@ import time
 
 import tornado
 
-import handlers
+import urls
 
 PROG_NAME = 'gravekeeper'
 PROG_DESCRIPTION = ''
 PROG_VERSION = '0.1.0'
 DEFAULT_SERVICE_PORT = 8398
 DEFAULT_SERVICE_ADDRESS = '127.0.0.1'
-DEFAULT_DATEBASE = 'graves.db'
+DEFAULT_DATEBASE = 'graveyard.db'
 
 
 def parse_args(args):
@@ -57,13 +57,7 @@ def main(args):
         'static_url_prefix': '/static/',
     }
 
-    application = tornado.web.Application([
-        (r'/', handlers.Main),
-        (r'/about', handlers.About),
-        (r'/help', handlers.Help),
-        (r'/dashborad', handlers.Dashborad),
-        (r'/notify', handlers.Notifier),
-    ], **settings)
+    application = tornado.web.Application(urls.patterns, **settings)
     application.listen(parsed_args.port, parsed_args.address)
 
     logging.debug('start ioloop')

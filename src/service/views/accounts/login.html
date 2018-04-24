@@ -1,0 +1,68 @@
+{% extends "../theme.html" %} 
+
+{% block title %}登录{% end %}
+
+{% block head_extra %}
+<style>
+    #douban-login {
+        height: 620px;
+    }
+</style>
+{% end %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+        <li>
+            <a href="{{ reverse_url('index') }}">主页</a>
+        </li>
+        <li>
+            <a href="/accounts">账号</a>
+        </li>
+        <li class="is-active">
+            <a href="#" aria-current="page">登录</a>
+        </li>
+    </ul>
+</nav>
+
+<article class="message is-danger">
+    <div class="message-body">程序使用豆瓣官方网页登录，不会获取和保存你的密码。为了保障你的帐号安全，请从官方渠道下载本软件。</div>
+</article>
+<nav class="navbar is-transparent" role="navigation">
+    <div class="navbar-menu is-active">
+        <div class="navbar-start">
+            <div class="navbar-item">
+                <div class="field is-grouped">
+                    <p class="control">
+                        <a class="button is-primary">刷新</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+{% import time %}
+<webview id="douban-login" src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" partition="douban-{{ time.time() }}" nodeIntegration></webview>
+
+{% end %}
+
+<script>
+//{% block script_extra %}
+const cookie = system.require('cookie')
+let webContents
+$('#douban-login').on('load-commit', function() {
+    if (webContents) return
+    webContents = this.getWebContents()
+    webContents.session.webRequest.onSendHeaders({ urls: ['https://*.douban.com/*'] }, (details) => {
+        let cookies = details.requestHeaders.Cookie
+        if (!cookies) return
+        let cookiePairs = cookie.parse(details.requestHeaders.Cookie)
+        if ('dbcl2' in cookiePairs) {
+            webContents.stop()
+            window.alert('登录成功！', '信息')
+            console.log(cookies)
+        }
+    })
+})
+//{% end %}
+</script>

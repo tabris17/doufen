@@ -53,24 +53,6 @@ class Main(BaseRequestHandler):
         self.render('index.html')
 
 
-class Dashborad(BaseRequestHandler):
-    """
-    控制台
-    """
-
-    def get(self):
-        self.render('index.html')
-
-
-class About(BaseRequestHandler):
-    """
-    关于
-    """
-
-    def get(self):
-        self.render('about.html')
-
-
 class Help(BaseRequestHandler):
     """
     帮助

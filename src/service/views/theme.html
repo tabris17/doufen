@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ static_url('theme.css') }}">
     <script defer src="{{ static_url('fontawesome-all.min.js') }}"></script>
     <script src="{{ static_url('jquery.min.js') }}"></script>
+    {% block head_extra %}{% end %}
 </head>
 
 <body>
@@ -35,8 +36,8 @@
                     <div class="navbar-dropdown">
                         <a class="navbar-item external-link" href="http://www.baidu.com/">Overview</a>
                         <hr class="navbar-divider">
-                        <a class="navbar-item" href="/help">帮助</a>
-                        <a class="navbar-item" id="menu-about" href="/about">关于</a>
+                        <a class="navbar-item" href="{{ reverse_url('help') }}">帮助</a>
+                        <a class="navbar-item" id="menu-about">关于</a>
                     </div>
                 </div>
             </div>
@@ -99,7 +100,7 @@
 
             $('#menu-about').click((event) => {
                 event.preventDefault()
-                $('#modal-about').toggleClass('is-active')
+                $('#modal-about').toggleClass('is-active').removeClass('is-invisible')
             })
 
 
@@ -108,10 +109,13 @@
                 system.openLink($(this).attr('href'))
             }).on('click', '.delete, .action-close', function() {
                 event.preventDefault()
-                $(this.dataset.target).removeClass('is-active')
+                $(this.dataset.target).removeClass('is-active').toggleClass('is-invisible')
             })
+
+            //{% block script_extra %} {% end %}
         })
     </script>
+    {% block body_extra %}{% end %}
 </body>
 
 </html>
