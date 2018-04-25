@@ -1,27 +1,17 @@
-{% extends "../theme.html" %} 
+{% extends "../themes/main.html" %} 
 
 {% block title %}登录{% end %}
 
 {% block head_extra %}
 <style>
-    #component-webview {
+    #webview {
         margin-top: 10px;
-    }
-
-    #component-webview>webview {
         height: 620px;
-    }
-
-    #component-webview>span {
-        position: absolute;
-        top: 0px;
-        margin-top: 0;
-        float: left;
     }
 </style>
 {% end %}
 
-{% block content %}
+{% block main %}
 <div class="container">
     <nav class="breadcrumb" aria-label="breadcrumbs">
         <ul>
@@ -41,35 +31,30 @@
         <div class="message-body">程序使用豆瓣官方网页登录，不会获取和保存你的密码。为了保障你的帐号安全，请从官方渠道下载本软件。</div>
     </article>
 
-    <div class="field-body">
-        <div class="field is-grouped">
-            <p class="control is-expanded">
-                <input class="input" id="input-address" type="text" readonly placeholder="地址栏">
-            </p>
-            <p class="control">
-                <a class="button is-primary" id="button-refresh">
-                    <span class="icon">
-                        <i class="fas fa-sync-alt"></i>
-                    </span>
-                    <span>刷新</span>
-                </a>
-            </p>
-            <p class="control">
-                <a class="button" id="button-reset">
-                    <span class="icon">
-                        <i class="fas fa-undo-alt"></i>
-                    </span>
-                    <span>返回登录页</span>
-                </a>
-            </p>
-        </div>
+    <div class="field is-grouped">
+        <p class="control is-expanded">
+            <input class="input" id="input-address" type="text" readonly placeholder="地址栏">
+        </p>
+        <p class="control">
+            <a class="button is-primary" id="button-refresh">
+                <span class="icon">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+                <span>刷新</span>
+            </a>
+        </p>
+        <p class="control">
+            <a class="button" id="button-reset">
+                <span class="icon">
+                    <i class="fas fa-undo-alt"></i>
+                </span>
+                <span>返回登录页</span>
+            </a>
+        </p>
     </div>
 
-{% import time %}
-    <div class="container" id="component-webview">
-        <span class="tag is-info is-medium is-invisible">Loading...</span>
-        <webview id="webview-douban" src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" partition="douban-{{ time.time() }}" nodeIntegration></webview>
-    </div>
+    {% import time %}
+    <webview id="webview" src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" partition="douban-{{ time.time() }}" nodeIntegration></webview>
 </div>
 {% end %}
 
@@ -77,11 +62,12 @@
 <script>
     system.on('loaded', () => {
         const cookie = system.require('cookie')
-
         let webContents
-        let $loadingTag = $('#component-webview>span')
 
-        let $webview = $('#component-webview>webview').on('load-commit', function() {
+        let $refreshButton = $('#button-refresh')
+        let $resetButton = $('#button-reset')
+
+        let $webview = $('#webview').on('load-commit', function() {
             $('#input-address').val(this.getURL())
             if (webContents) return
             webContents = this.getWebContents()
@@ -96,16 +82,16 @@
                 }
             })
         }).on('did-start-loading', () => {
-            $loadingTag.removeClass('is-invisible')
+            $refreshButton.addClass('is-loading')
         }).on('did-stop-loading', () => {
-            $loadingTag.addClass('is-invisible')
+            $refreshButton.removeClass('is-loading')
         })
 
-        $('#button-refresh').click(() => {
+        $refreshButton.click(() => {
             $webview[0].reload()
         })
 
-        $('#button-reset').click(() => {
+        $resetButton.click(() => {
             $webview[0].loadURL('https://www.douban.com/login')
         })
     })

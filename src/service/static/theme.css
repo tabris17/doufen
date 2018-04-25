@@ -2,18 +2,17 @@ body, html {
     font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
 }
 
-#nav-logo {
+#primary-nav>.navbar-brand>.navbar-item {
     font-size: 28px;
     line-height: 28px;
 }
 
-#nav-logo .icon {
+#primary-nav>.navbar-brand>.navbar-item .icon {
     margin-right: 12px;
 }
 
-#main-content {
-    margin: auto;
-    padding: 10px;
+.section {
+    padding: 2rem 1.5rem;
 }
 
 dl.is-horizontal>dt, dl.is-horizontal>dd {

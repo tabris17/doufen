@@ -12,26 +12,26 @@
 </head>
 
 <body class="page-layout">
-    <nav id="nav" class="navbar is-dark">
+    <nav id="primary-nav" class="navbar is-dark">
         <div class="navbar-brand">
-            <a class="navbar-item" href="/" id="nav-logo">
+            <a class="navbar-item" href="/">
                 <span class="icon">
                     <i class="fas fa-poo"></i>
                 </span>
                 <span>豆坟</span>
             </a>
-            <div class="navbar-burger burger" data-target="#nav-menu">
+            <div class="navbar-burger burger" data-target="#primary-nav>.navbar-menu">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
         </div>
 
-        <div id="nav-menu" class="navbar-menu">
+        <div class="navbar-menu">
             <div class="navbar-start">
                 <a class="navbar-item" href="/">Home</a>
                 <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link" href="/documentation/overview/start/">Docs</a>
+                    <a class="navbar-link" href="#">Docs</a>
                     <div class="navbar-dropdown">
                         <a class="navbar-item external-link" href="http://www.baidu.com/">Overview</a>
                         <hr class="navbar-divider">
@@ -66,9 +66,7 @@
         </div>
     </nav>
 
-    <main id="main-content">
-        {% block content %} {% end %}
-    </main>
+    {% block body %} {% end %}
 
     <template id="tpl-modal-about">
         <div class="modal" id="modal-about">
