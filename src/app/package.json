@@ -1,10 +1,12 @@
 {
     "name": "doufen-app",
-    "productName": "doufen",
+    "productName": "豆坟",
     "version": "0.1.0",
     "main": "main.js",
     "dependencies": {
         "cookie": "^0.3.1",
+        "jquery": "^3.3.1",
+        "mustache": "^2.3.0",
         "showdown": "^1.8.6",
         "ws": "^5.1.1"
     }

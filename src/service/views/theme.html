@@ -4,15 +4,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %} {% end %}</title>
+    <title>{% block title %}豆坟{% end %}</title>
     <link rel="stylesheet" href="{{ static_url('bulma.min.css') }}">
     <link rel="stylesheet" href="{{ static_url('theme.css') }}">
     <script defer src="{{ static_url('fontawesome-all.min.js') }}"></script>
-    <script src="{{ static_url('jquery.min.js') }}"></script>
     {% block head_extra %}{% end %}
 </head>
 
-<body>
+<body class="page-layout">
     <nav id="nav" class="navbar is-dark">
         <div class="navbar-brand">
             <a class="navbar-item" href="/" id="nav-logo">
@@ -67,52 +66,84 @@
         </div>
     </nav>
 
-    <section id="body-content" class="container">
+    <main id="main-content">
         {% block content %} {% end %}
-    </section>
+    </main>
 
-    <div class="modal" id="modal-about">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">关于</p>
-                <button class="delete" aria-label="close" data-target="#modal-about"></button>
-            </header>
-            <section class="modal-card-body">
-                <script>
-                    (() => {
-                        const { app } = system.require('electron').remote
-                        document.write(app.getVersion())
-                    })()
-                </script>
-            </section>
-            <footer class="modal-card-foot">
-                <button class="button is-success action-close" data-target="#modal-about">确定</button>
-            </footer>
+    <template id="tpl-modal-about">
+        <div class="modal" id="modal-about">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">关于</p>
+                    <button class="delete" aria-label="close" data-target="#modal-about"></button>
+                </header>
+                <section class="modal-card-body">
+                    <dl class="is-horizontal">
+                        <dt>软件名称</dt>
+                        <dd>${name}</dd>
+                        <dt>软件版本</dt>
+                        <dd>${version}</dd>
+                        <dt>路径</dt>
+                        <dd>${path}</dd>
+                        <dt>Electron 版本</dt>
+                        <dd>${electronVersion}</dd>
+                        <dt>Chrome 版本</dt>
+                        <dd>${chromeVersion}</dd>
+                        <dt>Node.js 版本</dt>
+                        <dd>${nodeVersion}</dd>
+                        <dt>V8 引擎版本</dt>
+                        <dd>${v8Version}</dd>
+                        <dt>Python 版本</dt>
+                        {% import sys %}
+                        <dd>{{ sys.version }}</dd>
+                    </dl>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-success action-close" data-target="#modal-about">确定</button>
+                </footer>
+            </div>
         </div>
-    </div>
+    </template>
+
     <script>
-        $(document).ready(() => {
+        system.on('loaded', () => {
             $('.navbar-burger').click(function () {
                 $(this.dataset.target).toggleClass('is-active')
                 $(this).toggleClass('is-active')
             })
 
-            $('#menu-about').click((event) => {
-                event.preventDefault()
-                $('#modal-about').toggleClass('is-active').removeClass('is-invisible')
-            })
-
-
             $(document.body).on('click', 'a.external-link', function(event) {
                 event.preventDefault()
                 system.openLink($(this).attr('href'))
-            }).on('click', '.delete, .action-close', function() {
+            }).on('click', '.delete, .action-close', function(event) {
                 event.preventDefault()
                 $(this.dataset.target).removeClass('is-active').toggleClass('is-invisible')
+            }).on('click', '.action-open', function(event) {
+                event.preventDefault()
+                $(this.dataset.target).toggleClass('is-active').removeClass('is-invisible')
             })
 
-            //{% block script_extra %} {% end %}
+            $('#menu-about').click((event) => {
+                const Mustache = system.require('mustache')
+                const { app } = system.require('electron').remote
+
+                let modal = $('#modal-about')
+                if (modal.length == 0) {
+                    modal = $(Mustache.render($('#tpl-modal-about').html(), {
+                        version: app.getVersion(),
+                        name: app.getName(),
+                        path: app.getAppPath(),
+                        chromeVersion: process.versions.chrome,
+                        electronVersion: process.versions.electron,
+                        nodeVersion: process.versions.node,
+                        v8Version: process.versions.v8
+                    })).appendTo('body')
+                }
+
+                event.preventDefault()
+                modal.toggleClass('is-active').removeClass('is-invisible')
+            })
         })
     </script>
     {% block body_extra %}{% end %}

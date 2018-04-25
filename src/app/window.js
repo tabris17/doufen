@@ -87,7 +87,7 @@ function createMainWindow(service) {
 
     win.on('page-title-updated', (event, title) => {
         event.preventDefault()
-        win.setTitle(title.trim() ? `${MAIN_WINDOW_TITLE} - ${title}` : MAIN_WINDOW_TITLE)
+        win.setTitle(title.trim() != MAIN_WINDOW_TITLE ? `${MAIN_WINDOW_TITLE} - ${title}` : MAIN_WINDOW_TITLE)
     })
 
     win.on('minimize', (event) => {

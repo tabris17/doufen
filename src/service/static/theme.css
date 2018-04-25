@@ -11,6 +11,27 @@ body, html {
     margin-right: 12px;
 }
 
-#body-content {
+#main-content {
+    margin: auto;
     padding: 10px;
+}
+
+dl.is-horizontal>dt, dl.is-horizontal>dd {
+    display: block;
+    line-height: 1.5;
+}
+
+dl.is-horizontal>dt {
+    font-weight: 600;
+    float: left;
+    width: 120px;
+    overflow: hidden;
+    clear: left;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+dl.is-horizontal>dd {
+    margin-left: 140px;
 }
