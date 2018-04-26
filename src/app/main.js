@@ -16,9 +16,10 @@ const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8398/'
  * @param {Array} args 
  */
 function parseArgs(args) {
+    const package = require('./package.json')
     let argsParser = ArgumentParser({
-        version: app.getVersion(),
-        prog: app.getName(),
+        version: package.version,
+        prog: package.commandName,
         addHelp: true
     })
     argsParser.addArgument(

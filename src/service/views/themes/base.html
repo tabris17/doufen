@@ -29,39 +29,82 @@
 
         <div class="navbar-menu">
             <div class="navbar-start">
-                <a class="navbar-item" href="/">Home</a>
                 <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link" href="#">Docs</a>
-                    <div class="navbar-dropdown">
-                        <a class="navbar-item external-link" href="http://www.baidu.com/">Overview</a>
+                    <a class="navbar-link">我的豆瓣</a>
+                    <div class="navbar-dropdown is-hidden-tablet-only is-hidden-mobile">
+                        <a class="navbar-item">友邻</a>
                         <hr class="navbar-divider">
-                        <a class="navbar-item" href="{{ reverse_url('help') }}">帮助</a>
+                        <a class="navbar-item">广播</a>
+                        <a class="navbar-item">相册</a>
+                        <a class="navbar-item">日记</a>
+                        <a class="navbar-item">喜欢</a>
+                        <a class="navbar-item">豆列</a>
+                        <a class="navbar-item">评论</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item">书影音</a>
+                    </div>
+                </div>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">工具</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="">帐号管理</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item" href="{{ reverse_url('settings') }}">设置</a>
+                    </div>
+                </div>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">帮助</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="{{ reverse_url('manual') }}">用户手册</a>
+                        <hr class="navbar-divider is-hidden-tablet-only is-hidden-mobile">
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-homepage">项目地址</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-discuss">软件论坛</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-issues">问题反馈</a>
+                        <hr class="navbar-divider">
                         <a class="navbar-item" id="menu-about">关于</a>
                     </div>
                 </div>
             </div>
 
             <div class="navbar-end">
+                {% block search %}
                 <div class="navbar-item">
-                    <div class="field is-grouped">
-                        <p class="control">
-                            <a class="bd-tw-button button">
-                                <span class="icon">
-                                    <i class="fab fa-twitter"></i>
-                                </span>
-                                <span>Tweet</span>
-                            </a>
-                        </p>
-                        <p class="control">
-                            <a class="button is-primary">
-                                <span class="icon">
-                                    <i class="fas fa-download"></i>
-                                </span>
-                                <span>Download</span>
-                            </a>
+                    <div class="field">
+                        <p class="control has-icons-right">
+                            <input class="input" type="search" placeholder="搜索">
+                            <span class="icon is-small is-right">
+                                <i class="fas fa-search"></i>
+                            </span>
                         </p>
                     </div>
                 </div>
+                {% end %}
+                {% block login %}
+                <div class="navbar-item">
+                    <a class="button is-info" href="{{ reverse_url('accounts.login') }}">登录</a>
+                </div>
+                {% end %}
+                {% block account %}
+                <div class="navbar-item">
+                    <div class="dropdown is-hoverable is-justify">
+                        <div class="dropdown-trigger">
+                            <a class="button" href="" aria-haspopup="true" aria-controls="dropdown-menu">
+                                <span>{% block user %}&lt;用户名&gt;{% end %}</span>
+                                <span class="icon is-small">
+                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                                </span>
+                            </a>
+                        </div>
+                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                            <div class="dropdown-content">
+                                <a href="#" class="dropdown-item">切换帐号</a>
+                                <hr class="dropdown-divider">
+                                <a href="#" class="dropdown-item">注销</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% end %}
             </div>
         </div>
     </nav>
@@ -84,21 +127,22 @@
                         <dd>${version}</dd>
                         <dt>路径</dt>
                         <dd>${path}</dd>
-                        <dt>Electron 版本</dt>
-                        <dd>${electronVersion}</dd>
-                        <dt>Chrome 版本</dt>
-                        <dd>${chromeVersion}</dd>
-                        <dt>Node.js 版本</dt>
-                        <dd>${nodeVersion}</dd>
-                        <dt>V8 引擎版本</dt>
-                        <dd>${v8Version}</dd>
+                        <dt>内核版本</dt>
+                        <dd>Electron-${electronVersion}; Chrome-${chromeVersion}; Node.js-${nodeVersion}; V8-${v8Version}</dd>
                         <dt>Python 版本</dt>
                         {% import sys %}
                         <dd>{{ sys.version }}</dd>
+                        <dt>作者</dt>
+                        <dd>
+                            <a href="${contact}" class="external-link">${author}</a>
+                        </dd>
                     </dl>
                 </section>
                 <footer class="modal-card-foot">
                     <button class="button is-success action-close" data-target="#modal-about">确定</button>
+                    <a href="${homepage}" class="button is-info external-link">项目主页</a>
+                    <a href="${homepage}" class="button is-info external-link">软件论坛</a>
+                    <a href="${homepage}" class="button is-info external-link">问题反馈</a>
                 </footer>
             </div>
         </div>
@@ -106,6 +150,22 @@
 
     <script>
         system.on('loaded', () => {
+            const path = system.require('path')
+            const package = system.require(path.join(system.getAppPath(), 'package.json'))
+
+            $('#link-discuss').attr('href', package.urls.discuss)
+            $('#link-issues').attr('href', package.urls.issues)
+            $('#link-homepage').attr('href', package.homepage)
+
+            $('.navbar').on('mouseover', '.dropdown.is-hoverable.is-justify>.dropdown-trigger', function (event) {
+                let $dropdown = $(this).parent('.dropdown.is-hoverable.is-justify')
+                if (event.pageX < 200) {
+                    $dropdown.removeClass('is-right')
+                } else {
+                    $dropdown.addClass('is-right')
+                }
+            })
+
             $('.navbar-burger').click(function () {
                 $(this.dataset.target).toggleClass('is-active')
                 $(this).toggleClass('is-active')
@@ -116,18 +176,18 @@
                 system.openLink($(this).attr('href'))
             }).on('click', '.delete, .action-close', function(event) {
                 event.preventDefault()
-                $(this.dataset.target).removeClass('is-active').toggleClass('is-invisible')
+                $(this.dataset.target).removeClass('is-active').addClass('is-hidden')
             }).on('click', '.action-open', function(event) {
                 event.preventDefault()
-                $(this.dataset.target).toggleClass('is-active').removeClass('is-invisible')
+                $(this.dataset.target).removeClass('is-hidden').addClass('is-active')
             })
 
             $('#menu-about').click((event) => {
-                const Mustache = system.require('mustache')
-                const { app } = system.require('electron').remote
-
                 let modal = $('#modal-about')
                 if (modal.length == 0) {
+                    const Mustache = system.require('mustache')
+                    const { app } = system.require('electron').remote
+
                     modal = $(Mustache.render($('#tpl-modal-about').html(), {
                         version: app.getVersion(),
                         name: app.getName(),
@@ -135,12 +195,17 @@
                         chromeVersion: process.versions.chrome,
                         electronVersion: process.versions.electron,
                         nodeVersion: process.versions.node,
-                        v8Version: process.versions.v8
+                        v8Version: process.versions.v8,
+                        author: package.author,
+                        contact: package.urls.contact,
+                        homepage: package.homepage,
+                        discuss: package.urls.discuss,
+                        issues: package.urls.issues
                     })).appendTo('body')
                 }
 
                 event.preventDefault()
-                modal.toggleClass('is-active').removeClass('is-invisible')
+                modal.toggleClass('is-active').removeClass('is-hidden')
             })
         })
     </script>
@@ -148,3 +213,5 @@
 </body>
 
 </html>
+
+{% block login %} {% end %}

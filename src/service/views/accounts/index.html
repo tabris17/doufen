@@ -1,0 +1,18 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}帐号{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a href="{{ reverse_url('index') }}">主页</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">帐号</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% end %}

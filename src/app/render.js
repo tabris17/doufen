@@ -8,21 +8,22 @@ process.once('loaded', () => {
         module: global.module,
 
         /**
-         * 引用本地的代码
-         * @param {string} mod
-         */
-        requireNative(mod) {
-            return system.require(path.join(__dirname, mod))
-        },
-
-        /**
          * 在浏览器里打开链接
          * @param {string} url 
          * @param {JSON} options 
          * @param {Function} callback 
+         * @returns {boolean}
          */
         openLink(url, options, callback) {
             return shell.openExternal(url, options, callback)
+        },
+
+        /**
+         * 返回程序路径
+         * @returns {string}
+         */
+        getAppPath() {
+            return __dirname
         }
     }
     system.__proto__ = EventEmitter.prototype

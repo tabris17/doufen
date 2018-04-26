@@ -1,8 +1,17 @@
 {
     "name": "doufen-app",
     "productName": "豆坟",
+    "description": "A GUI shell for doufen platform",
     "version": "0.1.0",
     "main": "main.js",
+    "author": "四不象(tabris17)",
+    "commandName": "doufen",
+    "homepage": "https://github.com/tabris17/doufen#readme",
+    "urls": {
+        "contact": "https://www.douban.com/people/tabris17/",
+        "discuss": "https://github.com/tabris17/doufen/issues",
+        "issues":"https://github.com/tabris17/doufen/issues"    
+    },
     "dependencies": {
         "cookie": "^0.3.1",
         "jquery": "^3.3.1",

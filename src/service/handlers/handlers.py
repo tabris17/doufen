@@ -41,7 +41,11 @@ class BaseRequestHandler(RequestHandler):
     默认继承
     """
 
-    pass
+    def initialize(self):
+        self._db = self.settings['_db']
+
+    def get_db(self):
+        return self._db
 
 
 class Main(BaseRequestHandler):
@@ -53,10 +57,19 @@ class Main(BaseRequestHandler):
         self.render('index.html')
 
 
-class Help(BaseRequestHandler):
+class Manual(BaseRequestHandler):
     """
-    帮助
+    使用手册
     """
 
     def get(self):
-        self.render('help.html')
+        self.render('manual.html')
+
+
+class Settings(BaseRequestHandler):
+    """
+    使用手册
+    """
+
+    def get(self):
+        self.render('settings.html', db=self.get_db())

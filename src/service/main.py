@@ -6,6 +6,7 @@ import sys
 import time
 
 import tornado
+from unqlite import UnQLite
 
 import urls
 
@@ -14,12 +15,12 @@ PROG_DESCRIPTION = ''
 PROG_VERSION = '0.1.0'
 DEFAULT_SERVICE_PORT = 8398
 DEFAULT_SERVICE_ADDRESS = '127.0.0.1'
-DEFAULT_DATEBASE = 'graveyard.db'
+DEFAULT_DATEBASE = 'var/data/graveyard.db'
 
 
 def parse_args(args):
     """
-    parse program arguments
+    解析命令参数
     """
     parser = argparse.ArgumentParser(
         prog=PROG_NAME, description=PROG_DESCRIPTION)
@@ -36,9 +37,18 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
+def load_database(path):
+    """
+    加载数据库
+    """
+    db = UnQLite(path)
+    db['foo'] = 'bar'
+    return db
+
+
 def main(args):
     """
-    main entry
+    程序主函数
     """
     parsed_args = parse_args(args)
 
@@ -48,6 +58,8 @@ def main(args):
         datefmt='%m-%d %H:%M'
     )
 
+    db = load_database(parsed_args.database)
+
     base_path = os.path.dirname(__file__)
     settings = {
         'autoreload': parsed_args.debug,
@@ -55,6 +67,7 @@ def main(args):
         'template_path': os.path.join(base_path, 'views'),
         'static_path': os.path.join(base_path, 'static'),
         'static_url_prefix': '/static/',
+        '_db': db,
     }
 
     application = tornado.web.Application(urls.patterns, **settings)

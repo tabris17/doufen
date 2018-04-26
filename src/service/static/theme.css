@@ -2,17 +2,29 @@ body, html {
     font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
 }
 
+#primary-nav {
+    font-size: 1.1rem;
+}
+
 #primary-nav>.navbar-brand>.navbar-item {
-    font-size: 28px;
-    line-height: 28px;
+    font-size: 2rem;
+    line-height: 2rem;
 }
 
 #primary-nav>.navbar-brand>.navbar-item .icon {
-    margin-right: 12px;
+    margin-right: 1rem;
 }
 
 .section {
     padding: 2rem 1.5rem;
+}
+
+.has-margin {
+    margin: 1rem;
+}
+
+.has-padding {
+    padding: 1rem;
 }
 
 dl.is-horizontal>dt, dl.is-horizontal>dd {
@@ -34,3 +46,4 @@ dl.is-horizontal>dt {
 dl.is-horizontal>dd {
     margin-left: 140px;
 }
+

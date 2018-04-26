@@ -16,7 +16,7 @@
                 <a href="{{ reverse_url('index') }}">主页</a>
             </li>
             <li class="is-active">
-                <a href="#" aria-current="page">帮助</a>
+                <a aria-current="page">用户手册</a>
             </li>
         </ul>
     </nav>
@@ -31,9 +31,8 @@
         const { Converter } = system.require('showdown')
         const fs = system.require('fs')
         const path = system.require('path')
-        const { app } = system.require('electron').remote
 
-        fs.readFile(path.join(app.getAppPath(), 'help.md'), 'utf8', (err, data) => {
+        fs.readFile(path.join(system.getAppPath(), 'manual.md'), 'utf8', (err, data) => {
             let converter = new Converter()
             $('#help-content').html(converter.makeHtml(data))
         })
