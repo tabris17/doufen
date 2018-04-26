@@ -4,11 +4,12 @@ import logging
 import os
 import sys
 import time
+from distutils.version import StrictVersion
 
 import tornado
-from unqlite import UnQLite
 
 import urls
+import db
 
 PROG_NAME = 'gravekeeper'
 PROG_DESCRIPTION = ''
@@ -16,6 +17,8 @@ PROG_VERSION = '0.1.0'
 DEFAULT_SERVICE_PORT = 8398
 DEFAULT_SERVICE_ADDRESS = '127.0.0.1'
 DEFAULT_DATEBASE = 'var/data/graveyard.db'
+
+__VERSION__ = '0.1.0'
 
 
 def parse_args(args):
@@ -37,13 +40,20 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def load_database(path):
+def init_db(path):
     """
-    加载数据库
+    初始化数据库
     """
-    db = UnQLite(path)
-    db['foo'] = 'bar'
-    return db
+    with db.get_instance(path) as db_instance:
+        try:
+            data_verion = db_instance['version']
+            if StrictVersion(data_verion) < StrictVersion(__VERSION__) and \
+                not db.upgrade(db_instance, data_verion, __VERSION__):
+                raise Exception('升级数据库失败')
+        except KeyError:
+            db_instance['version'] = __VERSION__
+
+        return db_instance
 
 
 def main(args):
@@ -58,7 +68,8 @@ def main(args):
         datefmt='%m-%d %H:%M'
     )
 
-    db = load_database(parsed_args.database)
+    logging.debug('initiliaze database')
+    db_instance = init_db(parsed_args.database)
 
     base_path = os.path.dirname(__file__)
     settings = {
@@ -67,7 +78,7 @@ def main(args):
         'template_path': os.path.join(base_path, 'views'),
         'static_path': os.path.join(base_path, 'static'),
         'static_url_prefix': '/static/',
-        '_db': db,
+        '_database': db_instance,
     }
 
     application = tornado.web.Application(urls.patterns, **settings)

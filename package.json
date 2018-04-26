@@ -7,7 +7,7 @@
     },
     "scripts": {
         "start": "source ./scripts/launch.sh",
-        "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt",
+        "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt && mkdir var && mkdir var/data && mkdir var/log",
         "start-app": "electron ./src/app --debug",
         "start-service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
         "python-packages": "source ./.venv/Scripts/activate && pip list"

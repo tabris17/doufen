@@ -2,8 +2,11 @@
 import json
 import logging
 
+import tornado
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
+
+import db
 
 
 class Notifier(WebSocketHandler):
@@ -42,10 +45,13 @@ class BaseRequestHandler(RequestHandler):
     """
 
     def initialize(self):
-        self._db = self.settings['_db']
+        self._database = self.settings['_database']
 
     def get_db(self):
-        return self._db
+        """
+        取得数据库对象
+        """
+        return self._database
 
 
 class Main(BaseRequestHandler):
@@ -73,3 +79,13 @@ class Settings(BaseRequestHandler):
 
     def get(self):
         self.render('settings.html', db=self.get_db())
+
+
+class Shutdown(BaseRequestHandler):
+    """
+    关闭系统
+    """
+
+    def get(self):
+        self.write('shutdown')
+        tornado.ioloop.IOLoop.instance().stop()
