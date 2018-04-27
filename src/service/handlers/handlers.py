@@ -6,8 +6,6 @@ import tornado
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
 
-import db
-
 
 class Notifier(WebSocketHandler):
     """
@@ -17,41 +15,32 @@ class Notifier(WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def write_message(self, message, binary=False):
-        logging.debug('send message: "{0}"'.format(message))
-        return super().write_message(message, binary)
+    def on_message(self, message):
+        logging.debug('receive message: "{0}"'.format(message))
 
     def open(self):
         logging.debug('websocket open')
+        self.application.register_client(self)
 
     def on_close(self):
         logging.debug('websocket close')
-        pass
-
-    def on_message(self, message):
-        logging.debug('receive message: "{0}"'.format(message))
-        data = json.loads(message)
-        data.get('type')
-        data.get('session')
-        data.get('body')
+        self.application.unregister_client(self)
 
     def on_connection_close(self):
         logging.debug('connection close')
-
+        self.application.unregister_client(self)
+        
 
 class BaseRequestHandler(RequestHandler):
     """
     默认继承
     """
 
-    def initialize(self):
-        self._database = self.settings['_database']
-
     def get_db(self):
         """
         取得数据库对象
         """
-        return self._database
+        return self.application.database
 
 
 class Main(BaseRequestHandler):
@@ -89,3 +78,13 @@ class Shutdown(BaseRequestHandler):
     def get(self):
         self.write('shutdown')
         tornado.ioloop.IOLoop.instance().stop()
+
+
+class Bootstrap(BaseRequestHandler):
+    """
+    系统启动
+    """
+
+    @tornado.web.asynchronous
+    def get(self):
+        tornado.gen.sleep(1)

@@ -57,7 +57,7 @@ function createMainWindow(service) {
             preload: path.join(__dirname, 'render.js')
         }
     })
-    win.loadURL(service)
+    win.loadURL(service + 'bootstrap')
 
     if (global.debugMode) {
         win.webContents.openDevTools()
