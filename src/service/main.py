@@ -12,6 +12,7 @@ import version
 import server
 
 DEFAULT_SERVICE_PORT = 8398
+DEFAULT_SERVICE_HOST = '127.0.0.1'
 DEFAULT_DATEBASE = 'var/data/graveyard.db'
 
 
@@ -55,7 +56,7 @@ def main(args):
     }
 
     application = server.Application(urls.patterns, **settings)
-    application.listen(parsed_args.port, '127.0.0.1')
+    application.listen(parsed_args.port, DEFAULT_SERVICE_HOST)
 
     logging.debug('start ioloop')
     tornado.ioloop.IOLoop.instance().start()

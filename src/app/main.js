@@ -2,12 +2,15 @@
  * 主进程代码入口
  */
 const path = require('path')
+const url = require('url')
 const { ArgumentParser } = require('argparse')
 const { app, dialog } = require('electron')
 const { initializeWindow, getMainWindow } = require('./window')
+const Notifier = require('./notifier')
 
 
-const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8398/'
+const DEFAULT_SERVICE_PORT = 8398
+const DEFAULT_SERVICE_HOST = '127.0.0.1'
 
 
 /**
@@ -31,12 +34,13 @@ function parseArgs(args) {
         }
     )
     argsParser.addArgument(
-        ['-s', '--service'], {
+        ['-p', '--port'], {
             action: 'store',
-            metavar: 'url',
-            dest: 'service',
-            help: 'Specify the service url.',
-            defaultValue: DEFAULT_SERVICE_URL,
+            dest: 'port',
+            metavar: 'port',
+            type: 'int',
+            help: 'Specify the port of service.',
+            defaultValue: DEFAULT_SERVICE_PORT,
             required: false
         }
     )
@@ -70,9 +74,27 @@ function main(args) {
     ensureSingleton()
 
     let parsedArgs = parseArgs(args)
+    
     global.debugMode = parsedArgs.debug
+    if (debugMode) {
+        console.debug = console.log
+    } else {
+        console.debug = (...args) => {}
+    }
 
-    initializeWindow(parsedArgs.service)
+    let notifier = new Notifier(url.format({
+        port: parsedArgs.port,
+        pathname: '/notify',
+        protocol: 'ws:',
+        hostname: DEFAULT_SERVICE_HOST
+    }))
+
+    initializeWindow(url.format({
+        port: parsedArgs.port,
+        pathname: '/',
+        protocol: 'http:',
+        hostname: DEFAULT_SERVICE_HOST
+    }))
 
     app.on('all-window-closed', () => {
         if (process.platform !== 'darwin') {
