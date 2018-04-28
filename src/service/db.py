@@ -28,7 +28,7 @@ def instance(path):
     return unqlite.UnQLite(path, open_database=False)
 
 
-def upgrade(dbo, src_version, dest_version):
+def upgrade(dbo, src, dest):
     """
     升级数据库
     """

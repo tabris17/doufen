@@ -1,5 +1,5 @@
 /**
- * 创建程序主窗口
+ * 管理程序的窗口
  */
 const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const path = require('path')
@@ -19,6 +19,8 @@ let systemTray
 
 /**
  * 创建闪屏窗口
+ * 
+ * @returns {BrowserWindow}
  */
 function splashScreen() {
     let win = new BrowserWindow({
@@ -42,9 +44,9 @@ function splashScreen() {
 /**
  * 创建程序主窗口
  * 
- * @param {string} service 
+ * @returns {BrowserWindow}
  */
-function createMainWindow(service) {
+function createMainWindow() {
     let win = new BrowserWindow({
         width: MAIN_WINDOW_WIDTH,
         height: MAIN_WINDOW_HEIGHT,
@@ -57,14 +59,15 @@ function createMainWindow(service) {
             preload: path.join(__dirname, 'render.js')
         }
     })
-    win.loadURL(service + 'bootstrap')
 
     if (global.debugMode) {
         win.webContents.openDevTools()
     }
 
     win.on('closed', () => {
-        systemTray.destroy()
+        if (systemTray) {
+            systemTray.destroy()
+        }
         mainWindow = systemTray = null
     })
 
@@ -117,6 +120,8 @@ function createMainWindow(service) {
 
 /**
  * 创建系统托盘
+ * 
+ * @returns {Tray}
  */
 function createTray() {
     const toggleMainWindow = () => {
@@ -144,44 +149,19 @@ function createTray() {
 
 
 /**
- * 初始化程序窗口
+ * 获取主窗口
+ * 
+ * @returns {BrowserWindow | null}
  */
-function initializeWindow(service) {
-    if (app.isReady()) {
-        return
-    }
-
-    app.on('ready', () => {
-        let splash = splashScreen()
-        let win = createMainWindow(service)
-
-        if (global.debugMode) {
-            splash.webContents.on('destroyed', () => {
-                win.show()
-                createTray()
-            })
-        } else {
-            win.once('ready-to-show', () => {
-                win.show()
-                createTray()
-                splash.close()
-            })
-        }
-    })
-
-    app.on('activate', () => {
-        if (mainWindow === null) {
-            createMainWindow()
-        }
-    })
-}
-
 function getMainWindow() {
     if (!mainWindow || mainWindow.isDestroyed()) {
-        createMainWindow()
+        mainWindow = null
     }
     return mainWindow
 }
 
-exports.initializeWindow = initializeWindow
+
+exports.splashScreen = splashScreen
+exports.createMainWindow = createMainWindow
 exports.getMainWindow = getMainWindow
+exports.createTray = createTray

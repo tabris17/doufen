@@ -66,22 +66,34 @@
 
 <body>
     <section class="splash">
-        <p class="header" id="press-any-key" style="display: none;">点击任意键继续</p>
+        <p class="header">
+            <span id="status">正在启动服务...</span>
+        </p>
         <a class="brand">豆坟</a>
         <p class="footer">版本：
             <span id="version"></span>
         </p>
     </section>
     <script>
-        const { app, getGlobal } = require('electron').remote
-        document.querySelector('#version').innerText = app.getVersion()
+        const { remote, ipcRenderer } = require('electron')
+        const debugMode = remote.getGlobal('debugMode')
 
-        if (getGlobal('debugMode')) {
-            document.querySelector('#press-any-key').style = 'display: block;'
-            document.body.addEventListener('keydown', () => {
+        document.querySelector('#version').innerText = remote.app.getVersion()
+
+        let status = document.querySelector('#status')
+        ipcRenderer.on('ready-to-connect', () => {
+            status.innerText = '正在连接服务...'
+        })
+        ipcRenderer.on('ready-to-show', () => {
+            if (debugMode) {
+                status.innerText = '按任意键继续'
+                document.body.addEventListener('keydown', () => {
+                    window.close()
+                })
+            } else {
                 window.close()
-            })
-        }
+            }
+        })
     </script>
 </body>
 

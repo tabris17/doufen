@@ -1,3 +1,6 @@
+/**
+ * renderer 进程调用的模块
+ */
 process.once('loaded', () => {
     const { shell, remote } = require('electron')
     const path = require('path')

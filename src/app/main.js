@@ -4,13 +4,15 @@
 const path = require('path')
 const url = require('url')
 const { ArgumentParser } = require('argparse')
-const { app, dialog, ipcMain } = require('electron')
-const { initializeWindow, getMainWindow } = require('./window')
-const Notifier = require('./notifier')
+const { app, dialog, ipcMain, Notification } = require('electron')
+const { splashScreen, createMainWindow, createTray, getMainWindow } = require('./window')
+const Messenger = require('./messenger')
 
 
 const DEFAULT_SERVICE_PORT = 8398
 const DEFAULT_SERVICE_HOST = '127.0.0.1'
+const MESSENGER_RECONNECT_TIMES = 10
+const MESSENGER_RECONNECT_INTERVAL = 5000
 
 
 /**
@@ -82,32 +84,106 @@ function main(args) {
         console.debug = (...args) => {}
     }
 
-    /*
-    let notifier = new Notifier(url.format({
-        port: parsedArgs.port,
-        pathname: '/notify',
-        protocol: 'ws:',
-        hostname: DEFAULT_SERVICE_HOST
-    }))
-
-    ipcMain.on('subscribe', (event, window) => {
-
-    })
-
-    notifier.connect()
-    */
-
-    initializeWindow(url.format({
+    let serviceUrl = url.format({
         port: parsedArgs.port,
         pathname: '/',
         protocol: 'http:',
         hostname: DEFAULT_SERVICE_HOST
-    }))
+    })
+
+    let messenger = new Messenger(url.format({
+        port: parsedArgs.port,
+        pathname: '/notify',
+        protocol: 'ws:',
+        hostname: DEFAULT_SERVICE_HOST
+    }), 100, times=MESSENGER_RECONNECT_TIMES)
+
+    messenger.on('fail', () => {
+        dialog.showMessageBox({
+            type: 'error',
+            buttons: ['确定(&O)'],
+            noLink: true,
+            title: '错误',
+            normalizeAccessKeys: true,
+            message: '服务没有响应。请重新启动程序。'
+        }, () => {
+            app.exit()
+        })
+    })
+
+    app.on('ready', () => {
+        let splash = splashScreen()
+        let win = createMainWindow()
+
+        const handleMessengerClose = () => {
+            messenger.once('close', () => {
+                let notification = new Notification({
+                    title: '错误',
+                    body: '服务连接中断。正在尝试重新连接...'
+                })
+                notification.show()
+
+                messenger.connect(MESSENGER_RECONNECT_INTERVAL, 3)
+                messenger.once('open', () => {
+                    let notification = new Notification({
+                        title: '消息',
+                        body: '服务重新连接成功！'
+                    })
+                    notification.show()
+
+                    handleMessengerClose()
+                })
+            })
+        }
+
+        const bootstrap = () => {
+            console.debug('service started')
+
+            let splashWebContents = splash.webContents
+            splashWebContents.send('ready-to-connect')
+
+            win.loadURL(serviceUrl)
+            win.once('ready-to-show', () => {
+                console.debug('main window rendered')
+
+                splashWebContents.send('ready-to-show')
+                splash.once('closed', () => {
+                    win.show()
+                    createTray()
+                })
+            })
+
+            handleMessengerClose()
+        }
+
+        console.debug('waiting for service to be started')
+        if (messenger.isConnected) {
+            bootstrap()
+        } else {
+            messenger.once('open', () => {
+                bootstrap()
+            })
+        }
+    })
+
+    app.on('activate', () => {
+        if (!getMainWindow()) {
+            let win = createMainWindow()
+            win.loadURL(serviceUrl).once('ready-to-show', () => {
+                win.show()
+            })
+        }
+    })
 
     app.on('all-window-closed', () => {
         if (process.platform !== 'darwin') {
             app.quit()
         }
+    })
+
+    app.on('will-quit', () => {
+        console.debug('app will quit')
+        messenger.close()
     })
 }
 
