@@ -4,7 +4,7 @@
 const path = require('path')
 const url = require('url')
 const { ArgumentParser } = require('argparse')
-const { app, dialog } = require('electron')
+const { app, dialog, ipcMain } = require('electron')
 const { initializeWindow, getMainWindow } = require('./window')
 const Notifier = require('./notifier')
 
@@ -82,12 +82,20 @@ function main(args) {
         console.debug = (...args) => {}
     }
 
+    /*
     let notifier = new Notifier(url.format({
         port: parsedArgs.port,
         pathname: '/notify',
         protocol: 'ws:',
         hostname: DEFAULT_SERVICE_HOST
     }))
+
+    ipcMain.on('subscribe', (event, window) => {
+
+    })
+
+    notifier.connect()
+    */
 
     initializeWindow(url.format({
         port: parsedArgs.port,

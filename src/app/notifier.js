@@ -20,6 +20,7 @@ class Notifier extends EventEmitter {
         })
         websocket.on('error', (error) => {
             if (error.code == 'ECONNREFUSED') {
+                console.debug('WebSocket ECONNREFUSED: retry late')
                 setTimeout(() => {
                     this.connect()
                 }, this._interval)
