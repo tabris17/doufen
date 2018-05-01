@@ -7,5 +7,6 @@ patterns = [
     (r'/settings', handlers.Settings, None, 'settings'),
     (r'/manual', handlers.Manual, None, 'manual'),
     (r'/accounts/login', handlers.accounts.Login, None, 'accounts.login'),
+    (r'/accounts/add', handlers.accounts.Add, None, 'accounts.add'),
     (r'/notify', handlers.Notifier, None, 'notify'),
 ]

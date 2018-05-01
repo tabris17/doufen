@@ -77,6 +77,9 @@
                 let cookiePairs = cookie.parse(details.requestHeaders.Cookie)
                 if ('dbcl2' in cookiePairs) {
                     webContents.stop()
+                    $.ajax('').then((data, status, $xhr) => {
+
+                    })
                     window.alert('登录成功！', '信息')
                     console.log(cookies)
                 }

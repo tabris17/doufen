@@ -5,7 +5,18 @@ import logging
 import tornado
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
-from server import BaseRequestHandler
+
+
+class BaseRequestHandler(RequestHandler):
+    """
+    默认继承
+    """
+
+    def get_db(self):
+        """
+        取得数据库对象
+        """
+        return self.application.database
 
 
 class Notifier(WebSocketHandler):

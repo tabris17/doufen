@@ -16,9 +16,26 @@ def init(dbo):
                 not upgrade(dbo, data_verion, version.__version__):
                 raise Exception('升级数据库失败')
         except KeyError:
+            collections = [
+                'accounts',
+                'users',
+                'user_relationships',
+                'books',
+                'movies',
+                'music',
+                'likes',
+                'doulists',
+                'notes',
+                'photos',
+                'statuses'
+            ]
+            with dbo.transaction():
+                for collection_name in collections:
+                    collection = dbo.collection(collection_name)
+                    if not collection.exists():
+                        collection.create()
             dbo['version'] = version.__version__
-
-        return dbo
+            return dbo
 
 
 def instance(path):

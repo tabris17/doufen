@@ -110,8 +110,9 @@
     </nav>
 
     {% block body %} {% end %}
-
     <template id="tpl-modal-about">
+        {% import sys %}
+        {% import sqlite3 %}
         <div class="modal" id="modal-about">
             <div class="modal-background"></div>
             <div class="modal-card">
@@ -128,10 +129,11 @@
                         <dt>路径</dt>
                         <dd>${path}</dd>
                         <dt>内核版本</dt>
-                        <dd>Electron-${electronVersion}; Chrome-${chromeVersion}; Node.js-${nodeVersion}; V8-${v8Version}</dd>
+                        <dd>Electron-v${electronVersion}; Chrome-v${chromeVersion}; Node.js-v${nodeVersion}; V8-v${v8Version}</dd>
                         <dt>Python 版本</dt>
-                        {% import sys %}
                         <dd>{{ sys.version }}</dd>
+                        <dt>SQLite 版本</dt>
+                        <dd>{{ sqlite3.sqlite_version }}</dd>
                         <dt>作者</dt>
                         <dd>
                             <a href="${contact}" class="external-link">${author}</a>
@@ -147,7 +149,6 @@
             </div>
         </div>
     </template>
-
     <script>
         system.on('loaded', () => {
             const path = system.require('path')
