@@ -43,7 +43,14 @@ class Application(tornado.web.Application):
         super().__init__(*args, **kwargs)
 
         self.clients = dict()
-        self.database = None
+        self._db_path = kwargs['db_path']
+        self._server = kwargs['server']
+
+    def get_server(self):
+        """
+        获得 server 对象
+        """
+        return self._server
 
     def register_client(self, handler):
         """
@@ -65,30 +72,6 @@ class Application(tornado.web.Application):
             client.send(message)
 
 
-def run(port, address=''):
-    """
-    运行接口服务
-    """
-    base_path = os.path.dirname(__file__)
-    settings = {
-        'autoreload': __debug__,
-        'debug': __debug__,
-        'template_path': os.path.join(base_path, 'views'),
-        'static_path': os.path.join(base_path, 'static'),
-        'static_url_prefix': '/static/'
-    }
-
-    application = Application(urls.patterns, **settings)
-    application.listen(port, address)
-
-    try:
-        logging.debug('start ioloop')
-        tornado.ioloop.IOLoop.instance().start()
-    except KeyboardInterrupt:
-        logging.debug('stop ioloop')
-        tornado.ioloop.IOLoop.instance().stop()
-
-
 class Server:
     """
     主服务
@@ -103,43 +86,59 @@ class Server:
             'static_path': os.path.join(base_path, 'static'),
             'static_url_prefix': '/static/',
             'db_path': db_path,
+            'server': self,
         }
 
         application = Application(urls.patterns, **settings)
         application.listen(port, address)
         self.application = application
 
-        self.__worker_output = Queue()
-        self.__worker_input = Queue()
-        self.__workers = []
+        self._worker_output = Queue()
+        self._worker_input = Queue()
+        self.workers = []
 
     @tornado.gen.coroutine
-    def __watch_worker(self):
-        queue = self.__worker_output
+    def _watch_worker(self):
+        """
+        写成这样我也很绝望啊：
+        multiprocessing 的 Queue 不支持异步读，而 tornodo 的 Queue 不支持跨进/线程
+        也许用 socket 才是正途吧
+        """
+        queue = self._worker_output
         while True:
             try:
-                item = queue.get_nowait()
-                print(item)
+                ret = queue.get_nowait()
+                if isinstance(ret, logging.LogRecord):
+                    logging.root.handle(ret)
+                else:
+                    logging.debug(ret)
+                    self._worker_input.put('received:' + str(ret))
+                    for w in self.workers:
+                        print(w.name if hasattr(w, 'name') else 'NULL')
+                    pass
             except queues.Empty:
                 pass
-            yield
+            yield tornado.gen.sleep(1)
+            # yield
 
-    def add_worker(self, routine, args):
-        worker = Worker(routine, self.__worker_input, self.__worker_output)
-        process = Process(target=worker, args=args)
-        self.__workers.append(process)
+    def add_task(self, routine, args=()):
+        worker = Worker(routine, self._worker_input, self._worker_output, args=args)
+        self.workers.append(worker)
+        return worker
 
     def start_workers(self):
-        for worker in self.__workers:
-            worker.start()
+        for worker in self.workers:
+            if worker.is_pending():
+                worker.start()
 
     def stop_workers(self):
-        for worker in self.__workers:
-            worker.stop()
+        for worker in self.workers:
+            if worker.is_running():
+                worker.stop()
 
     def run(self):
         ioloop = tornado.ioloop.IOLoop.current()
-        ioloop.add_callback(self.__watch_worker)
+        ioloop.add_callback(self._watch_worker)
 
         try:
             logging.debug('start workers')

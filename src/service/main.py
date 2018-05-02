@@ -46,6 +46,8 @@ def main(args):
     )
 
     server = Server(parsed_args.port, DEFAULT_SERVICE_HOST, DEFAULT_DATEBASE)
+    import tasks
+    server.add_task(tasks.test)
     server.run()
 
 
