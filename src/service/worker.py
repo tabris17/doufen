@@ -15,7 +15,7 @@ class Worker:
         """
         Worker 运行结束返回的对象
         """
-        
+
         def __init__(self, name, value):
             self.name = name
             self.value = value
@@ -24,21 +24,24 @@ class Worker:
         """
         Worker 运行发生异常返回的对象
         """
-        def __init__(self, code, message):
-            self.code = code
-            self.message = message
+
+        def __init__(self, name, exception):
+            self.name = name
+            self.exception = exception
 
     class Yield:
         """
         Worker 挂起返回的对象
         """
-        pass
+
+        def __init__(self, name, value):
+            self.name = name
+            self.value = value
 
     class State(Enum):
         PENDING = 0
         RUNNING = 1
         TERMINATED = 2
-        SUSPENDED = 3
 
     class RuntimeError(Exception):
         """
@@ -48,6 +51,7 @@ class Worker:
             self.message = message
 
     def __init__(self, routine, input_queue=None, output_queue=None, name=None, args=(), kwargs={}):
+        self._name = name
         self._status = Worker.State.PENDING
         self._routine = routine
         self._input_queue = input_queue
@@ -82,25 +86,29 @@ class Worker:
         try:
             if isgeneratorfunction(self._routine):
                 gen = self._routine(*args, **kwargs)
-                output_queue.put(next(gen))
+                output_queue.put(Worker.Yield(self._name, next(gen)))
                 while True:
                     try:
                         output_queue.put(
-                            gen.send(
-                                input_queue.get()
+                            Worker.Yield(
+                                self._name,
+                                gen.send(
+                                    input_queue.get()
+                                )
                             )
                         )
                     except StopIteration:
-                        break
+                        output_queue.put(Worker.Return(self._name, None))
             else:
                 kwargs['input_queue'] = input_queue
                 kwargs['output_queue'] = output_queue
-                self._routine(*args, **kwargs)
+                result = self._routine(*args, **kwargs)
+                output_queue.put(Worker.Return(self._name, result))
         except Exception as e:
             """
             TODO: 处理错误
             """
-            pass
+            output_queue.put(Worker.Error(self._name, e))
 
     def start(self):
         if self.is_pending():

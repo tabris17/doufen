@@ -8,5 +8,5 @@ def test():
         i = i + 1
         time.sleep(2)
         received = yield i
-        logging.debug(received)
+        logging.debug('Task received:' + str(received))
 

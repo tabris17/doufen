@@ -109,13 +109,23 @@ class Server:
             try:
                 ret = queue.get_nowait()
                 if isinstance(ret, logging.LogRecord):
+                    # 收集日志
                     logging.root.handle(ret)
-                else:
-                    logging.debug(ret)
-                    self._worker_input.put('received:' + str(ret))
-                    for w in self.workers:
-                        print(w.name if hasattr(w, 'name') else 'NULL')
-                    pass
+                elif isinstance(ret, Worker.Yield):
+                    # 有工作进程任务结束并挂起，等待接收新任务
+                    logging.debug('Server received:' + str(ret.value))
+
+                    logging.debug('Server sent:' + str(ret.value + 1))
+                    self._worker_input.put(ret.value + 1)
+
+                elif isinstance(ret, Worker.Error):
+                    # 有工作进程发生错误并退出
+                    self.application.broadcast('工作进程发生错误并退出')
+                    logging.debug('Worker error:' + str(ret.exception))
+                elif isinstance(ret, Worker.Return):
+                    # 有工作进程执行完毕并退出
+                    self.application.broadcast('任务已完成')
+                    logging.debug('Worker terminated')
             except queues.Empty:
                 pass
             yield tornado.gen.sleep(1)

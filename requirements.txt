@@ -2,4 +2,4 @@ douban-client==0.0.6
 Scrapy==1.5.0
 tornado==5.0.1
 pyinstaller==3.3.1
-peewee==3.3.1
+peewee==3.3.2
