@@ -1,5 +1,4 @@
 # encoding: utf-8
-import unqlite
 from distutils.version import StrictVersion
 
 import version
@@ -42,7 +41,7 @@ def instance(path):
     """
     获取数据库实例
     """
-    return unqlite.UnQLite(path, open_database=False)
+    return 
 
 
 def upgrade(dbo, src, dest):

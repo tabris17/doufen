@@ -8,5 +8,12 @@ def test():
         i = i + 1
         time.sleep(2)
         received = yield i
-        logging.debug('Task received:' + str(received))
+        if isinstance(received, Test):
+            logging.debug('Worker received:' + received.value)
 
+class Test:
+    def __init__(self, value):
+        self.value = value
+
+    def get(self):
+        return self.value

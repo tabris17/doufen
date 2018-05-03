@@ -39,6 +39,9 @@ class Worker:
             self.value = value
 
     class State(Enum):
+        """
+        工作进程状态
+        """
         PENDING = 0
         RUNNING = 1
         TERMINATED = 2
@@ -50,70 +53,44 @@ class Worker:
         def __init__(self, message):
             self.message = message
 
-    def __init__(self, routine, input_queue=None, output_queue=None, name=None, args=(), kwargs={}):
-        self._name = name
+    def __init__(self, queue_in=None, queue_out=None):
         self._status = Worker.State.PENDING
-        self._routine = routine
-        self._input_queue = input_queue
-        self._output_queue = output_queue
-        self._process_kwargs = {
-            'target': self,
-            'name': name,
-            'args': args,
-            'kwargs': kwargs,
-        }
+        self._queue_in = queue_in
+        self._queue_out = queue_out
 
     @property
     def input(self):
-        if self._input_queue is None:
-            self._input_queue = Queue()
-        return self._input_queue
+        if self._queue_in is None:
+            self._queue_in = Queue()
+        return self._queue_in
 
     @property
     def output(self):
-        if self._output_queue is None:
-            self._output_queue = Queue()
-        return self._output_queue
+        if self._queue_out is None:
+            self._queue_out = Queue()
+        return self._queue_out
 
     def __call__(self, *args, **kwargs):
-        input_queue = self.input
-        output_queue = self.output
+        queue_in = self.input
+        queue_out = self.output
 
         logger = logging.getLogger()
-        logger.addHandler(QueueHandler(output_queue))
+        logger.addHandler(QueueHandler(queue_out))
         logger.setLevel(logging.DEBUG if __debug__ else logging.INFO)
 
         try:
-            if isgeneratorfunction(self._routine):
-                gen = self._routine(*args, **kwargs)
-                output_queue.put(Worker.Yield(self._name, next(gen)))
-                while True:
-                    try:
-                        output_queue.put(
-                            Worker.Yield(
-                                self._name,
-                                gen.send(
-                                    input_queue.get()
-                                )
-                            )
-                        )
-                    except StopIteration:
-                        output_queue.put(Worker.Return(self._name, None))
-            else:
-                kwargs['input_queue'] = input_queue
-                kwargs['output_queue'] = output_queue
-                result = self._routine(*args, **kwargs)
-                output_queue.put(Worker.Return(self._name, result))
+            pass
+
         except Exception as e:
             """
             TODO: 处理错误
             """
-            output_queue.put(Worker.Error(self._name, e))
+            queue_out.put(Worker.Error(self._name, e))
 
     def start(self):
         if self.is_pending():
             self._status = Worker.State.RUNNING
-            self._process = Process(**self._process_kwargs)
+            self._process = Process(target=self)
             self._process.start()
         else:
             raise Worker.RuntimeError('Can not start worker. The worker is ' + (

@@ -115,8 +115,9 @@ class Server:
                     # 有工作进程任务结束并挂起，等待接收新任务
                     logging.debug('Server received:' + str(ret.value))
 
-                    logging.debug('Server sent:' + str(ret.value + 1))
-                    self._worker_input.put(ret.value + 1)
+                    logging.debug('Server sent: test object')
+                    import tasks
+                    self._worker_input.put(tasks.Test('hashdjkdsf'))
 
                 elif isinstance(ret, Worker.Error):
                     # 有工作进程发生错误并退出
