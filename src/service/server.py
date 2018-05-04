@@ -4,6 +4,7 @@ import os
 import sys
 from multiprocessing import Queue, Process
 from multiprocessing import queues
+from uuid import uuid4 as uuid
 
 import tornado
 
@@ -95,7 +96,14 @@ class Server:
 
         self._worker_output = Queue()
         self._worker_input = Queue()
-        self.workers = []
+        self._workers = dict()
+        self._task = []
+
+    def _create_workers(self):
+        self._workers[str(uuid())] = Worker(
+            self._worker_input,
+            self._worker_output
+        )
 
     @tornado.gen.coroutine
     def _watch_worker(self):
@@ -111,43 +119,40 @@ class Server:
                 if isinstance(ret, logging.LogRecord):
                     # 收集日志
                     logging.root.handle(ret)
-                elif isinstance(ret, Worker.Yield):
-                    # 有工作进程任务结束并挂起，等待接收新任务
-                    logging.debug('Server received:' + str(ret.value))
-
-                    logging.debug('Server sent: test object')
-                    import tasks
-                    self._worker_input.put(tasks.Test('hashdjkdsf'))
-
-                elif isinstance(ret, Worker.Error):
-                    # 有工作进程发生错误并退出
+                elif isinstance(ret, Worker.ReturnReady):
+                    # 已经就绪
+                    pass
+                elif isinstance(ret, Worker.ReturnDone):
+                    # 任务执行完毕
+                    pass
+                elif isinstance(ret, Worker.ReturnWorking):
+                    # 开始执行任务
+                    pass
+                elif isinstance(ret, Worker.ReturnError):
+                    # 发生错误
                     self.application.broadcast('工作进程发生错误并退出')
                     logging.debug('Worker error:' + str(ret.exception))
-                elif isinstance(ret, Worker.Return):
-                    # 有工作进程执行完毕并退出
-                    self.application.broadcast('任务已完成')
-                    logging.debug('Worker terminated')
             except queues.Empty:
                 pass
             yield tornado.gen.sleep(1)
             # yield
 
-    def add_task(self, routine, args=()):
-        worker = Worker(routine, self._worker_input, self._worker_output, args=args)
-        self.workers.append(worker)
-        return worker
+    def add_task(self, task):
+        pass
 
     def start_workers(self):
-        for worker in self.workers:
+        for worker in self._workers:
             if worker.is_pending():
                 worker.start()
 
     def stop_workers(self):
-        for worker in self.workers:
+        for worker in self._workers:
             if worker.is_running():
                 worker.stop()
 
     def run(self):
+        self._create_workers()
+
         ioloop = tornado.ioloop.IOLoop.current()
         ioloop.add_callback(self._watch_worker)
 

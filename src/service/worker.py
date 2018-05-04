@@ -10,33 +10,41 @@ class Worker:
     """
     工作进程封装
     """
-    
-    class Return:
-        """
-        Worker 运行结束返回的对象
-        """
 
-        def __init__(self, name, value):
-            self.name = name
-            self.value = value
-
-    class Error:
+    class ReturnError:
         """
-        Worker 运行发生异常返回的对象
+        工作进程发生异常
         """
 
         def __init__(self, name, exception):
             self.name = name
             self.exception = exception
 
-    class Yield:
+    class ReturnDone:
         """
-        Worker 挂起返回的对象
+        任务完成
         """
 
         def __init__(self, name, value):
             self.name = name
             self.value = value
+
+    class ReturnReady:
+        """
+        工作进程准备完毕
+        """
+
+        def __init__(self, name):
+            self.name = name
+
+    class ReturnWorking():
+        """
+        接收到任务准备工作
+        """
+
+        def __init__(self, name, task):
+            self.name = name
+            self.task = task
 
     class State(Enum):
         """
@@ -53,39 +61,60 @@ class Worker:
         def __init__(self, message):
             self.message = message
 
-    def __init__(self, queue_in=None, queue_out=None):
+    def __init__(self, name, queue_in=None, queue_out=None, **settings):
         self._status = Worker.State.PENDING
+        self._name = name
         self._queue_in = queue_in
         self._queue_out = queue_out
+        self._settings = settings
 
     @property
-    def input(self):
+    def queue_in(self):
         if self._queue_in is None:
             self._queue_in = Queue()
         return self._queue_in
 
     @property
-    def output(self):
+    def queue_out(self):
         if self._queue_out is None:
             self._queue_out = Queue()
         return self._queue_out
 
-    def __call__(self, *args, **kwargs):
-        queue_in = self.input
-        queue_out = self.output
+    @property
+    def name(self):
+        return self._name
 
+    def _ready(self):
+        self.queue_out.put(Worker.ReturnReady(self._name))
+
+    def _work(self, task):
+        self.queue_out.put(Worker.ReturnWorking(self._name, task))
+
+    def _done(self, result):
+        self.queue_out.put(Worker.ReturnDone(self._name, result))
+        
+    def _error(self, exception):
+        self.queue_out.put(Worker.ReturnError(self._name, exception))
+
+    def __call__(self, *args, **kwargs):
+        queue_in = self.queue_in
+        queue_out = self.queue_out
         logger = logging.getLogger()
         logger.addHandler(QueueHandler(queue_out))
         logger.setLevel(logging.DEBUG if __debug__ else logging.INFO)
 
         try:
-            pass
+            self._ready()
+            while True:
+                task = queue_in.get()
+                self._work(str(task))
+                self._done(task(**self._settings))
 
         except Exception as e:
             """
             TODO: 处理错误
             """
-            queue_out.put(Worker.Error(self._name, e))
+            self._error(e)
 
     def start(self):
         if self.is_pending():
