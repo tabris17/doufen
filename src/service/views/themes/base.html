@@ -44,21 +44,14 @@
                         <a class="navbar-item">书影音</a>
                     </div>
                 </div>
-                <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link">工具</a>
-                    <div class="navbar-dropdown">
-                        <a class="navbar-item" href="">帐号管理</a>
-                        <hr class="navbar-divider">
-                        <a class="navbar-item" href="{{ reverse_url('settings') }}">设置</a>
-                    </div>
-                </div>
+                <a class="navbar-item" href="{{ reverse_url('settings') }}">设置</a>
                 <div class="navbar-item has-dropdown is-hoverable">
                     <a class="navbar-link">帮助</a>
                     <div class="navbar-dropdown">
                         <a class="navbar-item" href="{{ reverse_url('manual') }}">用户手册</a>
                         <hr class="navbar-divider is-hidden-tablet-only is-hidden-mobile">
-                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-homepage">项目地址</a>
-                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-discuss">软件论坛</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-homepage">项目主页</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-discuss">软件讨论</a>
                         <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-issues">问题反馈</a>
                         <hr class="navbar-divider">
                         <a class="navbar-item" id="menu-about">关于</a>
@@ -81,7 +74,7 @@
                 {% end %}
                 {% block login %}
                 <div class="navbar-item">
-                    <a class="button is-info" href="{{ reverse_url('accounts.login') }}">登录</a>
+                    <a class="button is-info" href="{{ reverse_url('settings.accounts.login') }}">登录</a>
                 </div>
                 {% end %}
                 {% block account %}

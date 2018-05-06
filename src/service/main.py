@@ -7,8 +7,9 @@ import time
 
 import tornado
 
-from server import Server
+import db
 import version
+from server import Server
 from worker import Worker
 
 DEFAULT_SERVICE_PORT = 8398
@@ -45,9 +46,9 @@ def main(args):
         datefmt='%m-%d %H:%M'
     )
 
-    server = Server(parsed_args.port, DEFAULT_SERVICE_HOST, DEFAULT_DATEBASE)
-    import tasks
-    server.add_task(tasks.test)
+    db.init(parsed_args.database)
+
+    server = Server(parsed_args.port, DEFAULT_SERVICE_HOST)
     server.run()
 
 

@@ -12,11 +12,9 @@ class BaseRequestHandler(RequestHandler):
     默认继承
     """
 
-    def get_db(self):
-        """
-        取得数据库对象
-        """
-        return self.application.database
+    @property
+    def server(self):
+        return self.application.server
 
 
 class Notifier(WebSocketHandler):
@@ -55,12 +53,3 @@ class Manual(BaseRequestHandler):
 
     def get(self):
         self.render('manual.html')
-
-
-class Settings(BaseRequestHandler):
-    """
-    使用手册
-    """
-
-    def get(self):
-        self.render('settings.html', db='self.get_db()')

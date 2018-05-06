@@ -1,51 +1,64 @@
 # encoding: utf-8
-from distutils.version import StrictVersion
-
-import version
+from peewee import *
 
 
-def init(dbo):
+__all__ = ['dbo', 'init', 'Account', 'User', 'Setting']
+
+dbo = SqliteDatabase(None)
+
+def init(db_path):
     """
     初始化数据库
     """
+    dbo.init(db_path)
     with dbo:
-        try:
-            data_verion = dbo['version']
-            if StrictVersion(data_verion) < StrictVersion(version.__version__) and \
-                not upgrade(dbo, data_verion, version.__version__):
-                raise Exception('升级数据库失败')
-        except KeyError:
-            collections = [
-                'accounts',
-                'users',
-                'user_relationships',
-                'books',
-                'movies',
-                'music',
-                'likes',
-                'doulists',
-                'notes',
-                'photos',
-                'statuses'
-            ]
-            with dbo.transaction():
-                for collection_name in collections:
-                    collection = dbo.collection(collection_name)
-                    if not collection.exists():
-                        collection.create()
-            dbo['version'] = version.__version__
-            return dbo
+        dbo.create_tables([
+            Account,
+            User,
+            Setting
+        ])
 
 
-def instance(path):
-    """
-    获取数据库实例
-    """
-    return 
+class BaseModel(Model):
+    class Meta:
+        database = dbo
 
 
-def upgrade(dbo, src, dest):
+class User(BaseModel):
     """
-    升级数据库
+    用户
     """
-    return True
+    unique_name = IntegerField(unique=True, help_text='豆瓣域名')
+    name = CharField(help_text='用户名称')
+    created = DateTimeField(help_text='加入时间')
+    desc = TextField(help_text='描述')
+    type = CharField(help_text='类型。已知有user类型')
+    loc_id = IntegerField(help_text='所在地ID')
+    loc_name = CharField(help_text='所在地')
+    signature = TextField(help_text='签名')
+    avatar = CharField(help_text='头像')
+    large_avatar = CharField(help_text='头像大图')
+    alt = CharField(help_text='用户主页')
+    is_banned = BooleanField(help_text='是否被封禁')
+    is_suicide = BooleanField(help_text='是否已主动注销')
+
+
+class Account(BaseModel):
+    """
+    豆瓣帐号
+    """
+
+    name = CharField(null=True, help_text='帐号显示名称')
+    user = ForeignKeyField(model=User, null=True, unique=True, help_text='豆瓣用户')
+    session = CharField(help_text='登录会话的Cookie')
+    created = TimestampField(help_text='创建时间')
+    is_activated = BooleanField(default=False, help_text='是否已激活')
+    is_invalid = BooleanField(default=False, help_text='是否失效')
+
+
+class Setting(BaseModel):
+    """
+    配置信息
+    """
+    name = CharField(unique=True, help_text='名称')
+    value = TextField(help_text='值')

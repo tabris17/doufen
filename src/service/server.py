@@ -4,7 +4,6 @@ import os
 import sys
 from multiprocessing import Queue, Process
 from multiprocessing import queues
-from uuid import uuid4 as uuid
 
 import tornado
 
@@ -43,11 +42,11 @@ class Application(tornado.web.Application):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.clients = dict()
-        self._db_path = kwargs['db_path']
+        self._clients = dict()
         self._server = kwargs['server']
 
-    def get_server(self):
+    @property
+    def server(self):
         """
         获得 server 对象
         """
@@ -57,19 +56,19 @@ class Application(tornado.web.Application):
         """
         注册客户端
         """
-        self.clients[handler] = Client(handler)
+        self._clients[handler] = Client(handler)
 
     def unregister_client(self, handler):
         """
         注销客户端
         """
-        del self.clients[handler]
+        del self._clients[handler]
 
     def broadcast(self, message):
         """
         向所有在线客户端发送广播
         """
-        for client in self.clients:
+        for client in self._clients:
             client.send(message)
 
 
@@ -78,7 +77,7 @@ class Server:
     主服务
     """
 
-    def __init__(self, port, address, db_path):
+    def __init__(self, port, address):
         base_path = os.path.dirname(__file__)
         settings = {
             'autoreload': __debug__,
@@ -86,7 +85,6 @@ class Server:
             'template_path': os.path.join(base_path, 'views'),
             'static_path': os.path.join(base_path, 'static'),
             'static_url_prefix': '/static/',
-            'db_path': db_path,
             'server': self,
         }
 
@@ -97,13 +95,24 @@ class Server:
         self._worker_output = Queue()
         self._worker_input = Queue()
         self._workers = dict()
-        self._task = []
+        self._tasks = []
 
     def _create_workers(self):
-        self._workers[str(uuid())] = Worker(
+        # TODO: 根据代理服务器数量创建1+N个工作进程
+        worker_name = '工作进程#1'
+        self._workers[worker_name] = Worker(
+            worker_name,
             self._worker_input,
             self._worker_output
         )
+
+    def _launch_task(self):
+        try:
+            task = self._tasks.pop(0)
+            self._worker_input.put(task)
+            self.application.broadcast('开始执行"{0}"任务'.format(task))
+        except IndexError:
+            pass
 
     @tornado.gen.coroutine
     def _watch_worker(self):
@@ -112,41 +121,46 @@ class Server:
         multiprocessing 的 Queue 不支持异步读，而 tornodo 的 Queue 不支持跨进/线程
         也许用 socket 才是正途吧
         """
-        queue = self._worker_output
         while True:
             try:
-                ret = queue.get_nowait()
+                ret = self._worker_output.get_nowait()
                 if isinstance(ret, logging.LogRecord):
-                    # 收集日志
                     logging.root.handle(ret)
                 elif isinstance(ret, Worker.ReturnReady):
-                    # 已经就绪
-                    pass
+                    logging.debug('"{0}" is ready'.format(ret.name))
+                    self._launch_task()
                 elif isinstance(ret, Worker.ReturnDone):
-                    # 任务执行完毕
-                    pass
+                    logging.debug('"{0}" has done'.format(ret.name))
+                    self._workers[ret.name].toggle_task()
+                    self.application.broadcast('任务"{0}"执行完毕'.format(ret.name))
+                    self._launch_task()
                 elif isinstance(ret, Worker.ReturnWorking):
-                    # 开始执行任务
-                    pass
+                    logging.debug('"{0}" is working for "{1}"'.format(ret.name, ret.task))
+                    self._workers[ret.name].toggle_task(ret.task)
                 elif isinstance(ret, Worker.ReturnError):
-                    # 发生错误
-                    self.application.broadcast('工作进程发生错误并退出')
+                    self.application.broadcast('"{0}"发生错误并退出: {1}'.format(ret.name, str(ret.exception)))
                     logging.debug('Worker error:' + str(ret.exception))
             except queues.Empty:
                 pass
-            yield tornado.gen.sleep(1)
-            # yield
+            # 每隔0.5秒读取一下队列
+            yield tornado.gen.sleep(0.5)
 
     def add_task(self, task):
-        pass
+        if len(self._tasks) == 0:
+            for worker in self._workers:
+                if worker.is_suspended():
+                    self._worker_input.put(task)
+                    return
+        self._tasks.append(task)
+        logging.debug('add "{0}" to task list'.format(task))
 
     def start_workers(self):
-        for worker in self._workers:
+        for worker in self._workers.values():
             if worker.is_pending():
                 worker.start()
 
     def stop_workers(self):
-        for worker in self._workers:
+        for worker in self._workers.values():
             if worker.is_running():
                 worker.stop()
 
@@ -166,3 +180,4 @@ class Server:
             self.stop_workers()
             logging.debug('stop ioloop')
             ioloop.stop()
+            raise

@@ -67,6 +67,7 @@ class Worker:
         self._queue_in = queue_in
         self._queue_out = queue_out
         self._settings = settings
+        self._current_task = None
 
     @property
     def queue_in(self):
@@ -111,10 +112,9 @@ class Worker:
                 self._done(task(**self._settings))
 
         except Exception as e:
-            """
-            TODO: 处理错误
-            """
             self._error(e)
+        except KeyboardInterrupt:
+            pass
 
     def start(self):
         if self.is_pending():
@@ -156,3 +156,13 @@ class Worker:
 
     def is_terminated(self):
         return self.status == Worker.State.TERMINATED
+
+    def toggle_task(self, task=None):
+        self._current_task = task
+
+    def is_suspended(self):
+        return self._current_task is None
+
+    @property
+    def current_task(self):
+        return self._current_task
