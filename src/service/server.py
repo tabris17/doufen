@@ -2,6 +2,7 @@
 import logging
 import os
 import sys
+from collections import deque
 from multiprocessing import Queue, Process
 from multiprocessing import queues
 
@@ -9,6 +10,7 @@ import tornado
 
 import db
 import urls
+import setting
 from worker import Worker
 
 
@@ -95,20 +97,32 @@ class Server:
         self._worker_output = Queue()
         self._worker_input = Queue()
         self._workers = dict()
-        self._tasks = []
+        self._tasks = deque()
 
     def _create_workers(self):
-        # TODO: 根据代理服务器数量创建1+N个工作进程
         worker_name = '工作进程#1'
         self._workers[worker_name] = Worker(
             worker_name,
             self._worker_input,
             self._worker_output
         )
+        proxies = setting.get('worker.proxies', 'json')
+        if not proxies:
+            return
+        index = 1
+        for proxy in  proxies:
+            index += 1
+            worker_name = '工作进程#' + str(index)
+            self._workers[worker_name] = Worker(
+                worker_name,
+                self._worker_input,
+                self._worker_output,
+                proxy=proxy
+            )
 
     def _launch_task(self):
         try:
-            task = self._tasks.pop(0)
+            task = self._tasks.popleft()
             self._worker_input.put(task)
             self.application.broadcast('开始执行"{0}"任务'.format(task))
         except IndexError:
@@ -145,13 +159,17 @@ class Server:
             # 每隔0.5秒读取一下队列
             yield tornado.gen.sleep(0.5)
 
-    def add_task(self, task):
+    def add_task(self, task, priority=False):
         if len(self._tasks) == 0:
             for worker in self._workers:
                 if worker.is_suspended():
                     self._worker_input.put(task)
                     return
-        self._tasks.append(task)
+        
+        if priority:
+            self._tasks.appendleft(task)
+        else:
+            self._tasks.append(task)
         logging.debug('add "{0}" to task list'.format(task))
 
     def start_workers(self):
