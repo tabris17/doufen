@@ -11,7 +11,7 @@ import tornado
 import db
 import urls
 import setting
-from worker import Worker
+from worker import Worker, REQUESTS_PER_MINUTE
 
 
 class Client:
@@ -82,7 +82,6 @@ class Server:
     def __init__(self, port, address):
         base_path = os.path.dirname(__file__)
         settings = {
-            'autoreload': __debug__,
             'debug': __debug__,
             'template_path': os.path.join(base_path, 'views'),
             'static_path': os.path.join(base_path, 'static'),
@@ -100,11 +99,13 @@ class Server:
         self._tasks = deque()
 
     def _create_workers(self):
+        requests_per_minute = setting.get('worker.requests-per-minute', int, REQUESTS_PER_MINUTE)
         worker_name = '工作进程#1'
         self._workers[worker_name] = Worker(
             worker_name,
             self._worker_input,
-            self._worker_output
+            self._worker_output,
+            requests_per_minute=requests_per_minute
         )
         proxies = setting.get('worker.proxies', 'json')
         if not proxies:
@@ -117,7 +118,8 @@ class Server:
                 worker_name,
                 self._worker_input,
                 self._worker_output,
-                proxy=proxy
+                proxy=proxy,
+                requests_per_minute=requests_per_minute
             )
 
     def _launch_task(self):

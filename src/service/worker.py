@@ -6,6 +6,9 @@ from logging.handlers import QueueHandler
 from multiprocessing import Queue, Process
 
 
+REQUESTS_PER_MINUTE = 120
+
+
 class Worker:
     """
     工作进程封装

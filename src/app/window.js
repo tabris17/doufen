@@ -5,8 +5,10 @@ const { app, BrowserWindow, Tray, Menu, dialog } = require('electron')
 const path = require('path')
 const url = require('url')
 
-const MAIN_WINDOW_HEIGHT = 580
-const MAIN_WINDOW_WIDTH = 800
+const MAIN_WINDOW_HEIGHT = 640
+const MAIN_WINDOW_WIDTH = 1105
+const MAIN_WINDOW_MIN_HEIGHT = 580
+const MAIN_WINDOW_MIN_WIDTH = 800
 const MAIN_WINDOW_TITLE = '豆坟'
 const APP_ICON = path.join(__dirname, 'app.ico')
 const SPLASH_WINDOW_HEIGHT = 309
@@ -50,8 +52,8 @@ function createMainWindow() {
     let win = new BrowserWindow({
         width: MAIN_WINDOW_WIDTH,
         height: MAIN_WINDOW_HEIGHT,
-        minWidth: MAIN_WINDOW_WIDTH,
-        minHeight: MAIN_WINDOW_HEIGHT,
+        minWidth: MAIN_WINDOW_MIN_WIDTH,
+        minHeight: MAIN_WINDOW_MIN_HEIGHT,
         title: MAIN_WINDOW_TITLE,
         show: false,
         icon: APP_ICON,

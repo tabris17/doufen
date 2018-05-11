@@ -1,0 +1,7 @@
+<aside class="menu">
+    <ul class="menu-list">
+        <li><a {% if active_page == 'general' %}class="is-active"{% else %} href="{{ reverse_url('settings.general') }}"{% end %}>常规</a></li>
+        <li><a {% if active_page == 'account' %}class="is-active"{% else %} href="{{ reverse_url('settings.accounts') }}"{% end %}>帐号</a></li>
+        <li><a {% if active_page == 'network' %}class="is-active"{% else %} href="{{ reverse_url('settings.network') }}"{% end %}>网络</a></li>
+    </ul>
+</aside>

@@ -4,7 +4,7 @@
 const EventEmitter = require('events')
 const WebSocket = require('ws')
 
-const SILENT_CLOSE_CODE = -1
+const SILENT_CLOSE_CODE = 892356
 
 /**
  * 支持重试连接的 WebSocket 客户端
@@ -56,6 +56,7 @@ class Messenger extends EventEmitter {
         websocket.once('close', (code, reason) => {
             console.debug(`[WebSocket]closed: code: ${code} reason: ${reason}`)
             if (code == SILENT_CLOSE_CODE) {
+                console.debug('slient closed')
                 return
             }
             this.emit('close', code, reason)

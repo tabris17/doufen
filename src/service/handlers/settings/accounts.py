@@ -1,4 +1,5 @@
 # encoding: utf-8
+import re
 from ..handlers import BaseRequestHandler
 from db import Account
 
@@ -17,7 +18,7 @@ class Index(BaseRequestHandler):
     """
 
     def get(self):
-        self.render('settings/accounts/index.html')
+        self.render('settings/accounts/index.html', rows=Account.select())
 
 
 class Add(BaseRequestHandler):
@@ -26,10 +27,16 @@ class Add(BaseRequestHandler):
     """
 
     def post(self):
-        session_cookie = self.get_argument('sess')
-        account = Account()
-        account.session = session_cookie
-        account.save()
+        session = self.get_argument('session')
+        homepage = self.get_argument('homepage')
+        result = re.findall(r'^https://www\.douban\.com/people/(.+)/$', 'https://www.douban.com/people/tabris17/')
+        try:
+            Account(
+                session=session,
+                name=result[0]
+            ).save()
+        except IndexError:
+            pass
 
         self.write('OK')
         

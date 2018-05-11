@@ -2,7 +2,7 @@
 from peewee import *
 
 
-__all__ = ['dbo', 'init', 'Account', 'User', 'Setting']
+__all__ = ['dbo', 'init', 'Account', 'User', 'Setting', 'UserHistorical']
 
 dbo = SqliteDatabase(None)
 
@@ -15,6 +15,7 @@ def init(db_path):
         dbo.create_tables([
             Account,
             User,
+            UserHistorical,
             Setting
         ])
 
@@ -28,6 +29,7 @@ class User(BaseModel):
     """
     用户
     """
+    douban_id = IntegerField(unique=True, help_text='豆瓣ID')
     unique_name = IntegerField(unique=True, help_text='豆瓣域名')
     name = CharField(help_text='用户名称')
     created = DateTimeField(help_text='加入时间')
@@ -41,6 +43,18 @@ class User(BaseModel):
     alt = CharField(help_text='用户主页')
     is_banned = BooleanField(help_text='是否被封禁')
     is_suicide = BooleanField(help_text='是否已主动注销')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间')
+
+
+class UserHistorical(User):
+    """
+    用户历史数据
+    """
+    class Meta:
+        table_name = 'user_historical'
+    
+    user = ForeignKeyField(User, field=User.id, help_text='豆瓣ID')
 
 
 class Account(BaseModel):
