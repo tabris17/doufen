@@ -23,37 +23,31 @@
             {% if len(rows) == 0 %}
             <div class="notification is-primary">没有帐号，请先<a href="{{ reverse_url('settings.accounts.login') }}">登录</a>。</div>
             {% else %}
-            <table class="table">
+            <table class="table is-fullwidth is-hoverable">
                 <thead>
                     <tr>
                         <th>用户名</th>
-                        <th>创建时间</th>
-                        <th>SESSION(注意保密不要外泄)</th>
-                        <th>有效</th>
-                        <th>操作</th>
+                        <th>登录时间</th>
+                        <th>登录凭证</th>
+                        <th></th>
                     </tr>
                 </thead>
-                <tfoot>
-                    <tr>
-                        <th>用户名</th>
-                        <th>创建时间</th>
-                        <th>SESSION(注意保密不要外泄)</th>
-                        <th>有效</th>
-                        <th>操作</th>
-                    </tr>
-                </tfoot>
                 <tbody>
                     {% for row in rows %}
-                    <tr{% if row.is_activated%} class="is-selected"{% end %}>
+                    <tr class="{% if row.is_activated%} is-selected{% end %} {% if row.is_invalid%} has-background-grey-lighter has-text-white-ter{% end %}">
                         <td>{{ row.name }}</td>
                         <td>{{ row.created }}</td>
                         <td>{{ row.session }}</td>
-                        <td>{% if not row.is_invalid %}是{% else %}否{% end %}</td>
-                        <td><a href="" class="button is-small">删除</a></td>
+                        <td>
+                            <a href="" class="is-small" title="删除">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% end %}
                 </tbody>
             </table>
+            <p><a class="button is-primary" href="{{ reverse_url('settings.accounts.login') }}">添加</a></p>
             {% end %}
         </div>
     </div>

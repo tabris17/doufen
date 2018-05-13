@@ -65,7 +65,8 @@
 <script>
     system.on('loaded', () => {
         const cookie = system.require('cookie')
-        let webContents, webRequest, sessCookie
+        const doubanMineURL = 'https://www.douban.com/mine/'
+        let webContents, webRequest, mineURL
 
         let $refreshButton = $('#button-refresh')
         let $resetButton = $('#button-reset')
@@ -76,29 +77,28 @@
             webRequest = webContents.session.webRequest
             webRequest.onSendHeaders({ urls: ['https://*.douban.com/*'] }, (details) => {
                 let cookies = details.requestHeaders.Cookie
-                if (!cookies || sessCookie) return
                 let cookiePairs = cookie.parse(cookies)
-                if ('dbcl2' in cookiePairs) {
-                    sessCookie = cookies
-                    webRequest.onBeforeRedirect({ urls: ['https://www.douban.com/mine/'] }, (details) => {
-                        let mineURL = details.redirectURL
-                        webContents.stop()
-                        $.ajax({
-                            url: '{{ reverse_url("settings.accounts.add") }}',
-                            method: 'POST',
-                            data: {
-                                session: sessCookie,
-                                homepage: mineURL
-                            }
-                        }).then((data, status, $xhr) => {
-                            location = '{{ reverse_url("settings.accounts") }}'
-                        }, ($xhr, status, error) => {
-                            window.alert('添加帐号失败：' + error, '错误')
-                        })
-                        window.alert('登录成功！', '信息')
+                if ('ck' in cookiePairs) {
+                    $.ajax({
+                        url: '{{ reverse_url("settings.accounts.add") }}',
+                        method: 'POST',
+                        data: {
+                            session: cookies,
+                            homepage: mineURL
+                        }
+                    }).then((data, status, $xhr) => {
+                        location = '{{ reverse_url("settings.accounts") }}'
+                    }, ($xhr, status, error) => {
+                        window.alert('添加帐号失败：' + error, '错误')
                     })
-                    webContents.loadURL('https://www.douban.com/mine/')
+                    window.alert('登录成功！', '信息')
+                } else if ('dbcl2' in cookiePairs && details.url != doubanMineURL) {
+                    webContents.loadURL(doubanMineURL)
                 }
+            })
+            webRequest.onBeforeRedirect({ urls: [doubanMineURL] }, (details) => {
+                mineURL = details.redirectURL
+                webContents.stop()
             })
         }).on('did-start-loading', () => {
             $refreshButton.addClass('is-loading')

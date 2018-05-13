@@ -62,8 +62,7 @@ class Account(BaseModel):
     豆瓣帐号
     """
 
-    name = CharField(null=True, help_text='帐号显示名称')
-    user = ForeignKeyField(model=User, null=True, unique=True, help_text='豆瓣用户')
+    name = CharField(null=True, help_text='帐号显示名称，对应豆瓣域名')
     session = CharField(help_text='登录会话的Cookie')
     created = TimestampField(help_text='创建时间')
     is_activated = BooleanField(default=False, help_text='是否已激活')

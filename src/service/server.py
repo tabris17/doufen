@@ -71,7 +71,7 @@ class Application(tornado.web.Application):
         向所有在线客户端发送广播
         """
         for client in self._clients:
-            client.send(message)
+            client.write_message(message)
 
 
 class Server:
@@ -98,29 +98,37 @@ class Server:
         self._workers = dict()
         self._tasks = deque()
 
+    @property
+    def workers(self):
+        """
+        返回所有工作进程
+        """
+        return self._workers.values()
+
+    @property
+    def tasks(self):
+        return list(self._tasks)
+
     def _create_workers(self):
+        self._workers.clear()
         requests_per_minute = setting.get('worker.requests-per-minute', int, REQUESTS_PER_MINUTE)
-        worker_name = '工作进程#1'
-        self._workers[worker_name] = Worker(
-            worker_name,
+        worker = Worker(
             self._worker_input,
             self._worker_output,
             requests_per_minute=requests_per_minute
         )
+        self._workers[worker.name] = worker
         proxies = setting.get('worker.proxies', 'json')
         if not proxies:
             return
-        index = 1
         for proxy in  proxies:
-            index += 1
-            worker_name = '工作进程#' + str(index)
-            self._workers[worker_name] = Worker(
-                worker_name,
+            worker = Worker(
                 self._worker_input,
                 self._worker_output,
                 proxy=proxy,
                 requests_per_minute=requests_per_minute
             )
+            self._workers[worker.name] = worker
 
     def _launch_task(self):
         try:
@@ -133,9 +141,7 @@ class Server:
     @tornado.gen.coroutine
     def _watch_worker(self):
         """
-        写成这样我也很绝望啊：
-        multiprocessing 的 Queue 不支持异步读，而 tornodo 的 Queue 不支持跨进/线程
-        也许用 socket 才是正途吧
+        监控工作队列
         """
         while True:
             try:
@@ -158,35 +164,44 @@ class Server:
                     logging.debug('Worker error:' + str(ret.exception))
             except queues.Empty:
                 pass
-            # 每隔0.5秒读取一下队列
-            yield tornado.gen.sleep(0.5)
+            # 每隔1秒读取一下队列（任务不会很密集地产生，所以可以等待时间比较长）
+            yield tornado.gen.sleep(1)
 
     def add_task(self, task, priority=False):
         if len(self._tasks) == 0:
-            for worker in self._workers:
+            for worker in self._workers.values():
                 if worker.is_suspended():
                     self._worker_input.put(task)
+                    logging.debug('put "{0}" to worker immediately'.format(task))
                     return
         
         if priority:
             self._tasks.appendleft(task)
         else:
             self._tasks.append(task)
-        logging.debug('add "{0}" to task list'.format(task))
+        logging.debug('add "{0}" to task queue'.format(task))
 
     def start_workers(self):
+        self._create_workers()
         for worker in self._workers.values():
             if worker.is_pending():
                 worker.start()
 
     def stop_workers(self):
+        """
+        暂停工作进程
+        并将正在执行的任务重新放回任务队列
+        """
+        running_tasks = []
         for worker in self._workers.values():
             if worker.is_running():
+                if worker.current_task:
+                    running_tasks.append(worker.current_task)
                 worker.stop()
+        for task in running_tasks:
+            self.add_task(task, True)
 
     def run(self):
-        self._create_workers()
-
         ioloop = tornado.ioloop.IOLoop.current()
         ioloop.add_callback(self._watch_worker)
 

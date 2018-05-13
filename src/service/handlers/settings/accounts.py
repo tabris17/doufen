@@ -29,12 +29,14 @@ class Add(BaseRequestHandler):
     def post(self):
         session = self.get_argument('session')
         homepage = self.get_argument('homepage')
-        result = re.findall(r'^https://www\.douban\.com/people/(.+)/$', 'https://www.douban.com/people/tabris17/')
+        
         try:
-            Account(
-                session=session,
-                name=result[0]
-            ).save()
+            name = re.findall(r'^https://www\.douban\.com/people/(.+)/$', homepage).pop()
+            account = Account.get(Account.name == name)
+            account.session = session
+            account.save()
+        except Account.DoesNotExist:
+            Account.create(session=session, name=name)
         except IndexError:
             pass
 

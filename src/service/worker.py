@@ -14,6 +14,9 @@ class Worker:
     工作进程封装
     """
 
+    _id = 1
+    _name = '工作进程'
+
     class ReturnError:
         """
         工作进程发生异常
@@ -64,9 +67,12 @@ class Worker:
         def __init__(self, message):
             self.message = message
 
-    def __init__(self, name, queue_in=None, queue_out=None, **settings):
+    def __init__(self, queue_in=None, queue_out=None, **settings):
+        class_type = type(self)
+        self._name = '{name}#{id}'.format(name=class_type._name, id=class_type._id)
+        class_type._id += 1
+
         self._status = Worker.State.PENDING
-        self._name = name
         self._queue_in = queue_in
         self._queue_out = queue_out
         self._settings = settings
@@ -87,6 +93,9 @@ class Worker:
     @property
     def name(self):
         return self._name
+
+    def __str__(self):
+        return self.name
 
     def _ready(self):
         self.queue_out.put(Worker.ReturnReady(self._name))
@@ -151,6 +160,20 @@ class Worker:
                 self._status = Worker.State.TERMINATED
         return self._status
 
+    @property
+    def status_text(self):
+        status = self.status
+        if status == Worker.State.PENDING:
+            return '等待'
+        elif status == Worker.State.RUNNING:
+            if self.is_suspended():
+                return '挂起'
+            return '运行'
+        elif status == Worker.State.TERMINATED:
+            return '停止'
+        else:
+            return '未知'
+
     def is_running(self):
         return self.status == Worker.State.RUNNING
 
@@ -168,4 +191,7 @@ class Worker:
 
     @property
     def current_task(self):
+        """
+        当前工作进程正在执行的任务    
+        """
         return self._current_task
