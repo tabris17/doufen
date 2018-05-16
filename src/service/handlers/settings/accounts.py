@@ -29,9 +29,12 @@ class Add(BaseRequestHandler):
     def post(self):
         session = self.get_argument('session')
         homepage = self.get_argument('homepage')
+        import logging
+        logging.debug('session: '+session)
+        logging.debug('homepage: '+homepage)
         
         try:
-            name = re.findall(r'^https://www\.douban\.com/people/(.+)/$', homepage).pop()
+            name = re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', homepage).pop(0)
             account = Account.get(Account.name == name)
             account.session = session
             account.save()

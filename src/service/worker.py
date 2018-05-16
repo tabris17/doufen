@@ -3,8 +3,9 @@ import logging
 from enum import Enum
 from inspect import isgeneratorfunction
 from logging.handlers import QueueHandler
-from multiprocessing import Queue, Process
+from multiprocessing import Process, Queue
 
+import db
 
 REQUESTS_PER_MINUTE = 120
 
@@ -115,6 +116,7 @@ class Worker:
         logger = logging.getLogger()
         logger.addHandler(QueueHandler(queue_out))
         logger.setLevel(logging.DEBUG if __debug__ else logging.INFO)
+        db.init(self._settings['db_path'], False)
 
         try:
             self._ready()

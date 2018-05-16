@@ -1,13 +1,18 @@
 # encoding: utf-8
-import requests
-import pyquery
+import datetime
+import json
 import logging
 from abc import abstractmethod
-from requests.exceptions import TooManyRedirects
-from time import time, sleep
-from urllib.parse import urljoin
 from collections import OrderedDict
+from time import sleep, time
+from urllib.parse import urljoin
 
+import pyquery
+import requests
+from requests.exceptions import TooManyRedirects
+
+import db
+from db import dbo
 
 
 DOUBAN_URL = 'https://www.douban.com/'
@@ -56,6 +61,7 @@ class Task:
             'Accept-Language': 'zh-CN,zh;q=0.8',
         })
         self._session = session
+
         try:
             return self.run()
         except (TooManyRedirects, Forbidden):
@@ -63,9 +69,9 @@ class Task:
             self._account.is_invalid = True
             self._account.save()
             return False
-        except Exception as e:
-            logging.debug(e)
-            return False
+        #except Exception as e:
+        #    logging.debug(e)
+        #    return False
         finally:
             session.close()
 
@@ -82,7 +88,8 @@ class Task:
 
         self._last_request_at = now
         response = self._session.get(url, proxies=self._proxy)
-        return response.text, response.headers
+        # response.text, response.status_code, response.headers
+        return response
 
     @abstractmethod
     def run(self):
@@ -94,15 +101,77 @@ class Task:
         """
         return isinstance(task, type(self)) and self._account.id == task._account.id
 
+    @dbo.atomic()
+    def save_user(self, detail):
+        """
+        用户信息入库
+        """
+        douban_id = detail['id']
+        detail['douban_id'] = douban_id
+        detail['unique_name'] = detail['uid']
+        detail['version'] = 1
+        detail['updated_at'] = datetime.datetime.now()
+        del detail['id']
+        del detail['uid']
 
-class Test(Task):
-    _name = '测试'
+        try:
+            user = db.User.create(**detail)
+            logging.debug('create user: ' + user.unique_name)
+        except db.IntegrityError:
+            user = db.User.get(db.User.douban_id == douban_id)
+            
+            if not user.equals(detail):
+                db.UserHistorical.clone(user)
+                detail['version'] = db.User.version + 1
+                db.User.update(**detail).where(db.User.id == user.id)
+        return user
+
+    @dbo.atomic()
+    def save_movie(self, detail):
+        pass
+
+    def fetch_user_by_api(self, name):
+        """
+        通过豆瓣API获取用户信息
+        """
+        url = 'https://api.douban.com/v2/user/{0}'.format(name)
+        response = self.get_url(url)
+        if response.status_code != 200:
+            return None
+
+        detail = json.loads(response.text)
+        return self.save_user(detail)
+
+    def fetch_movie_by_api(self, id):
+        """
+        通过豆瓣API获取电影信息
+        """
+        url = 'https://api.douban.com/v2/movie/subject/{0}'.format(id)
+        response = self.get_url(url)
+        if response.status_code != 200:
+            return None
+
+        detail = json.loads(response.text)
+        return self.save_movie(detail)
+
+    def sync_account(self):
+        """
+        同步当前帐号信息
+        """
+        account = self._account
+        user = self.fetch_user_by_api(account.name)
+        if account.user is None:
+            account.user = user
+            account.save()
+
+
+class FetchAccountUser(Task):
+    _name = '更新帐号用户信息'
 
     def run(self):
-        sleep(10)
-        self.get_url('https://www.douban.com/')
+        user = self.fetch_user_by_api('tabris17')
 
 
-ALL_TASKS = OrderedDict([
-    ('测试', Test),
-])
+ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
+    FetchAccountUser,
+]])

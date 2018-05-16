@@ -5,8 +5,6 @@ import os
 import sys
 import time
 
-import tornado
-
 import db
 import version
 from server import Server

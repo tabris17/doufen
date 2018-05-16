@@ -112,22 +112,20 @@ class Server:
     def _create_workers(self):
         self._workers.clear()
         requests_per_minute = setting.get('worker.requests-per-minute', int, REQUESTS_PER_MINUTE)
-        worker = Worker(
-            self._worker_input,
-            self._worker_output,
-            requests_per_minute=requests_per_minute
-        )
+        worker_args = {
+            'queue_in': self._worker_input,
+            'queue_out': self._worker_output,
+            'requests_per_minute': requests_per_minute,
+            'db_path': db.DATEBASE_PATH,
+        }
+        worker = Worker(**worker_args)
         self._workers[worker.name] = worker
         proxies = setting.get('worker.proxies', 'json')
         if not proxies:
             return
-        for proxy in  proxies:
-            worker = Worker(
-                self._worker_input,
-                self._worker_output,
-                proxy=proxy,
-                requests_per_minute=requests_per_minute
-            )
+        for proxy in proxies:
+            worker_args['proxy'] = proxy
+            worker = Worker(**worker_args)
             self._workers[worker.name] = worker
 
     def _launch_task(self):
@@ -173,13 +171,18 @@ class Server:
                 if worker.is_suspended():
                     self._worker_input.put(task)
                     logging.debug('put "{0}" to worker immediately'.format(task))
-                    return
-        
+                    return True
+
+        if filter(lambda t: not task.equals(t), self._tasks):
+            logging.debug('fail to add "{0}": task duplicated'.format(task))
+            return False
+
         if priority:
             self._tasks.appendleft(task)
         else:
             self._tasks.append(task)
         logging.debug('add "{0}" to task queue'.format(task))
+        return True
 
     def start_workers(self):
         self._create_workers()
