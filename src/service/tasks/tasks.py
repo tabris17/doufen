@@ -115,7 +115,7 @@ class Task:
         del detail['uid']
 
         try:
-            user = db.User.create(**detail)
+            user = db.User.safe_create(**detail)
             logging.debug('create user: ' + user.unique_name)
         except db.IntegrityError:
             user = db.User.get(db.User.douban_id == douban_id)
@@ -123,12 +123,29 @@ class Task:
             if not user.equals(detail):
                 db.UserHistorical.clone(user)
                 detail['version'] = db.User.version + 1
-                db.User.update(**detail).where(db.User.id == user.id)
+                db.User.safe_update(**detail).where(db.User.id == user.id).execute()
         return user
 
     @dbo.atomic()
     def save_movie(self, detail):
-        pass
+        douban_id = detail['id']
+        detail['douban_id'] = douban_id
+        detail['version'] = 1
+        detail['updated_at'] = datetime.datetime.now()
+        del detail['id']
+
+        try:
+            movie = db.Movie.safe_create(**detail)
+            logging.debug('create movie: ' + movie.title)
+        except db.IntegrityError:
+            movie = db.Movie.get(db.Movie.douban_id == douban_id)
+            
+            if not movie.equals(detail):
+                db.MovieHistorical.clone(movie)
+                detail['version'] = db.Movie.version + 1
+                db.Movie.safe_update(**detail).where(db.Movie.id == movie.id).execute()
+        return movie
+
 
     def fetch_user_by_api(self, name):
         """
@@ -165,13 +182,23 @@ class Task:
             account.save()
 
 
-class FetchAccountUser(Task):
+class TestFetchAccountUser(Task):
     _name = '更新帐号用户信息'
 
     def run(self):
         user = self.fetch_user_by_api('tabris17')
 
 
+class TestFetchMovie(Task):
+    _name = '获取电影信息'
+
+    def run(self):
+        user = self.fetch_movie_by_api('1300374')
+
+
+
+
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
-    FetchAccountUser,
+    TestFetchAccountUser,
+    TestFetchMovie,
 ]])

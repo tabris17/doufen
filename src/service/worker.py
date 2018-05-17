@@ -118,17 +118,17 @@ class Worker:
         logger.setLevel(logging.DEBUG if __debug__ else logging.INFO)
         db.init(self._settings['db_path'], False)
 
-        try:
-            self._ready()
-            while True:
+        self._ready()
+        while True:
+            try:
                 task = queue_in.get()
                 self._work(str(task))
                 self._done(task(**self._settings))
 
-        except Exception as e:
-            self._error(e)
-        except KeyboardInterrupt:
-            pass
+            except Exception as e:
+                self._error(e)
+            except KeyboardInterrupt:
+                break
 
     def start(self):
         if self.is_pending():

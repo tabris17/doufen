@@ -158,12 +158,13 @@ class Server:
                     logging.debug('"{0}" is working for "{1}"'.format(ret.name, ret.task))
                     self._workers[ret.name].toggle_task(ret.task)
                 elif isinstance(ret, Worker.ReturnError):
-                    self.application.broadcast('"{0}"发生错误并退出: {1}'.format(ret.name, str(ret.exception)))
-                    logging.debug('Worker error:' + str(ret.exception))
+                    logging.debug('"{0}" error: {1}'.format(ret.name, ret.exception))
+                    self._workers[ret.name].toggle_task()
+                    self.application.broadcast('"{0}"发生错误: {1}'.format(ret.name, str(ret.exception)))
             except queues.Empty:
                 pass
-            # 每隔1秒读取一下队列（任务不会很密集地产生，所以可以等待时间比较长）
-            yield tornado.gen.sleep(1)
+            # 每隔0.1秒读取一下队列
+            yield tornado.gen.sleep(0.1)
 
     def add_task(self, task, priority=False):
         if len(self._tasks) == 0:
