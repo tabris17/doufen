@@ -5,13 +5,14 @@ import logging
 
 
 logging.basicConfig(
-    level=logging.DEBUG if __debug__ else logging.INFO,
+    level=logging.INFO,
     format='[%(asctime)s] (%(pathname)s:%(lineno)s) [%(levelname)s] %(name)s: %(message)s',
     datefmt='%m-%d %H:%M'
 )
 db.init('var/data/graveyard.db')
 
 
-task = tasks.FetchAccountUser(db.Account.get_by_id(1))
+task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
-task(requests_per_minute=120)
+#task(requests_per_minute=50, proxy='http://127.0.0.1:8118')
+task(requests_per_minute=50)

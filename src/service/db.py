@@ -30,6 +30,9 @@ def init(db_path, create_tables=True):
                 MovieHistorical,
                 Setting,
                 Following,
+                FollowingHistorical,
+                Follower,
+                FollowerHistorical,
             ])
 
 
@@ -97,18 +100,18 @@ class User(BaseModel):
 
     douban_id = IntegerField(unique=True, help_text='豆瓣ID')
     unique_name = CharField(unique=True, help_text='豆瓣域名')
-    name = CharField(help_text='用户名称')
-    created = CharField(help_text='加入时间')
-    desc = TextField(help_text='描述')
-    type = CharField(help_text='类型。已知有user类型')
-    loc_id = IntegerField(help_text='所在地ID')
-    loc_name = CharField(help_text='所在地')
-    signature = TextField(help_text='签名')
-    avatar = CharField(help_text='头像')
-    large_avatar = CharField(help_text='头像大图')
-    alt = CharField(help_text='用户主页')
-    is_banned = BooleanField(help_text='是否被封禁')
-    is_suicide = BooleanField(help_text='是否已主动注销')
+    name = CharField(help_text='用户名称', null=True)
+    created = CharField(help_text='加入时间', null=True)
+    desc = TextField(help_text='描述', null=True)
+    type = CharField(help_text='类型。已知有user类型', null=True)
+    loc_id = IntegerField(help_text='所在地ID', null=True)
+    loc_name = CharField(help_text='所在地', null=True)
+    signature = TextField(help_text='签名', null=True)
+    avatar = CharField(help_text='头像', null=True)
+    large_avatar = CharField(help_text='头像大图', null=True)
+    alt = CharField(help_text='用户主页', null=True)
+    is_banned = BooleanField(help_text='是否被封禁', null=True)
+    is_suicide = BooleanField(help_text='是否已主动注销', null=True)
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
@@ -144,11 +147,12 @@ class Follower(BaseModel):
     """
     class Meta:
         indexes = (
-            (('user', 'follower'), True)
+            (('user', 'follower_username'), True),
         )
 
     user = ForeignKeyField(User, help_text='用户')
-    follower = ForeignKeyField(User, help_text='用户的关注者')
+    follower = ForeignKeyField(User, help_text='用户的关注者', null=True)
+    follower_username = CharField(help_text='关注者用户名')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
@@ -158,6 +162,9 @@ class FollowerHistorical(Follower):
     """
     class Meta:
         table_name = 'follower_historical'
+        indexes = (
+            (('user',), False),
+        )
 
     deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
 
@@ -168,11 +175,12 @@ class Following(BaseModel):
     """
     class Meta:
         indexes = (
-            (('user', 'following_user'), True)
+            (('user', 'following_username'), True),
         )
 
     user = ForeignKeyField(User, help_text='用户')
-    following_user = ForeignKeyField(User, help_text='用户的关注对象', index=True)
+    following_user = ForeignKeyField(User, help_text='用户的关注对象', null=True)
+    following_username = CharField(help_text='关注对象用户名')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
@@ -182,6 +190,9 @@ class FollowingHistorical(Following):
     """
     class Meta:
         table_name = 'following_historical'
+        indexes = (
+            (('user',), False),
+        )
 
     deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
 

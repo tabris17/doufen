@@ -7,7 +7,7 @@ from multiprocessing import Process, Queue
 
 import db
 
-REQUESTS_PER_MINUTE = 120
+REQUESTS_PER_MINUTE = 60
 
 
 class Worker:

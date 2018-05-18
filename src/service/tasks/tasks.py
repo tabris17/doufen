@@ -16,6 +16,9 @@ from db import dbo
 
 
 DOUBAN_URL = 'https://www.douban.com/'
+REQUEST_TIMEOUT = 5
+REQUEST_RETRY_TIMES = 5
+LOCAL_OBJECT_DURATION = 86400
 
 class Forbidden(Exception):
     """
@@ -47,7 +50,8 @@ class Task:
     def __call__(self, **kwargs):
         self._settings = kwargs
         self._proxy = {
-            kwargs['proxy']: kwargs['proxy']
+            'http': kwargs['proxy'],
+            'https': kwargs['proxy'],
         } if 'proxy' in kwargs else None
         requests_per_minute = kwargs['requests_per_minute']
         self._min_request_interval = 60 / requests_per_minute
@@ -78,18 +82,34 @@ class Task:
     def get_setting(self, name, default=None):
         return self._settings.get(name, default)
 
-    def get_url(self, url, base_url=DOUBAN_URL):
+    def fetch_url_content(self, url, base_url=DOUBAN_URL):
         url = urljoin(base_url, url)
 
-        now = time()
-        remaining = now - self._last_request_at - self._min_request_interval
-        if remaining > 0:
-            sleep(remaining)
+        error_count = 0
+        while error_count < REQUEST_RETRY_TIMES:
+            now = time()
+            remaining = self._min_request_interval + self._last_request_at - now
+            if remaining > 0:
+                sleep(remaining)
+            self._last_request_at = now
 
-        self._last_request_at = now
-        response = self._session.get(url, proxies=self._proxy)
-        # response.text, response.status_code, response.headers
-        return response
+            try:
+                logging.info('fetch URL {0}'.format(url))
+                response = self._session.get(url, proxies=self._proxy, timeout=REQUEST_TIMEOUT)
+                response.raise_for_status()
+                return response
+            except requests.exceptions.HTTPError as e:
+                logging.error('fetch URL "{0}" error, response code: {1}'.format(url, response.status_code))
+                break
+            except Exception as e:
+                error_count += 1
+                logging.warn('fetch URL "{0}" error: {1}'.format(url, e))
+
+        logging.error('fetch URL "{0}" error: retries exceeded'.format(url))
+
+    @property
+    def account(self):
+        return self._account
 
     @abstractmethod
     def run(self):
@@ -146,14 +166,27 @@ class Task:
                 db.Movie.safe_update(**detail).where(db.Movie.id == movie.id).execute()
         return movie
 
+    def fetch_user(self, name, duration):
+        """
+        尝试从本地获取用户信息，如果没有则从网上抓取
+        """
+        try:
+            user = db.User.get(db.User.unique_name == name)
+            now = datetime.datetime.now()
+            if (now - user.updated_at).seconds > duration:
+                raise db.User.DoesNotExist()
+        except db.User.DoesNotExist:
+            user = self.fetch_user_by_api(name)
+
+        return user
 
     def fetch_user_by_api(self, name):
         """
         通过豆瓣API获取用户信息
         """
         url = 'https://api.douban.com/v2/user/{0}'.format(name)
-        response = self.get_url(url)
-        if response.status_code != 200:
+        response = self.fetch_url_content(url)
+        if not response:
             return None
 
         detail = json.loads(response.text)
@@ -164,8 +197,8 @@ class Task:
         通过豆瓣API获取电影信息
         """
         url = 'https://api.douban.com/v2/movie/subject/{0}'.format(id)
-        response = self.get_url(url)
-        if response.status_code != 200:
+        response = self.fetch_url_content(url)
+        if not response:
             return None
 
         detail = json.loads(response.text)
@@ -176,29 +209,102 @@ class Task:
         同步当前帐号信息
         """
         account = self._account
-        user = self.fetch_user_by_api(account.name)
+        user = self.fetch_user(account.name, LOCAL_OBJECT_DURATION)
         if account.user is None:
             account.user = user
             account.save()
+        return account
 
 
-class TestFetchAccountUser(Task):
-    _name = '更新帐号用户信息'
+class FollowingFollowerTask(Task):
+    _name = '我的友邻'
+
+    def get_follow_list(self, user, action):
+        url = 'https://api.douban.com/shuo/v2/users/{user}/{action}?count=50&page={page}'
+
+        user_list = []
+        page_count = 1
+        while True:
+            response = self.fetch_url_content(url.format(action=action, user=user, page=page_count))
+            if not response:
+                break
+            user_list_partial = json.loads(response.text)
+            if len(user_list_partial) == 0:
+                break
+            user_list.extend([user['uid'] for user in user_list_partial])
+            page_count += 1
+
+        return user_list
+
+    @dbo.atomic()
+    def save_following(self, account_user, following_users):
+        now = datetime.datetime.now()
+        for following_username, following_user in following_users.items():
+            try:
+                db.Following(user=account_user, following_user=following_user, following_username=following_username, updated_at=now).save()
+            except db.IntegrityError:
+                fw = db.Following.get(db.Following.user == account_user, db.Following.following_username == following_username)
+                fw.updated_at = now
+                fw.save()
+
+    def run(self):
+        account = self.sync_account()
+        following_user_list = self.get_follow_list(account.name, 'following')
+        following_users = {username: self.fetch_user(username, LOCAL_OBJECT_DURATION) for username in following_user_list}
+        self.save_following(account.user, following_users)
+        
+        #user_list = self.get_follow_list(account.name, 'followers')
+        #logging.debug(user_list)
+
+
+class ShuoTask(Task):
+    _name = '我的广播'
 
     def run(self):
         user = self.fetch_user_by_api('tabris17')
 
 
-class TestFetchMovie(Task):
-    _name = '获取电影信息'
+class BookMovieMusicTask(Task):
+    _name = '我的书影音'
 
     def run(self):
-        user = self.fetch_movie_by_api('1300374')
+        user = self.fetch_user_by_api('tabris17')
 
 
+class NoteTask(Task):
+    _name = '我的日记'
+
+    def run(self):
+        user = self.fetch_user_by_api('tabris17')
+
+
+class PhotoAlbumTask(Task):
+    _name = '我的相册'
+
+    def run(self):
+        user = self.fetch_user_by_api('tabris17')
+
+
+class ReviewTask(Task):
+    _name = '我的评论'
+
+    def run(self):
+        user = self.fetch_user_by_api('tabris17')
+
+
+class DoulistTask(Task):
+    _name = '我的豆列'
+
+    def run(self):
+        user = self.fetch_user_by_api('tabris17')
 
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
-    TestFetchAccountUser,
-    TestFetchMovie,
+    FollowingFollowerTask,
+    #ShuoTask,
+    #BookMovieMusicTask,
+    #NoteTask,
+    #PhotoAlbumTask,
+    #ReviewTask,
+    #DoulistTask,
 ]])
