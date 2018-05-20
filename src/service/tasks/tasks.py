@@ -18,7 +18,7 @@ from db import dbo
 DOUBAN_URL = 'https://www.douban.com/'
 REQUEST_TIMEOUT = 5
 REQUEST_RETRY_TIMES = 5
-LOCAL_OBJECT_DURATION = 86400
+FAKE_API_KEY = '04f1ddfc67bddc4a0ed599f5373994de'
 
 class Forbidden(Exception):
     """
@@ -55,6 +55,7 @@ class Task:
         } if 'proxy' in kwargs else None
         requests_per_minute = kwargs['requests_per_minute']
         self._min_request_interval = 60 / requests_per_minute
+        self._local_object_duration = kwargs['local_object_duration']
         self._last_request_at = time()
         session = requests.Session()
         session.headers.update({
@@ -78,6 +79,10 @@ class Task:
         #    return False
         finally:
             session.close()
+    
+    def is_oject_expired(self, obj):
+        now = datetime.datetime.now()
+        return (now - obj.updated_at).seconds > self._local_object_duration
 
     def get_setting(self, name, default=None):
         return self._settings.get(name, default)
@@ -166,14 +171,13 @@ class Task:
                 db.Movie.safe_update(**detail).where(db.Movie.id == movie.id).execute()
         return movie
 
-    def fetch_user(self, name, duration):
+    def fetch_user(self, name):
         """
         尝试从本地获取用户信息，如果没有则从网上抓取
         """
         try:
             user = db.User.get(db.User.unique_name == name)
-            now = datetime.datetime.now()
-            if (now - user.updated_at).seconds > duration:
+            if self.is_oject_expired(user):
                 raise db.User.DoesNotExist()
         except db.User.DoesNotExist:
             user = self.fetch_user_by_api(name)
@@ -184,7 +188,7 @@ class Task:
         """
         通过豆瓣API获取用户信息
         """
-        url = 'https://api.douban.com/v2/user/{0}'.format(name)
+        url = 'https://api.douban.com/v2/user/{0}?apikey={1}'.format(name, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
             return None
@@ -196,7 +200,7 @@ class Task:
         """
         通过豆瓣API获取电影信息
         """
-        url = 'https://api.douban.com/v2/movie/subject/{0}'.format(id)
+        url = 'https://api.douban.com/v2/movie/subject/{0}?apikey={1}'.format(id, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
             return None
@@ -209,7 +213,7 @@ class Task:
         同步当前帐号信息
         """
         account = self._account
-        user = self.fetch_user(account.name, LOCAL_OBJECT_DURATION)
+        user = self.fetch_user(account.name)
         if account.user is None:
             account.user = user
             account.save()
@@ -234,28 +238,115 @@ class FollowingFollowerTask(Task):
             user_list.extend([user['uid'] for user in user_list_partial])
             page_count += 1
 
+        user_list.reverse()
         return user_list
 
     @dbo.atomic()
     def save_following(self, account_user, following_users):
         now = datetime.datetime.now()
         for following_username, following_user in following_users.items():
+            real_following_username = following_user.unique_name if following_user else following_username
             try:
-                db.Following(user=account_user, following_user=following_user, following_username=following_username, updated_at=now).save()
+                kwargs = {
+                    'user': account_user,
+                    'following_user': following_user,
+                    'following_username': real_following_username,
+                    'updated_at': now,
+                }   
+                db.Following(**kwargs).save()
             except db.IntegrityError:
-                fw = db.Following.get(db.Following.user == account_user, db.Following.following_username == following_username)
+                fw = db.Following.get(
+                    db.Following.user == account_user,
+                    db.Following.following_username == real_following_username
+                )
+                if not fw.following_user and following_user is not None :
+                    fw.following_user = following_user
+                if following_user and fw.following_username != following_user.unique_name:
+                    fw.following_username = following_user.unique_name
                 fw.updated_at = now
                 fw.save()
+
+        db.FollowingHistorical.insert_from(
+            db.Following.select(
+                db.Following.user,
+                db.Following.following_user,
+                db.Following.following_username,
+                db.Following.updated_at,
+                db.fn.DATETIME('now')
+            ).where(
+                db.Following.user == account_user,
+                db.Following.updated_at < now
+            ),
+            [
+                db.FollowingHistorical.user,
+                db.FollowingHistorical.following_user,
+                db.FollowingHistorical.following_username,
+                db.FollowingHistorical.updated_at,
+                db.FollowingHistorical.deleted_at,
+            ]
+        ).execute()
+
+        db.Following.delete().where(
+            db.Following.user == account_user, 
+            db.Following.updated_at < now
+        ).execute()
+
+    @dbo.atomic()
+    def save_followers(self, account_user, followers):
+        now = datetime.datetime.now()
+        for follower_username, follower in followers.items():
+            try:
+                kwargs = {
+                    'user': account_user,
+                    'follower': follower,
+                    'follower_username': follower_username,
+                    'updated_at': now,
+                }   
+                db.Follower(**kwargs).save()
+            except db.IntegrityError:
+                fw = db.Follower.get(
+                    db.Follower.user == account_user,
+                    db.Follower.follower_username == follower_username
+                )
+                if not fw.follower and follower is not None :
+                    fw.follower = follower
+                fw.updated_at = now
+                fw.save()
+
+        db.FollowerHistorical.insert_from(
+            db.Follower.select(
+                db.Follower.user,
+                db.Follower.follower,
+                db.Follower.follower_username,
+                db.Follower.updated_at,
+                db.fn.DATETIME('now')
+            ).where(
+                db.Follower.user == account_user,
+                db.Follower.updated_at < now
+            ),
+            [
+                db.FollowerHistorical.user,
+                db.FollowerHistorical.follower,
+                db.FollowerHistorical.follower_username,
+                db.FollowerHistorical.updated_at,
+                db.FollowerHistorical.deleted_at,
+            ]
+        ).execute()
+
+        db.Follower.delete().where(
+            db.Follower.user == account_user, 
+            db.Follower.updated_at < now
+        ).execute()
 
     def run(self):
         account = self.sync_account()
         following_user_list = self.get_follow_list(account.name, 'following')
-        following_users = {username: self.fetch_user(username, LOCAL_OBJECT_DURATION) for username in following_user_list}
+        following_users = {username: self.fetch_user(username) for username in following_user_list}
         self.save_following(account.user, following_users)
         
-        #user_list = self.get_follow_list(account.name, 'followers')
-        #logging.debug(user_list)
-
+        follower_list = self.get_follow_list(account.name, 'followers')
+        follower_users = {username: self.fetch_user(username) for username in follower_list}
+        self.save_followers(account.user, follower_users)
 
 class ShuoTask(Task):
     _name = '我的广播'

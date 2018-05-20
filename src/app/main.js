@@ -6,6 +6,7 @@ const url = require('url')
 const { ArgumentParser } = require('argparse')
 const { app, dialog, ipcMain, Notification } = require('electron')
 const { splashScreen, createMainWindow, createTray, getMainWindow } = require('./window')
+const electronReferer = require('electron-referer')
 const Messenger = require('./messenger')
 
 
@@ -13,6 +14,7 @@ const DEFAULT_SERVICE_PORT = 8398
 const DEFAULT_SERVICE_HOST = '127.0.0.1'
 const MESSENGER_RECONNECT_TIMES = 10
 const MESSENGER_RECONNECT_INTERVAL = 5000
+const MAX_LOG_LINES = 1000
 
 
 /**
@@ -64,6 +66,29 @@ function ensureSingleton() {
     if (isDuplicateInstance) {
         app.quit()
     }
+}
+
+
+let logger = {
+    lines: new Array(MAX_LOG_LINES),
+    cursor: 0,
+    append(line) {
+        this.lines[this.cursor] = line
+        return this.cursor = (this.cursor + 1) % MAX_LOG_LINES
+    },
+    all() {
+        let partA = this.lines.slice(this.cursor).join("\n")
+        let partB = this.lines.slice(0, this.cursor).join("\n")
+        return (partA + partB).trim()
+    },
+    restore() {
+        this.cursor = 0
+        this.lines = new Array(MAX_LOG_LINES)
+    }
+}
+
+global.sharedData = {
+    logger: logger
 }
 
 
@@ -164,6 +189,44 @@ function main(args) {
                 bootstrap()
             })
         }
+
+        messenger.on('message', (data) => {
+            switch (data.sender) {
+                case 'logger':
+                    logger.append(data.message)
+                    win.webContents.send('logger-update')
+                    break
+                case 'worker':
+                    let noticeTitle, noticeBody
+                    switch (data.event) {
+                        case 'error':
+                            noticeTitle = '通知'
+                            noticeBody = `工作进程"${data.src}"发生错误: ${data.message}`
+                            break
+                        case 'done':
+                            noticeTitle = '通知'
+                            noticeBody = `工作进程"${data.src}"执行完毕`
+                            win.webContents.send('worker-status-change')
+                            break
+                        case 'ready':
+                            noticeTitle = '通知'
+                            noticeBody = `工作进程"${data.src}"已启动`
+                            win.webContents.send('worker-status-change')
+                            break
+                        case 'working':
+                            noticeTitle = '通知'
+                            noticeBody = `工作进程"${data.src}"开始执行任务"${data.target}"`
+                            win.webContents.send('worker-status-change')
+                            break
+                    }
+                    (new Notification({
+                        title: noticeTitle,
+                        body: noticeBody
+                    })).show()
+                    break
+            }
+        })
+    
     })
 
     app.on('activate', () => {
@@ -185,6 +248,8 @@ function main(args) {
         console.debug('app will quit')
         messenger.close()
     })
+
+    electronReferer('https://www.douban.com/')
 }
 
 

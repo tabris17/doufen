@@ -27,6 +27,13 @@ process.once('loaded', () => {
          */
         getAppPath() {
             return __dirname
+        },
+
+        /**
+         * 获得主进程共享数据
+         */
+        getSharedData(name) {
+            return remote.getGlobal('sharedData')[name]
         }
     }
     system.__proto__ = EventEmitter.prototype

@@ -16,37 +16,47 @@
     </nav>
 
     <div class="columns is-mobile">
-        <div class="column is-one-fifth">
+        <div class="column is-2">
             {% module Template('settings/_menu.html', active_page='account') %}
         </div>
         <div class="column">
             {% if len(rows) == 0 %}
             <div class="notification is-primary">没有帐号，请先<a href="{{ reverse_url('settings.accounts.login') }}">登录</a>。</div>
             {% else %}
-            <table class="table is-fullwidth is-hoverable">
-                <thead>
-                    <tr>
-                        <th>用户名</th>
-                        <th>登录时间</th>
-                        <th>登录凭证</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in rows %}
-                    <tr class="{% if row.is_activated%} is-selected{% end %} {% if row.is_invalid%} has-background-grey-lighter has-text-white-ter{% end %}">
-                        <td>{{ row.name }}</td>
-                        <td>{{ row.created }}</td>
-                        <td>{{ row.session }}</td>
-                        <td>
-                            <a href="" class="is-small" title="删除">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% end %}
-                </tbody>
-            </table>
+            {% for row in rows %}
+            <article class="media box{% if row.is_invalid%} has-background-grey-lighter{% end %}">
+                <figure class="media-left">
+                    <p class="image is-48x48">
+                        <img src="{{ row.user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <nav class="level">
+                            <div class="level-left">
+                                <div>
+                                    {% if row.user %}
+                                    <p><strong><a href="{{ row.user.alt }}" class="external-link">{{ row.user.name }}</a></strong><small>({{ row.name}})</small></p>
+                                    <p><small class="has-text-grey-light">{{ row.user.signature }}</small></p>
+                                    {% else %}
+                                    <strong>{{ row.name}}</strong>
+                                    {% end %}
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <dl class="is-horizontal">
+                                    <dt>登录时间</dt>
+                                    <dd>{{ row.created }}</dd>
+                                </dl>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <button class="delete"></button>
+                </div>
+            </article>
+            {% end %}
             <p><a class="button is-primary" href="{{ reverse_url('settings.accounts.login') }}">添加</a></p>
             {% end %}
         </div>

@@ -53,3 +53,4 @@ class Manual(BaseRequestHandler):
 
     def get(self):
         self.render('manual.html')
+

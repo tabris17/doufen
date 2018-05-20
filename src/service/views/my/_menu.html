@@ -1,0 +1,33 @@
+<aside class="menu">
+    <p class="menu-label is-size-5">我的友邻</p>
+    <ul class="menu-list">
+        <li><a {% if active_page == 'following' %}class="is-active"{% else %} href="{{ reverse_url('my.following') }}"{% end %}>我关注的</a></li>
+        <li><a {% if active_page == 'followers' %}class="is-active"{% else %} href="{{ reverse_url('my.followers') }}"{% end %}>关注我的</a></li>
+        <li><a {% if active_page == 'blocklist' %}class="is-active"{% else %} href=""{% end %}>黑名单</a></li>
+    </ul>
+    <p class="menu-label is-size-5">我的电影</p>
+    <ul class="menu-list">
+        <li><a {% if active_page == 'movie/collect' %}class="is-active"{% else %} href=""{% end %}>看过</a></li>
+        <li><a {% if active_page == 'movie/wish' %}class="is-active"{% else %} href=""{% end %}>想看</a></li>
+        <li><a {% if active_page == 'movie/do' %}class="is-active"{% else %} href=""{% end %}>在看</a></li>
+    </ul>
+    <p class="menu-label is-size-5">我的书</p>
+    <ul class="menu-list">
+        <li><a {% if active_page == 'book/collect' %}class="is-active"{% else %} href=""{% end %}>看过</a></li>
+        <li><a {% if active_page == 'book/wish' %}class="is-active"{% else %} href=""{% end %}>想看</a></li>
+        <li><a {% if active_page == 'book/do' %}class="is-active"{% else %} href=""{% end %}>在看</a></li>
+    </ul>
+    <p class="menu-label is-size-5">我的音乐</p>
+    <ul class="menu-list">
+        <li><a {% if active_page == 'music/collect' %}class="is-active"{% else %} href=""{% end %}>听过</a></li>
+        <li><a {% if active_page == 'music/wish' %}class="is-active"{% else %} href=""{% end %}>想听</a></li>
+    </ul>
+    <p class="menu-label is-size-5">我的……</p>
+    <ul class="menu-list">
+        <li><a {% if active_page == 'broadcast' %}class="is-active"{% else %} href=""{% end %}>广播</a></li>
+        <li><a {% if active_page == 'photos' %}class="is-active"{% else %} href=""{% end %}>相册</a></li>
+        <li><a {% if active_page == 'notes' %}class="is-active"{% else %} href=""{% end %}>日记</a></li>
+        <li><a {% if active_page == 'doulists' %}class="is-active"{% else %} href=""{% end %}>豆列</a></li>
+        <li><a {% if active_page == 'likes' %}class="is-active"{% else %} href=""{% end %}>喜欢</a></li>
+    </ul>
+</aside>

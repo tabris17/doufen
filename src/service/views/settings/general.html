@@ -16,7 +16,7 @@
     </nav>
 
     <div class="columns is-mobile">
-        <div class="column is-one-fifth">
+        <div class="column is-2">
         {% module Template('settings/_menu.html', active_page='general') %}
         </div>
         <div class="column">
@@ -29,13 +29,31 @@
                         <div class="field is-expanded">
                             <div class="field has-addons">
                                 <p class="control">
-                                    <input name="requests-per-minute" class="input" type="text" placeholder="次/分钟" value="{{ requests_per_minute }}">
+                                    <input name="requests-per-minute" class="input" type="text" value="{{ requests_per_minute }}">
                                 </p>
                                 <p class="control">
                                     <a class="button is-static">次/分钟</a>
                                 </p>
                             </div>
                             <p class="help is-size-6 has-text-danger">豆瓣网站对单个IP发起的请求频率有限制。如果数字设置过大，可能导致IP被豆瓣封杀。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">本地数据有效期</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field is-expanded">
+                            <div class="field has-addons">
+                                <p class="control">
+                                    <input name="local-object-duration" class="input" type="text" value="{{ local_object_duration }}">
+                                </p>
+                                <p class="control">
+                                    <a class="button is-static">天</a>
+                                </p>
+                            </div>
+                            <p class="help is-size-6 has-text-danger">本地数据在超过这个周期后，会尝试从网上获取最新的数据。</p>
                         </div>
                     </div>
                 </div>

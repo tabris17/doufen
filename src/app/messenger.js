@@ -67,7 +67,7 @@ class Messenger extends EventEmitter {
         })
         websocket.on('message', (data) => {
             console.debug('[WebSocket]message received:' + data)
-            this.emit('message', data)
+            this.emit('message', JSON.parse(data))
         })
         this._websocket = websocket
     }

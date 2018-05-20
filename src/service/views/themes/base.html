@@ -29,21 +29,7 @@
 
         <div class="navbar-menu">
             <div class="navbar-start">
-                <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link">我的豆瓣</a>
-                    <div class="navbar-dropdown is-hidden-tablet-only is-hidden-mobile">
-                        <a class="navbar-item">友邻</a>
-                        <hr class="navbar-divider">
-                        <a class="navbar-item">广播</a>
-                        <a class="navbar-item">相册</a>
-                        <a class="navbar-item">日记</a>
-                        <a class="navbar-item">喜欢</a>
-                        <a class="navbar-item">豆列</a>
-                        <a class="navbar-item">评论</a>
-                        <hr class="navbar-divider">
-                        <a class="navbar-item">书影音</a>
-                    </div>
-                </div>
+                <a class="navbar-item" href="{{ reverse_url('my') }}">我的豆瓣</a>
                 <div class="navbar-item has-dropdown is-hoverable">
                     <a class="navbar-link">工具</a>
                     <div class="navbar-dropdown">
@@ -83,27 +69,7 @@
                     <a class="button is-info" href="{{ reverse_url('settings.accounts.login') }}">登录</a>
                 </div>
                 {% end %}
-                {% block account %}
-                <div class="navbar-item">
-                    <div class="dropdown is-hoverable is-justify">
-                        <div class="dropdown-trigger">
-                            <a class="button" href="" aria-haspopup="true" aria-controls="dropdown-menu">
-                                <span>{% block user %}&lt;用户名&gt;{% end %}</span>
-                                <span class="icon is-small">
-                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
-                                </span>
-                            </a>
-                        </div>
-                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
-                            <div class="dropdown-content">
-                                <a href="#" class="dropdown-item">切换帐号</a>
-                                <hr class="dropdown-divider">
-                                <a href="#" class="dropdown-item">注销</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% end %}
+                {% module Account() %}
             </div>
         </div>
     </nav>

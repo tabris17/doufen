@@ -1,0 +1,44 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}我关注的{% end %}
+
+{% block main %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-2">
+            {% module Template('my/_menu.html', active_page='following') %}
+        </div>
+        <div class="column">
+            {% for row in following %}
+            <article class="media box">
+                <figure class="media-left">
+                    <p class="image is-48x48">
+                        <img src="{{ row.following_user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p>
+                            <strong><a href="{{ row.following_user.alt }}" class="external-link">{{ row.following_user.name }}</a></strong>
+                            <small>(@{{ row.following_user.unique_name}})</small>
+                            <small class="has-text-grey-light">{{ row.following_user.signature }}</small>
+                        </p>
+                        <div style="overflow: hidden;max-width: 500px;">{{ row.following_user.desc }}</div>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <dl class="is-horizontal is-size-7">
+                        <dt>创建于</dt>
+                        <dd>{{ row.created_at }}</dd>
+                        <dt>更新于</dt>
+                        <dd>{{ row.updated_at }}</dd>
+                    </dl>
+                </div>
+            </article>
+            {% end %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

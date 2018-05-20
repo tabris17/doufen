@@ -16,10 +16,26 @@
     </nav>
 
     <div class="columns is-mobile">
-        <div class="column is-one-fifth">
+        <div class="column is-2">
         {% module Template('settings/_menu.html', active_page='network') %}
         </div>
-        <div class="column">asdasdsad</div>
+        <div class="column">
+            <form method="post">
+                <label class="label">代理服务器</label>
+                <p class="control">
+                    <textarea name="proxies" class="textarea">{{ proxies }}</textarea>
+                </p>
+                <p class="help is-size-6 has-text-danger">每行一个代理服务器地址</p>
+                <div class="field is-grouped is-grouped-centered">
+                    <div class="control">
+                        <button class="button is-link">确定</button>
+                    </div>
+                    <div class="control">
+                        <button class="button is-text" type="reset">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
 </div>

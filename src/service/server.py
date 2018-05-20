@@ -2,6 +2,7 @@
 import logging
 import os
 import sys
+import json
 from collections import deque
 from multiprocessing import Queue, Process
 from multiprocessing import queues
@@ -11,7 +12,8 @@ import tornado
 import db
 import urls
 import setting
-from worker import Worker, REQUESTS_PER_MINUTE
+import uimodules
+from worker import Worker, REQUESTS_PER_MINUTE, LOCAL_OBJECT_DURATION
 
 
 class Client:
@@ -87,6 +89,7 @@ class Server:
             'static_path': os.path.join(base_path, 'static'),
             'static_url_prefix': '/static/',
             'server': self,
+            'ui_modules': uimodules,
         }
 
         application = Application(urls.patterns, **settings)
@@ -112,10 +115,12 @@ class Server:
     def _create_workers(self):
         self._workers.clear()
         requests_per_minute = setting.get('worker.requests-per-minute', int, REQUESTS_PER_MINUTE)
+        local_object_duration = setting.get('worker.local-object-duration', int, LOCAL_OBJECT_DURATION)
         worker_args = {
             'queue_in': self._worker_input,
             'queue_out': self._worker_output,
             'requests_per_minute': requests_per_minute,
+            'local_object_duration': local_object_duration,
             'db_path': db.DATEBASE_PATH,
         }
         worker = Worker(**worker_args)
@@ -146,21 +151,46 @@ class Server:
                 ret = self._worker_output.get_nowait()
                 if isinstance(ret, logging.LogRecord):
                     logging.root.handle(ret)
+                    self.application.broadcast(json.dumps({
+                        'sender': 'logger',
+                        'message': ret.getMessage(),
+                        'level': ret.levelname,
+                    }))
                 elif isinstance(ret, Worker.ReturnReady):
                     logging.debug('"{0}" is ready'.format(ret.name))
                     self._launch_task()
+                    self.application.broadcast(json.dumps({
+                        'sender': 'worker',
+                        'src': ret.name,
+                        'event': 'ready',
+                    }))
                 elif isinstance(ret, Worker.ReturnDone):
                     logging.debug('"{0}" has done'.format(ret.name))
                     self._workers[ret.name].toggle_task()
-                    self.application.broadcast('任务"{0}"执行完毕'.format(ret.name))
+                    self.application.broadcast(json.dumps({
+                        'sender': 'worker',
+                        'src': ret.name,
+                        'event': 'done',
+                    }))
                     self._launch_task()
                 elif isinstance(ret, Worker.ReturnWorking):
                     logging.debug('"{0}" is working for "{1}"'.format(ret.name, ret.task))
                     self._workers[ret.name].toggle_task(ret.task)
+                    self.application.broadcast(json.dumps({
+                        'sender': 'worker',
+                        'src': ret.name,
+                        'event': 'working',
+                        'target': str(ret.task),
+                    }))
                 elif isinstance(ret, Worker.ReturnError):
                     logging.debug('"{0}" error: {1}'.format(ret.name, ret.exception))
                     self._workers[ret.name].toggle_task()
-                    self.application.broadcast('"{0}"发生错误: {1}'.format(ret.name, str(ret.exception)))
+                    self.application.broadcast(json.dumps({
+                        'event': 'worker',
+                        'src': ret.name,
+                        'event': 'error',
+                        'message': str(ret.exception),
+                    }))
             except queues.Empty:
                 pass
             # 每隔0.1秒读取一下队列

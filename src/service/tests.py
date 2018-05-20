@@ -15,4 +15,4 @@ db.init('var/data/graveyard.db')
 task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
 #task(requests_per_minute=50, proxy='http://127.0.0.1:8118')
-task(requests_per_minute=50)
+task(requests_per_minute=30, local_object_duration = 60*60*24*7)

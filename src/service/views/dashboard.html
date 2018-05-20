@@ -1,5 +1,7 @@
 {% extends "themes/main.html" %}
 
+{% block title %}控制台{% end %}
+
 {% block main %}
 <div class="container">
     <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -74,16 +76,7 @@
         <div class="tile is-parent">
             <div class="tile is-child box">
                 <p class="title">日志</p>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam semper diam at erat pulvinar, at pulvinar felis
-                    blandit. Vestibulum volutpat tellus diam, consequat gravida libero rhoncus ut. Morbi maximus, leo sit amet
-                    vehicula eleifend, nunc dui porta orci, quis semper odio felis ut quam.</p>
-                <p>Suspendisse varius ligula in molestie lacinia. Maecenas varius eget ligula a sagittis. Pellentesque interdum,
-                    nisl nec interdum maximus, augue diam porttitor lorem, et sollicitudin felis neque sit amet erat. Maecenas
-                    imperdiet felis nisi, fringilla luctus felis hendrerit sit amet. Aenean vitae gravida diam, finibus dignissim
-                    turpis. Sed eget varius ligula, at volutpat tortor.</p>
-                <p>Integer sollicitudin, tortor a mattis commodo, velit urna rhoncus erat, vitae congue lectus dolor consequat libero.
-                    Donec leo ligula, maximus et pellentesque sed, gravida a metus. Cras ullamcorper a nunc ac porta. Aliquam
-                    ut aliquet lacus, quis faucibus libero. Quisque non semper leo.</p>
+                <textarea class="textarea" id="log-output" rows="20" readonly></textarea>
             </div>
         </div>
     </div>
@@ -133,6 +126,19 @@
 {% block body_extra %}
 <script>
     system.on('loaded', () => {
+        const { ipcRenderer } = system.require('electron')
+        const logger = system.getSharedData('logger')
+        let $logOutputTextarea = $('#log-output')
+
+        ipcRenderer.on('worker-status-change', (event) => {
+            location.reload()
+        })
+        ipcRenderer.on('logger-update', (event) => {
+            $logOutputTextarea.val(logger.all())
+        })
+        $logOutputTextarea.val(logger.all())
+        $logOutputTextarea[0].scrollTop = $logOutputTextarea[0].scrollHeight
+
         $('#button-restart-workers').click((event) => {
             event.preventDefault()
             if (window.confirm('重启工作进程会导致当前运行的任务失败。确定要重启吗？', '确认')) {

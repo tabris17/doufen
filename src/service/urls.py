@@ -3,6 +3,7 @@ import handlers
 import handlers.settings
 import handlers.settings.accounts
 import handlers.dashboard
+import handlers.my
 
 patterns = [
     (r'/', handlers.Main, None, 'index'),
@@ -17,4 +18,7 @@ patterns = [
     (r'/dashboard/tasks/add', handlers.dashboard.AddTask, None, 'dashboard.tasks.add'),
     (r'/help/manual', handlers.Manual, None, 'help.manual'),
     (r'/notify', handlers.Notifier, None, 'notify'),
+    (r'/my', handlers.my.Index, None, 'my'),
+    (r'/my/following', handlers.my.Following, None, 'my.following'),
+    (r'/my/followers', handlers.my.Followers, None, 'my.followers'),
 ]

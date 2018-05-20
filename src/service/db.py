@@ -140,6 +140,15 @@ class Account(BaseModel):
     is_activated = BooleanField(default=False, help_text='是否已激活')
     is_invalid = BooleanField(default=False, help_text='是否失效')
 
+    @classmethod
+    def getDefault(cls):
+        return cls.select().where(
+            cls.is_invalid == False,
+            cls.user is not None
+        ).order_by(
+            cls.is_activated.desc()
+        ).get()
+
 
 class Follower(BaseModel):
     """
@@ -153,7 +162,8 @@ class Follower(BaseModel):
     user = ForeignKeyField(User, help_text='用户')
     follower = ForeignKeyField(User, help_text='用户的关注者', null=True)
     follower_username = CharField(help_text='关注者用户名')
-    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+    created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+    updated_at = DateTimeField(help_text='最后一次抓取时间', default=datetime.datetime.now())
 
 
 class FollowerHistorical(Follower):
@@ -181,7 +191,8 @@ class Following(BaseModel):
     user = ForeignKeyField(User, help_text='用户')
     following_user = ForeignKeyField(User, help_text='用户的关注对象', null=True)
     following_username = CharField(help_text='关注对象用户名')
-    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+    created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+    updated_at = DateTimeField(help_text='最后一次抓取时间', default=datetime.datetime.now())
 
 
 class FollowingHistorical(Following):
