@@ -177,6 +177,46 @@ class Task:
                 db.Movie.safe_update(**detail).where(db.Movie.id == movie.id).execute()
         return movie
 
+    @dbo.atomic()
+    def save_book(self, detail):
+        douban_id = detail['id']
+        detail['douban_id'] = douban_id
+        detail['version'] = 1
+        detail['updated_at'] = datetime.datetime.now()
+        del detail['id']
+
+        try:
+            book = db.Book.safe_create(**detail)
+            logging.debug('create book: ' + book.title)
+        except db.IntegrityError:
+            book = db.Book.get(db.Book.douban_id == douban_id)
+            
+            if not book.equals(detail):
+                db.BookHistorical.clone(book)
+                detail['version'] = db.Book.version + 1
+                db.Book.safe_update(**detail).where(db.Book.id == book.id).execute()
+        return book
+
+    @dbo.atomic()
+    def save_music(self, detail):
+        douban_id = detail['id']
+        detail['douban_id'] = douban_id
+        detail['version'] = 1
+        detail['updated_at'] = datetime.datetime.now()
+        del detail['id']
+
+        try:
+            music = db.Music.safe_create(**detail)
+            logging.debug('create music: ' + music.title)
+        except db.IntegrityError:
+            music = db.Music.get(db.Music.douban_id == douban_id)
+            
+            if not music.equals(detail):
+                db.MusicHistorical.clone(music)
+                detail['version'] = db.Music.version + 1
+                db.Music.safe_update(**detail).where(db.Music.id == music.id).execute()
+        return music
+
     def fetch_user(self, name):
         """
         尝试从本地获取用户信息，如果没有则从网上抓取
@@ -202,6 +242,19 @@ class Task:
         detail = json.loads(response.text)
         return self.save_user(detail)
 
+    def fetch_movie(self, douban_id):
+        """
+        尝试从本地获取电影，如果没有则从网上抓取
+        """
+        try:
+            movie = db.Movie.get(db.Moive.douban_id == douban_id)
+            if self.is_oject_expired(movie):
+                raise db.Movie.DoesNotExist()
+        except db.Movie.DoesNotExist:
+            movie = self.fetch_movie_by_api(douban_id)
+
+        return movie
+
     def fetch_movie_by_api(self, id):
         """
         通过豆瓣API获取电影信息
@@ -213,6 +266,56 @@ class Task:
 
         detail = json.loads(response.text)
         return self.save_movie(detail)
+
+    def fetch_book(self, douban_id):
+        """
+        尝试从本地获取书，如果没有则从网上抓取
+        """
+        try:
+            book = db.Book.get(db.Book.douban_id == douban_id)
+            if self.is_oject_expired(book):
+                raise db.Book.DoesNotExist()
+        except db.Book.DoesNotExist:
+            book = self.fetch_book_by_api(douban_id)
+
+        return book
+
+    def fetch_book_by_api(self, id):
+        """
+        通过豆瓣API获取书信息
+        """
+        url = 'https://api.douban.com/v2/book/{0}?apikey={1}'.format(id, FAKE_API_KEY)
+        response = self.fetch_url_content(url)
+        if not response:
+            return None
+
+        detail = json.loads(response.text)
+        return self.save_book(detail)
+
+    def fetch_music(self, douban_id):
+        """
+        尝试从本地获取音乐，如果没有则从网上抓取
+        """
+        try:
+            music = db.Music.get(db.Music.douban_id == douban_id)
+            if self.is_oject_expired(music):
+                raise db.Music.DoesNotExist()
+        except db.Music.DoesNotExist:
+            music = self.fetch_music_by_api(douban_id)
+
+        return music
+
+    def fetch_music_by_api(self, id):
+        """
+        通过豆瓣API获取书信息
+        """
+        url = 'https://api.douban.com/v2/music/{0}?apikey={1}'.format(id, FAKE_API_KEY)
+        response = self.fetch_url_content(url)
+        if not response:
+            return None
+
+        detail = json.loads(response.text)
+        return self.save_music(detail)
 
     def sync_account(self):
         """
@@ -443,22 +546,33 @@ class BookTask(Task):
 
     def run(self):
         wish_list = self.fetch_interests('book', 'mark')
+        for item in wish_list:
+            self.fetch_book_by_api(item['subject']['id'])
+
         doing_list = self.fetch_interests('book', 'doing')
+        for item in doing_list:
+            self.fetch_book_by_api(item['subject']['id'])
         done_list = self.fetch_interests('book', 'done')
+        for item in done_list:
+            self.fetch_book_by_api(item['subject']['id'])
 
 
 class MovieTask(Task):
     _name = '我的影视'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        wish_list = self.fetch_interests('movie', 'mark')
+        doing_list = self.fetch_interests('movie', 'doing')
+        done_list = self.fetch_interests('movie', 'done')
 
 
 class MusicTask(Task):
     _name = '我的音乐'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        wish_list = self.fetch_interests('music', 'mark')
+        doing_list = self.fetch_interests('music', 'doing')
+        done_list = self.fetch_interests('music', 'done')
 
 
 class BroadcastTask(Task):
@@ -499,7 +613,9 @@ class DoulistTask(Task):
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     FollowingFollowerTask,
     #BroadcastTask,
-    #BookMovieMusicTask,
+    #BookTask,
+    #MovieTask,
+    #MusicTask,
     #NoteTask,
     #PhotoAlbumTask,
     #ReviewTask,

@@ -23,6 +23,10 @@ def init(db_path, create_tables=True):
                 UserHistorical,
                 Movie,
                 MovieHistorical,
+                Book,
+                BookHistorical,
+                Music,
+                MusicHistorical,
                 Setting,
                 Following,
                 FollowingHistorical,
@@ -33,6 +37,9 @@ def init(db_path, create_tables=True):
                 MyMovie,
                 MyBook,
                 MyMusic,
+                MyMovieHistorical,
+                MyBookHistorical,
+                MyMusicHistorical,
             ])
 
 
@@ -125,7 +132,7 @@ class UserHistorical(User):
 
     douban_id = IntegerField(help_text='豆瓣ID')
     unique_name = CharField(help_text='豆瓣域名')
-    user = ForeignKeyField(User, field=User.id, help_text='豆瓣ID')
+    user = ForeignKeyField(User, field=User.id, help_text='原始对象ID')
 
 
 class Account(BaseModel):
@@ -334,24 +341,123 @@ class MovieHistorical(Movie):
 
 
 class Book(BaseModel):
-    pass
+    """
+    书
+    """
+    _attrs_to_compare_ = [
+        'title',
+        'rating',
+        'subtitle',
+        'author',
+        'pubdate',
+        'tags',
+        'origin_title',
+        'image',
+        'binding',
+        'translator',
+        'catalog',
+        'pages',
+        'images',
+        'alt',
+        'publisher',
+        'isbn10',
+        'isbn13',
+        'url',
+        'alt_title',
+        'author_intro',
+        'summary',
+        'price',
+    ]
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    title = CharField(help_text='标题', null=True)
+    rating = CharField(help_text='评分', null=True)
+    subtitle = CharField(help_text='副标题', null=True)
+    author = CharField(help_text='作者', null=True)
+    pubdate = CharField(help_text='上映日期', null=True)
+    tags = CharField(help_text='标签', null=True)
+    origin_title = CharField(help_text='标题', null=True)
+    image = CharField(help_text='图片', null=True)
+    binding = CharField(help_text='装帧', null=True)
+    translator = CharField(help_text='翻译', null=True)
+    catalog = TextField(help_text='目录', null=True)
+    pages = CharField(help_text='页数', null=True)
+    images = CharField(help_text='图片', null=True)
+    alt = CharField(help_text='条目页URL', null=True)
+    publisher = CharField(help_text='出版社', null=True)
+    isbn10 = CharField(help_text='ISBN', null=True)
+    isbn13 = CharField(help_text='ISBN', null=True)
+    url = CharField(help_text='URL地址', null=True)
+    alt_title = CharField(help_text='标题', null=True)
+    author_intro = CharField(help_text='作者介绍', null=True)
+    summary = TextField(help_text='介绍', null=True)
+    price = CharField(help_text='价格', null=True)
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
 class BookHistorical(Book):
-    pass
+    """
+    书历史数据
+    """
+    class Meta:
+        table_name = 'book_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    book = ForeignKeyField(Book, field=Book.id)
 
 
 class Music(BaseModel):
-    pass
+    """
+    音乐
+    """
+    _attrs_to_compare_ = [
+        'rating'
+        'author',
+        'alt_title', 
+        'image',
+        'title',
+        'mobile_link', 
+        'summary',
+        'attrs',
+        'alt',
+        'tags',
+    ]
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    rating = CharField(help_text='评分', null=True)
+    author = CharField(help_text='作者', null=True)
+    alt_title = CharField(help_text='标题', null=True)
+    image = CharField(help_text='图片', null=True)
+    title = CharField(help_text='标题', null=True)
+    mobile_link = CharField(help_text='移动版地址', null=True)
+    summary = CharField(help_text='介绍', null=True)
+    attrs = TextField(help_text='属性', null=True)
+    alt = CharField(help_text='地址', null=True)
+    tags = CharField(help_text='标签', null=True)
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
 class MusicHistorical(Music):
-    pass
+    """
+    音乐历史数据
+    """
+    class Meta:
+        table_name = 'music_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    music = ForeignKeyField(Music, field=Music.id)
 
 
-class BaseMyMedia(BaseModel):
+class BaseMyInterest(BaseModel):
+    _attrs_to_compare_ = [
+        'rating',
+        'tags',
+        'comment',
+    ]
     user = ForeignKeyField(User, help_text='用户')
-    rating = CharField(null=True, help_text='投票')
+    rating = CharField(null=True, help_text='评分')
     tags = CharField(null=True, help_text='标签')
     created = CharField(null=True, help_text='创建时间')
     comment = CharField(null=True, help_text='评论')
@@ -360,7 +466,10 @@ class BaseMyMedia(BaseModel):
     updated_at = DateTimeField(help_text='最后一次抓取时间', default=datetime.datetime.now())
 
 
-class MyBook(BaseMyMedia):
+class MyBook(BaseMyInterest):
+    """
+    我看的书
+    """
     class Meta:
         table_name = 'my_book'
         indexes = (
@@ -370,7 +479,20 @@ class MyBook(BaseMyMedia):
     book = ForeignKeyField(Book, help_text='书')
 
 
-class MyMovie(BaseMyMedia):
+class MyBookHistorical(MyBook):
+    class Meta:
+        table_name = 'my_book_historical'
+        indexes = (
+            (('user', 'book'), False),
+        )
+    
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
+
+
+class MyMovie(BaseMyInterest):
+    """
+    我看的电影
+    """
     class Meta:
         table_name = 'my_movie'
         indexes = (
@@ -380,7 +502,20 @@ class MyMovie(BaseMyMedia):
     movie = ForeignKeyField(Movie, help_text='电影')
 
 
-class MyMusic(BaseMyMedia):
+class MyMovieHistorical(MyMovie):
+    class Meta:
+        table_name = 'my_movie_historical'
+        indexes = (
+            (('user', 'movie'), False),
+        )
+    
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
+
+
+class MyMusic(BaseMyInterest):
+    """
+    我听的音乐
+    """
     class Meta:
         table_name = 'my_music'
         indexes = (
@@ -388,6 +523,16 @@ class MyMusic(BaseMyMedia):
         )
 
     music = ForeignKeyField(Music, help_text='音乐')
+
+
+class MyMusicHistorical(MyMusic):
+    class Meta:
+        table_name = 'my_music_historical'
+        indexes = (
+            (('user', 'music'), False),
+        )
+    
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
 
 
 class Setting(BaseModel):
