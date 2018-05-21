@@ -47,3 +47,21 @@ dl.is-horizontal>dd {
     margin-left: 140px;
 }
 
+dl.is-horizontal.is-label-size-4>dt{
+    width: 60px;
+    text-align: left;
+}
+
+
+dl.is-horizontal.is-label-size-4>dt{
+    width: 4rem;
+}
+dl.is-horizontal.is-label-size-4>dd {
+    margin-left: 4.5rem;
+}
+
+.text-break{
+    overflow-wrap: break-word;
+    word-break: break-all;
+    white-space: normal;
+}

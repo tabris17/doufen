@@ -1,0 +1,40 @@
+{% if page > 1 %}
+<nav class="pagination is-centered" role="navigation" aria-label="pagination" style="margin-bottom: 1rem;">
+    {% if page > 1 %}
+    <a class="pagination-previous" href="?page={{ page - 1 }}">上一页</a>
+    {% end %}
+    {% if page < total_pages %}
+    <a class="pagination-next" href="?page={{ page + 1 }}">下一页</a>
+    {% end %}
+    {% import math %}
+    {% set _relative_begin_page = page - int(math.floor((page_capacity - 1) / 2)) %}
+    {% set begin_page = _relative_begin_page if _relative_begin_page > 0 else 1 %}
+    {% set _relative_end_page = begin_page + page_capacity - 1 %}
+    {% set end_page =  _relative_end_page if _relative_end_page < total_pages else total_pages %}
+    <ul class="pagination-list">
+        {% if page == 1 %}
+        <li><a class="pagination-link is-current">1</a></li>
+        {% else %}
+        <li><a class="pagination-link" href="?page=1">1</a></li>
+        {% end %}
+        {% if begin_page > 2 %}
+        <li><span class="pagination-ellipsis">&hellip;</span></li>
+        {% end %}
+        {% for i in range(begin_page + 1, end_page) %}
+        {% if i == page %}
+        <li><a class="pagination-link is-current">{{ i }}</a></li>
+        {% else %}
+        <li><a class="pagination-link" href="?page={{ i }}">{{ i }}</a></li>
+        {% end %}
+        {% end %}
+        {% if end_page < total_pages - 1 %}
+        <li><span class="pagination-ellipsis">&hellip;</span></li>
+        {% end %}
+        {% if page == total_pages %}
+        <li><a class="pagination-link is-current">{{ total_pages }}</a></li>
+        {% else %}
+        <li><a class="pagination-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+        {% end %}
+    </ul>
+</nav>
+{% end %}

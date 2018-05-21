@@ -3,11 +3,6 @@ from peewee import *
 import datetime
 
 
-__all__ = ['dbo', 'init', 'Setting', 'Account', 'Following',
-           'User', 'UserHistorical',
-           'Movie', 'MovieHistorical',
-           'DATEBASE_PATH']
-
 DATEBASE_PATH = ''
 
 dbo = SqliteDatabase(None)
@@ -33,6 +28,11 @@ def init(db_path, create_tables=True):
                 FollowingHistorical,
                 Follower,
                 FollowerHistorical,
+                BlockUser,
+                BlockUserHistorical,
+                MyMovie,
+                MyBook,
+                MyMusic,
             ])
 
 
@@ -148,6 +148,36 @@ class Account(BaseModel):
         ).order_by(
             cls.is_activated.desc()
         ).get()
+
+
+class BlockUser(BaseModel):
+    """
+    黑名单用户
+    """
+    class Meta:
+        table_name = 'block_user'
+        indexes = (
+            (('user', 'block_user'), True),
+        )
+
+    user = ForeignKeyField(User, help_text='用户')
+    block_user = ForeignKeyField(User, help_text='黑名单用户', null=True)
+    block_username = CharField(help_text='黑名单用户名')
+    created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+    updated_at = DateTimeField(help_text='最后一次抓取时间', default=datetime.datetime.now())
+    
+
+class BlockUserHistorical(BlockUser):
+    """
+    黑名单用户历史
+    """
+    class Meta:
+        table_name = 'block_user_historical'
+        indexes = (
+            (('user',), False),
+        )
+
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
 
 
 class Follower(BaseModel):
@@ -301,6 +331,63 @@ class MovieHistorical(Movie):
     
     douban_id = CharField(help_text='豆瓣ID')
     movie = ForeignKeyField(Movie, field=Movie.id)
+
+
+class Book(BaseModel):
+    pass
+
+
+class BookHistorical(Book):
+    pass
+
+
+class Music(BaseModel):
+    pass
+
+
+class MusicHistorical(Music):
+    pass
+
+
+class BaseMyMedia(BaseModel):
+    user = ForeignKeyField(User, help_text='用户')
+    rating = CharField(null=True, help_text='投票')
+    tags = CharField(null=True, help_text='标签')
+    created = CharField(null=True, help_text='创建时间')
+    comment = CharField(null=True, help_text='评论')
+    status = CharField(help_text='状态')
+    created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+    updated_at = DateTimeField(help_text='最后一次抓取时间', default=datetime.datetime.now())
+
+
+class MyBook(BaseMyMedia):
+    class Meta:
+        table_name = 'my_book'
+        indexes = (
+            (('user', 'book'), True),
+        )
+
+    book = ForeignKeyField(Book, help_text='书')
+
+
+class MyMovie(BaseMyMedia):
+    class Meta:
+        table_name = 'my_movie'
+        indexes = (
+            (('user', 'movie'), True),
+        )
+
+    movie = ForeignKeyField(Movie, help_text='电影')
+
+
+class MyMusic(BaseMyMedia):
+    class Meta:
+        table_name = 'my_music'
+        indexes = (
+            (('user', 'music'), True),
+        )
+
+    music = ForeignKeyField(Music, help_text='音乐')
 
 
 class Setting(BaseModel):

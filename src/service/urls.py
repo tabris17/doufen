@@ -21,4 +21,8 @@ patterns = [
     (r'/my', handlers.my.Index, None, 'my'),
     (r'/my/following', handlers.my.Following, None, 'my.following'),
     (r'/my/followers', handlers.my.Followers, None, 'my.followers'),
+    (r'/my/blocklist', handlers.my.Blocklist, None, 'my.blocklist'),
+    (r'/my/following/historical', handlers.my.FollowingHistorical, None, 'my.following.historical'),
+    (r'/my/followers/historical', handlers.my.FollowersHistorical, None, 'my.followers.historical'),
+    (r'/my/blocklist/historical', handlers.my.BlocklistHistorical, None, 'my.blocklist.historical'),
 ]

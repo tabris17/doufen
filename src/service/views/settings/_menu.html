@@ -1,4 +1,4 @@
-<aside class="menu">
+<aside class="menu" style="width: 150px;">
     <ul class="menu-list">
         <li><a {% if active_page == 'general' %}class="is-active"{% else %} href="{{ reverse_url('settings.general') }}"{% end %}>常规</a></li>
         <li><a {% if active_page == 'account' %}class="is-active"{% else %} href="{{ reverse_url('settings.accounts') }}"{% end %}>帐号</a></li>

@@ -2,17 +2,20 @@
 import datetime
 import json
 import logging
+import re
 from abc import abstractmethod
 from collections import OrderedDict
 from time import sleep, time
 from urllib.parse import urljoin
+from http import cookies
 
-import pyquery
+from pyquery import PyQuery
 import requests
 from requests.exceptions import TooManyRedirects
 
 import db
 from db import dbo
+from .exceptions import *
 
 
 DOUBAN_URL = 'https://www.douban.com/'
@@ -20,11 +23,9 @@ REQUEST_TIMEOUT = 5
 REQUEST_RETRY_TIMES = 5
 FAKE_API_KEY = '04f1ddfc67bddc4a0ed599f5373994de'
 
-class Forbidden(Exception):
-    """
-    登录会话或IP被屏蔽了
-    """
-    pass
+# type: {music|book|movie}; status: {mark|doing|done}
+URL_INTERESTS_API = 'https://m.douban.com/rexxar/api/v2/user/{uid}/interests?type={type}&status={status}&start={{start}}&count=50&ck={ck}&for_mobile=1'
+
 
 class Task:
     """
@@ -64,8 +65,13 @@ class Task:
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'zh-CN,zh;q=0.8',
+            'Referer': 'https://www.douban.com/',
         })
         self._session = session
+
+        cookie = cookies.SimpleCookie()
+        cookie.load(self._account.session)
+        self._account_cookie = cookie
 
         try:
             return self.run()
@@ -219,11 +225,31 @@ class Task:
             account.save()
         return account
 
+    def fetch_interests(self, media_type, status):
+        interests_list = []
+        url = URL_INTERESTS_API.format(
+            status=status,
+            type=media_type,
+            uid=self.account.user.douban_id,
+            ck=self._account_cookie['ck'].value
+        )
+        response = self.fetch_url_content(url.format(start=0))
+        result = json.loads(response.text)
+        total = result['total']
+        interests_list.extend(result['interests'])
+
+        for start in range(50, total, 50):
+            response = self.fetch_url_content(url.format(start=start))
+            result = json.loads(response.text)
+            interests_list.extend(result['interests'])
+
+        return interests_list
+
 
 class FollowingFollowerTask(Task):
     _name = '我的友邻'
 
-    def get_follow_list(self, user, action):
+    def fetch_follow_list(self, user, action):
         url = 'https://api.douban.com/shuo/v2/users/{user}/{action}?count=50&page={page}'
 
         user_list = []
@@ -240,6 +266,12 @@ class FollowingFollowerTask(Task):
 
         user_list.reverse()
         return user_list
+
+    def fetch_block_list(self):
+        response = self.fetch_url_content('https://www.douban.com/contacts/blacklist')
+        dom = PyQuery(response.text)
+        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', PyQuery(el).attr('href')).pop(0)
+        return [strip_username(item) for item in dom('dl.obu>dd>a')]
 
     @dbo.atomic()
     def save_following(self, account_user, following_users):
@@ -271,6 +303,7 @@ class FollowingFollowerTask(Task):
                 db.Following.user,
                 db.Following.following_user,
                 db.Following.following_username,
+                db.Following.created_at,
                 db.Following.updated_at,
                 db.fn.DATETIME('now')
             ).where(
@@ -281,6 +314,7 @@ class FollowingFollowerTask(Task):
                 db.FollowingHistorical.user,
                 db.FollowingHistorical.following_user,
                 db.FollowingHistorical.following_username,
+                db.FollowingHistorical.created_at,
                 db.FollowingHistorical.updated_at,
                 db.FollowingHistorical.deleted_at,
             ]
@@ -318,6 +352,7 @@ class FollowingFollowerTask(Task):
                 db.Follower.user,
                 db.Follower.follower,
                 db.Follower.follower_username,
+                db.Follower.created_at,
                 db.Follower.updated_at,
                 db.fn.DATETIME('now')
             ).where(
@@ -328,6 +363,7 @@ class FollowingFollowerTask(Task):
                 db.FollowerHistorical.user,
                 db.FollowerHistorical.follower,
                 db.FollowerHistorical.follower_username,
+                db.FollowerHistorical.created_at,
                 db.FollowerHistorical.updated_at,
                 db.FollowerHistorical.deleted_at,
             ]
@@ -338,25 +374,95 @@ class FollowingFollowerTask(Task):
             db.Follower.updated_at < now
         ).execute()
 
+    @dbo.atomic()
+    def save_block_list(self, account_user, block_users):
+        now = datetime.datetime.now()
+        for block_username, block_user in block_users.items():
+            try:
+                kwargs = {
+                    'user': account_user,
+                    'block_user': block_user,
+                    'block_username': block_username,
+                    'updated_at': now,
+                }   
+                db.BlockUser(**kwargs).save()
+            except db.IntegrityError:
+                new_block_user = db.BlockUser.get(
+                    db.BlockUser.user == account_user,
+                    db.BlockUser.block_username == block_username
+                )
+                if not new_block_user.block_user and block_user is not None :
+                    new_block_user.block_user = block_user
+                new_block_user.updated_at = now
+                new_block_user.save()
+
+        db.BlockUserHistorical.insert_from(
+            db.BlockUser.select(
+                db.BlockUser.user,
+                db.BlockUser.block_user,
+                db.BlockUser.block_username,
+                db.BlockUser.created_at,
+                db.BlockUser.updated_at,
+                db.fn.DATETIME('now')
+            ).where(
+                db.BlockUser.user == account_user,
+                db.BlockUser.updated_at < now
+            ),
+            [
+                db.BlockUserHistorical.user,
+                db.BlockUserHistorical.block_user,
+                db.BlockUserHistorical.block_username,
+                db.BlockUserHistorical.created_at,
+                db.BlockUserHistorical.updated_at,
+                db.BlockUserHistorical.deleted_at,
+            ]
+        ).execute()
+
+        db.BlockUser.delete().where(
+            db.BlockUser.user == account_user, 
+            db.BlockUser.updated_at < now
+        ).execute()
+
     def run(self):
         account = self.sync_account()
-        following_user_list = self.get_follow_list(account.name, 'following')
+        following_user_list = self.fetch_follow_list(account.name, 'following')
         following_users = {username: self.fetch_user(username) for username in following_user_list}
         self.save_following(account.user, following_users)
         
-        follower_list = self.get_follow_list(account.name, 'followers')
+        follower_list = self.fetch_follow_list(account.name, 'followers')
         follower_users = {username: self.fetch_user(username) for username in follower_list}
         self.save_followers(account.user, follower_users)
 
-class ShuoTask(Task):
-    _name = '我的广播'
+        block_list = self.fetch_block_list()
+        block_users = {username: self.fetch_user(username) for username in block_list}
+        self.save_block_list(account.user, block_users)
+
+
+class BookTask(Task):
+    _name = '我的书'
+
+    def run(self):
+        wish_list = self.fetch_interests('book', 'mark')
+        doing_list = self.fetch_interests('book', 'doing')
+        done_list = self.fetch_interests('book', 'done')
+
+
+class MovieTask(Task):
+    _name = '我的影视'
 
     def run(self):
         user = self.fetch_user_by_api('tabris17')
 
 
-class BookMovieMusicTask(Task):
-    _name = '我的书影音'
+class MusicTask(Task):
+    _name = '我的音乐'
+
+    def run(self):
+        user = self.fetch_user_by_api('tabris17')
+
+
+class BroadcastTask(Task):
+    _name = '我的广播'
 
     def run(self):
         user = self.fetch_user_by_api('tabris17')
@@ -392,7 +498,7 @@ class DoulistTask(Task):
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     FollowingFollowerTask,
-    #ShuoTask,
+    #BroadcastTask,
     #BookMovieMusicTask,
     #NoteTask,
     #PhotoAlbumTask,

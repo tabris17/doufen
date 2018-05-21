@@ -1,0 +1,18 @@
+{% extends "followers.html" %} 
+
+{% block title %}关注我的历史记录{% end %}
+
+{% block headline %}
+<nav class="level">
+    <div class="level-left">
+        <div class="level-item">
+            <p class="subtitle is-5">我曾经被 <strong>{{ total_rows }}</strong> 人关注</p>
+        </div>
+    </div>
+    <div class="level-right">
+        <p class="level-item">
+            <a class="button" href="{{ reverse_url('my.followers') }}">返回关注我的</a>
+        </p>
+    </div>
+</nav>
+{% end %}
