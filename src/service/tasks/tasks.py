@@ -608,7 +608,10 @@ class InterestsTask(Task):
         set_cookie = set_cookie.replace(',', ';')
         cookie = cookies.SimpleCookie()
         cookie.load(set_cookie)
-        patched_cookie = self._account.session + '; frodotk="{0}"'.format(cookie['frodotk'].value)
+        try:
+            patched_cookie = self._account.session + '; frodotk="{0}"'.format(cookie['frodotk'].value)
+        except KeyError:
+            raise Exception('服务器没有正确授予Cookie，可能是登录会话过期，请重新登录')
         self._request_session.headers.update({
             'Cookie': patched_cookie,
             'Referer': 'https://m.douban.com/',

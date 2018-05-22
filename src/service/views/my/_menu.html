@@ -13,9 +13,9 @@
     </ul>
     <p class="menu-label is-size-5">我的书</p>
     <ul class="menu-list">
-        <li><a {% if active_page == 'book/done' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'done') }}"{% end %}>看过</a></li>
-        <li><a {% if active_page == 'book/wish' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'wish') }}"{% end %}>想看</a></li>
-        <li><a {% if active_page == 'book/doing' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'doing') }}"{% end %}>在看</a></li>
+        <li><a {% if active_page == 'book/done' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'done') }}"{% end %}>读过</a></li>
+        <li><a {% if active_page == 'book/wish' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'wish') }}"{% end %}>想读</a></li>
+        <li><a {% if active_page == 'book/doing' %}class="is-active"{% else %} href="{{ reverse_url('my.book', 'doing') }}"{% end %}>在读</a></li>
     </ul>
     <p class="menu-label is-size-5">我的音乐</p>
     <ul class="menu-list">
