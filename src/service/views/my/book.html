@@ -102,7 +102,9 @@
                     </div>
                 </div>
                 <div class="media-right">
-                    豆瓣评分
+                    {% set rating = ast.literal_eval(row.book.rating) %}
+                    豆瓣评分 {{ rating['average'] }} / 10<br>
+                    <a href="{{ row.book.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
                     {% if row.book.version > 1 %}
                     <a href="" class="button">历史记录</a>
                     {% end if %}
