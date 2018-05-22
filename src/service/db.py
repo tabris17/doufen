@@ -250,81 +250,27 @@ class Movie(BaseModel):
     电影
     """
     _attrs_to_compare_ = [
-        'title',
-        'original_title',
-        'aka',
         'rating',
-        'ratings_count',
-        'wish_count',
-        'collect_count',
-        'do_count',
-        'images',
-        'subtype',
-        'directors',
-        'casts',
-        'writers',
-        'website',
-        'douban_site',
-        'pubdates',
-        'mainland_pubdate',
-        'year',
-        'languages',
-        'durations',
-        'genres',
-        'countries',
+        'author',
+        'alt_title',
+        'image',
+        'title',
         'summary',
-        'comments_count',
-        'reviews_count',
-        'seasons_count',
-        'current_season',
-        'current_season',
-        'episodes_count',
-        'schedule_url',
-        'schedule_url',
-        'trailer_urls',
-        'clip_urls',
-        'blooper_urls',
-        'photos',
-        'popular_reviews',
+        'attrs',
+        'alt',
+        'tags',
     ]
 
     douban_id = CharField(unique=True, help_text='豆瓣ID')
+    rating = TextField(help_text='评分', null=True)
+    author = TextField(help_text='作者', null=True)
+    alt_title = TextField(help_text='又名', null=True)
+    image = CharField(help_text='电影海报', null=True)
     title = CharField(help_text='中文名')
-    original_title = CharField(help_text='原名', null=True)
-    aka = CharField(help_text='又名', null=True)
+    summary = TextField(help_text='简介', null=True)
+    attrs = TextField(help_text='属性', null=True)
     alt = CharField(help_text='条目页URL', null=True)
-    mobile_url = CharField(help_text='移动版条目页URL', null=True)
-    rating = CharField(help_text='评分', null=True)
-    ratings_count = IntegerField(help_text='评分人数', null=True)
-    wish_count = IntegerField(help_text='想看人数', null=True)
-    collect_count = IntegerField(help_text='看过人数', null=True)
-    do_count = IntegerField(help_text='在看人数', null=True)
-    images = CharField(help_text='电影海报图', null=True)
-    subtype = CharField(help_text='条目分类', null=True)
-    directors = CharField(help_text='导演', null=True)
-    casts = CharField(help_text='主演', null=True)
-    writers = CharField(help_text='编剧', null=True)
-    website = CharField(help_text='官方网站', null=True)
-    douban_site = CharField(help_text='豆瓣小站', null=True)
-    pubdates = CharField(help_text='上映日期', null=True)
-    mainland_pubdate = CharField(help_text='大陆上映日期', null=True)
-    year = CharField(help_text='年代', null=True)
-    languages = CharField(help_text='语言', null=True)
-    durations = CharField(help_text='片长', null=True)
-    genres = CharField(help_text='影片类型', null=True)
-    countries = CharField(help_text='制片国家/地区', null=True)
-    summary = CharField(help_text='简介', null=True)
-    comments_count = IntegerField(help_text='短评数量', null=True)
-    reviews_count = IntegerField(help_text='影评数量', null=True)
-    seasons_count = IntegerField(help_text='总季数', null=True)
-    current_season = IntegerField(help_text='当前季数', null=True)
-    episodes_count = IntegerField(help_text='当前季的集数', null=True)
-    schedule_url = CharField(help_text='影讯页URL', null=True)
-    trailer_urls = CharField(help_text='预告片URL', null=True)
-    clip_urls = CharField(help_text='片段URL', null=True)
-    blooper_urls = CharField(help_text='花絮URL', null=True)
-    photos = CharField(help_text='电影剧照', null=True)
-    popular_reviews = CharField(help_text='影评', null=True)
+    tags = TextField(help_text='标签', null=True)
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
@@ -371,25 +317,25 @@ class Book(BaseModel):
 
     douban_id = CharField(unique=True, help_text='豆瓣ID')
     title = CharField(help_text='标题', null=True)
-    rating = CharField(help_text='评分', null=True)
+    rating = TextField(help_text='评分', null=True)
     subtitle = CharField(help_text='副标题', null=True)
-    author = CharField(help_text='作者', null=True)
+    author = TextField(help_text='作者', null=True)
     pubdate = CharField(help_text='上映日期', null=True)
-    tags = CharField(help_text='标签', null=True)
+    tags = TextField(help_text='标签', null=True)
     origin_title = CharField(help_text='标题', null=True)
     image = CharField(help_text='图片', null=True)
     binding = CharField(help_text='装帧', null=True)
-    translator = CharField(help_text='翻译', null=True)
+    translator = TextField(help_text='翻译', null=True)
     catalog = TextField(help_text='目录', null=True)
     pages = CharField(help_text='页数', null=True)
-    images = CharField(help_text='图片', null=True)
+    images = TextField(help_text='图片', null=True)
     alt = CharField(help_text='条目页URL', null=True)
     publisher = CharField(help_text='出版社', null=True)
     isbn10 = CharField(help_text='ISBN', null=True)
     isbn13 = CharField(help_text='ISBN', null=True)
     url = CharField(help_text='URL地址', null=True)
     alt_title = CharField(help_text='标题', null=True)
-    author_intro = CharField(help_text='作者介绍', null=True)
+    author_intro = TextField(help_text='作者介绍', null=True)
     summary = TextField(help_text='介绍', null=True)
     price = CharField(help_text='价格', null=True)
     version = IntegerField(help_text='当前版本')
@@ -417,7 +363,6 @@ class Music(BaseModel):
         'alt_title', 
         'image',
         'title',
-        'mobile_link', 
         'summary',
         'attrs',
         'alt',
@@ -425,16 +370,15 @@ class Music(BaseModel):
     ]
 
     douban_id = CharField(unique=True, help_text='豆瓣ID')
-    rating = CharField(help_text='评分', null=True)
-    author = CharField(help_text='作者', null=True)
+    rating = TextField(help_text='评分', null=True)
+    author = TextField(help_text='作者', null=True)
     alt_title = CharField(help_text='标题', null=True)
     image = CharField(help_text='图片', null=True)
     title = CharField(help_text='标题', null=True)
-    mobile_link = CharField(help_text='移动版地址', null=True)
-    summary = CharField(help_text='介绍', null=True)
+    summary = TextField(help_text='介绍', null=True)
     attrs = TextField(help_text='属性', null=True)
     alt = CharField(help_text='地址', null=True)
-    tags = CharField(help_text='标签', null=True)
+    tags = TextField(help_text='标签', null=True)
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
@@ -451,15 +395,25 @@ class MusicHistorical(Music):
 
 
 class BaseMyInterest(BaseModel):
+    class Meta:
+        indexes = (
+            (('user', 'subject_id'), True),
+            (('user', 'status'), False),
+        )
+
     _attrs_to_compare_ = [
         'rating',
         'tags',
         'comment',
+        'create_time',
+        'status',
     ]
+
+    subject_id = CharField(help_text='豆瓣对象ID')
     user = ForeignKeyField(User, help_text='用户')
     rating = CharField(null=True, help_text='评分')
     tags = CharField(null=True, help_text='标签')
-    created = CharField(null=True, help_text='创建时间')
+    create_time = CharField(null=True, help_text='创建时间')
     comment = CharField(null=True, help_text='评论')
     status = CharField(help_text='状态')
     created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
@@ -472,9 +426,6 @@ class MyBook(BaseMyInterest):
     """
     class Meta:
         table_name = 'my_book'
-        indexes = (
-            (('user', 'book'), True),
-        )
 
     book = ForeignKeyField(Book, help_text='书')
 
@@ -483,7 +434,7 @@ class MyBookHistorical(MyBook):
     class Meta:
         table_name = 'my_book_historical'
         indexes = (
-            (('user', 'book'), False),
+            (('user', 'subject_id'), False),
         )
     
     deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
@@ -495,9 +446,6 @@ class MyMovie(BaseMyInterest):
     """
     class Meta:
         table_name = 'my_movie'
-        indexes = (
-            (('user', 'movie'), True),
-        )
 
     movie = ForeignKeyField(Movie, help_text='电影')
 
@@ -506,7 +454,7 @@ class MyMovieHistorical(MyMovie):
     class Meta:
         table_name = 'my_movie_historical'
         indexes = (
-            (('user', 'movie'), False),
+            (('user', 'subject_id'), False),
         )
     
     deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
@@ -518,9 +466,6 @@ class MyMusic(BaseMyInterest):
     """
     class Meta:
         table_name = 'my_music'
-        indexes = (
-            (('user', 'music'), True),
-        )
 
     music = ForeignKeyField(Music, help_text='音乐')
 
@@ -529,7 +474,7 @@ class MyMusicHistorical(MyMusic):
     class Meta:
         table_name = 'my_music_historical'
         indexes = (
-            (('user', 'music'), False),
+            (('user', 'subject_id'), False),
         )
     
     deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())

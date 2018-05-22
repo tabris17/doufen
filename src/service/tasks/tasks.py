@@ -66,8 +66,10 @@ class Task:
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'zh-CN,zh;q=0.8',
             'Referer': 'https://www.douban.com/',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
         })
-        self._session = session
+        self._request_session = session
 
         cookie = cookies.SimpleCookie()
         cookie.load(self._account.session)
@@ -106,7 +108,7 @@ class Task:
 
             try:
                 logging.info('fetch URL {0}'.format(url))
-                response = self._session.get(url, proxies=self._proxy, timeout=REQUEST_TIMEOUT)
+                response = self._request_session.get(url, proxies=self._proxy, timeout=REQUEST_TIMEOUT)
                 response.raise_for_status()
                 return response
             except requests.exceptions.HTTPError as e:
@@ -120,7 +122,7 @@ class Task:
 
     @property
     def account(self):
-        return self._account
+        return self.sync_account()
 
     @abstractmethod
     def run(self):
@@ -247,7 +249,7 @@ class Task:
         尝试从本地获取电影，如果没有则从网上抓取
         """
         try:
-            movie = db.Movie.get(db.Moive.douban_id == douban_id)
+            movie = db.Movie.get(db.Movie.douban_id == douban_id)
             if self.is_oject_expired(movie):
                 raise db.Movie.DoesNotExist()
         except db.Movie.DoesNotExist:
@@ -259,7 +261,7 @@ class Task:
         """
         通过豆瓣API获取电影信息
         """
-        url = 'https://api.douban.com/v2/movie/subject/{0}?apikey={1}'.format(id, FAKE_API_KEY)
+        url = 'https://api.douban.com/v2/movie/{0}?apikey={1}'.format(id, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
             return None
@@ -527,7 +529,7 @@ class FollowingFollowerTask(Task):
         ).execute()
 
     def run(self):
-        account = self.sync_account()
+        account = self.account
         following_user_list = self.fetch_follow_list(account.name, 'following')
         following_users = {username: self.fetch_user(username) for username in following_user_list}
         self.save_following(account.user, following_users)
@@ -541,38 +543,169 @@ class FollowingFollowerTask(Task):
         self.save_block_list(account.user, block_users)
 
 
-class BookTask(Task):
+class InterestsTask(Task):
+    @dbo.atomic()
+    def save_my_interests(self, subject_name, table, table_historical, user, interests):
+        now = datetime.datetime.now()
+        for subject_id, interest_detail in interests:
+            try:
+                interest_detail['created_at'] = now
+                interest_detail['updated_at'] = now
+                table.safe_create(**interest_detail)
+            except db.IntegrityError:
+                update_detail = {key: interest_detail[key] for key in ['rating', 'tags', 'create_time', 'comment', 'status']}
+                my_interest = table.get(
+                    table.user == user,
+                    table.subject_id == subject_id
+                )
+                if my_interest.equals(update_detail):
+                    my_interest.updated_at = now
+                    my_interest.save()
+                else:
+                    table_historical.clone(my_interest, {'deleted_at': now})
+                    update_detail['updated_at'] = now
+                    table.safe_update(**update_detail).where(table.id == my_interest.id).execute()
+        
+        table_historical.insert_from(
+            table.select(
+                table.subject_id,
+                table.rating,
+                table.tags,
+                table.create_time,
+                table.comment,
+                table.status,
+                getattr(table, subject_name),
+                table.user,
+                table.created_at,
+                table.updated_at,
+                db.fn.DATETIME('now')
+            ).where(
+                table.user == user,
+                table.updated_at < now
+            ),
+            [
+                table_historical.subject_id,
+                table_historical.rating,
+                table_historical.tags,
+                table_historical.create_time,
+                table_historical.comment,
+                table_historical.status,
+                getattr(table_historical, subject_name),
+                table_historical.user,
+                table_historical.created_at,
+                table_historical.updated_at,
+                table_historical.deleted_at,
+            ]
+        ).execute()
+        table.delete().where(
+            table.user == user, 
+            table.updated_at < now
+        ).execute()
+
+    def _frodotk_referer_patch(self):
+        response = self.fetch_url_content('https://m.douban.com/mine/')
+        set_cookie = response.headers['Set-Cookie']
+        set_cookie = set_cookie.replace(',', ';')
+        cookie = cookies.SimpleCookie()
+        cookie.load(set_cookie)
+        patched_cookie = self._account.session + '; frodotk="{0}"'.format(cookie['frodotk'].value)
+        self._request_session.headers.update({
+            'Cookie': patched_cookie,
+            'Referer': 'https://m.douban.com/',
+        })
+
+    def _run(self, subject_name, table, table_historical, fetch_subject):
+        '''
+        self._request_session.headers.update({
+            'Cookie': 'bid=bF6dBPLThxI; frodotk="b1a226a7436be60f14e673f5ca43b22d"; ue="tabris17.cn@hotmail.com"; dbcl2="1832573:JjPMLZuUzTg"; ck=QwA1; ',
+            'Referer': 'https://m.douban.com/',
+        })
+        '''
+        self._frodotk_referer_patch()
+        account_user = self.account
+
+        wish_list = self.fetch_interests(subject_name, 'mark')
+        wish_list.reverse()
+        my_wish_mapping = [(item['subject']['id'], {
+            'comment': item['comment'],
+            'rating': item['rating'],
+            'tags': item['tags'],
+            'create_time': item['create_time'],
+            'status': 'wish',
+            'subject_id': item['subject']['id'],
+            subject_name: fetch_subject(item['subject']['id']),
+            'user': account_user,
+        }) for item in wish_list]
+
+        doing_list = self.fetch_interests(subject_name, 'doing')
+        doing_list.reverse()
+        my_doing_mapping = [(item['subject']['id'], {
+            'comment': item['comment'],
+            'rating': item['rating'],
+            'tags': item['tags'],
+            'create_time': item['create_time'],
+            'status': 'doing',
+            'subject_id': item['subject']['id'],
+            subject_name: fetch_subject(item['subject']['id']),
+            'user': account_user,
+        }) for item in doing_list]
+
+        done_list = self.fetch_interests(subject_name, 'done')
+        done_list.reverse()
+        my_done_mapping = [(item['subject']['id'], {
+            'comment': item['comment'],
+            'rating': item['rating'],
+            'tags': item['tags'],
+            'create_time': item['create_time'],
+            'status': 'done',
+            'subject_id': item['subject']['id'],
+            subject_name: fetch_subject(item['subject']['id']),
+            'user': account_user,
+        }) for item in done_list]
+
+        self.save_my_interests(
+            subject_name,
+            table,
+            table_historical,
+            self.account.user,
+            my_wish_mapping + my_doing_mapping + my_done_mapping
+        )
+
+
+class BookTask(InterestsTask):
     _name = '我的书'
 
     def run(self):
-        wish_list = self.fetch_interests('book', 'mark')
-        for item in wish_list:
-            self.fetch_book_by_api(item['subject']['id'])
-
-        doing_list = self.fetch_interests('book', 'doing')
-        for item in doing_list:
-            self.fetch_book_by_api(item['subject']['id'])
-        done_list = self.fetch_interests('book', 'done')
-        for item in done_list:
-            self.fetch_book_by_api(item['subject']['id'])
+        return self._run(
+            'book',
+            db.MyBook,
+            db.MyBookHistorical,
+            self.fetch_book
+        )
 
 
-class MovieTask(Task):
+class MovieTask(InterestsTask):
     _name = '我的影视'
 
     def run(self):
-        wish_list = self.fetch_interests('movie', 'mark')
-        doing_list = self.fetch_interests('movie', 'doing')
-        done_list = self.fetch_interests('movie', 'done')
+        return self._run(
+            'movie',
+            db.MyMovie,
+            db.MyMovieHistorical,
+            self.fetch_movie
+        )
 
 
-class MusicTask(Task):
+class MusicTask(InterestsTask):
     _name = '我的音乐'
 
     def run(self):
-        wish_list = self.fetch_interests('music', 'mark')
-        doing_list = self.fetch_interests('music', 'doing')
-        done_list = self.fetch_interests('music', 'done')
+        return self._run(
+            'music',
+            db.MyMusic,
+            db.MyMusicHistorical,
+            self.fetch_music
+        )
 
 
 class BroadcastTask(Task):
@@ -612,12 +745,12 @@ class DoulistTask(Task):
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     FollowingFollowerTask,
-    #BroadcastTask,
-    #BookTask,
-    #MovieTask,
-    #MusicTask,
-    #NoteTask,
-    #PhotoAlbumTask,
-    #ReviewTask,
-    #DoulistTask,
+    BroadcastTask,
+    BookTask,
+    MovieTask,
+    MusicTask,
+    NoteTask,
+    PhotoAlbumTask,
+    ReviewTask,
+    DoulistTask,
 ]])
