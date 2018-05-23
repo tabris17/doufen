@@ -1,25 +1,26 @@
 {% extends "../themes/main.html" %} 
 
-{% block title %}{{ '我读过的书' if status == 'done' else '我想读的书' if status == 'wish' else '我在读的书' }}{% end %}
+{% block title %}{{ '我看过的影视' if status == 'done' else '我想看的影视' if status == 'wish' else '我在看的影视' }}{% end %}
+
 
 {% block main %}
 {% import ast %}
 <div class="container">
     <div class="columns is-mobile">
         <div class="column is-narrow">
-            {% module Template('my/_menu.html', active_page='book/' + status) %}
+            {% module Template('my/_menu.html', active_page='movie/' + status) %}
         </div>
         <div class="column">
             {% block headline %}
             <nav class="level">
                 <div class="level-left">
                     <div class="level-item">
-                        <p class="subtitle is-5">{{ '读过' if status == 'done' else '想读' if status == 'wish' else '在读' }} <strong>{{ total_rows }}</strong> 本</p>
+                        <p class="subtitle is-5">{{ '看过' if status == 'done' else '想看' if status == 'wish' else '在看' }} <strong>{{ total_rows }}</strong> 部</p>
                     </div>
                 </div>
                 <div class="level-right">
                     <p class="level-item">
-                        <!--<a class="button" href="{{ reverse_url('my.book.historical') }}">查看历史记录</a>-->
+                        <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
                     </p>
                 </div>
             </nav>
@@ -29,68 +30,68 @@
             <article class="media box" style="min-height: 220px;">
                 <figure class="media-left">
                     <p class="image is-128x128">
-                        <img src="{{ row.book.image }}">
+                        <img src="{{ row.movie.image }}">
                     </p>
                 </figure>
                 <div class="media-content">
                     <div class="content">
                         <p>
-                            <strong><a href="{{ row.book.alt }}" class="external-link">{{ row.book.title }}</a></strong>
-                            <small>{{ row.book.subtitle }}</small>
-                            {% if row.book.alt_title %}
-                            <br><small class="has-text-grey-light">({{ row.book.alt_title }})</small>
+                            <strong><a href="{{ row.movie.alt }}" class="external-link">{{ row.movie.title }}</a></strong>
+                            <small>{{ row.movie.subtitle }}</small>
+                            {% if row.movie.alt_title %}
+                            <br><small class="has-text-grey-light">({{ row.movie.alt_title }})</small>
                             {% end %}
                         </p>
                         <dl class="is-horizontal is-label-size-4">
-                            {% if row.book.author %}
-                            {% set author = ast.literal_eval(row.book.author) %}
-                            {% if len(row.book.author) %}
+                            {% if row.movie.author %}
+                            {% set author = ast.literal_eval(row.movie.author) %}
+                            {% if len(row.movie.author) %}
                             <dt class="has-text-left">作者</dt>
                             <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
                             {% end %}
                             {% end %}
 
-                            {% if row.book.translator %}
-                            {% set translator = ast.literal_eval(row.book.translator) %}
+                            {% if row.movie.translator %}
+                            {% set translator = ast.literal_eval(row.movie.translator) %}
                             {% if len(translator) %}
                             <dt class="has-text-left">译者</dt>
                             <dd class="has-text-grey-light">{{ ' / '.join(translator) }}</dd>
                             {% end %}
                             {% end %}
 
-                            {% if row.book.publisher %}
+                            {% if row.movie.publisher %}
                             <dt class="has-text-left">出版社</dt>
-                            <dd class="has-text-grey-light">{{ row.book.publisher }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.publisher }}</dd>
                             {% end %}
 
-                            {% if row.book.origin_title %}
+                            {% if row.movie.origin_title %}
                             <dt class="has-text-left">原作名</dt>
-                            <dd class="has-text-grey-light">{{ row.book.origin_title }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.origin_title }}</dd>
                             {% end %}
 
-                            {% if row.book.pubdate %}
+                            {% if row.movie.pubdate %}
                             <dt class="has-text-left">出版日期</dt>
-                            <dd class="has-text-grey-light">{{ row.book.pubdate }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.pubdate }}</dd>
                             {% end %}
 
-                            {% if row.book.isbn10 or row.book.isbn13 %}
+                            {% if row.movie.isbn10 or row.movie.isbn13 %}
                             <dt class="has-text-left">ISBN</dt>
-                            <dd class="has-text-grey-light">{{ row.book.isbn10 }} / {{ row.book.isbn13 }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.isbn10 }} / {{ row.movie.isbn13 }}</dd>
                             {% end %}
 
-                            {% if row.book.price %}
+                            {% if row.movie.price %}
                             <dt class="has-text-left">价格</dt>
-                            <dd class="has-text-grey-light">{{ row.book.price }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.price }}</dd>
                             {% end %}
 
-                            {% if row.book.pages %}
+                            {% if row.movie.pages %}
                             <dt class="has-text-left">页数</dt>
-                            <dd class="has-text-grey-light">{{ row.book.pages }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.pages }}</dd>
                             {% end %}
 
-                            {% if row.book.binding %}
+                            {% if row.movie.binding %}
                             <dt class="has-text-left">装帧</dt>
-                            <dd class="has-text-grey-light">{{ row.book.binding }}</dd>
+                            <dd class="has-text-grey-light">{{ row.movie.binding }}</dd>
                             {% end %}
                         </dl>
                         <dl class="is-horizontal is-label-size-4  is-marginless">
@@ -117,10 +118,10 @@
                 </div>
                 <div class="media-right">
                     <p>
-                        {% if row.book.rating %}
-                        {% set rating = ast.literal_eval(row.book.rating) %}
+                        {% if row.movie.rating %}
+                        {% set rating = ast.literal_eval(row.movie.rating) %}
                         豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
-                        <a href="{{ row.book.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                        <a href="{{ row.movie.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
                         {% end %}
                     </p>
                     <p style="margin-top: 10px;">

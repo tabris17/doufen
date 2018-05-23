@@ -40,11 +40,17 @@
                         </p>
                         <dl class="is-horizontal is-label-size-4">
                             <dt class="has-text-left">加入时间</dt>
-                            <dd class="has-text-grey-light">{{ row.user.created }}</dd>
+                            <dd class="has-text-grey-light">{{ row.following_user.created }}</dd>
                             <dt class="has-text-left">所在地</dt>
-                            <dd class="has-text-grey-light">{{ row.user.loc_name }}({{ row.user.loc_id }})</dd>
+                            <dd class="has-text-grey-light">{{ row.following_user.loc_name }}({{ row.following_user.loc_id }})</dd>
                         </dl>
-                        <p class="text-break">{{ row.following_user.desc }}</p>
+                        <p class="text-break">
+                            {% for ln in row.following_user.desc.split("\n") %}
+                            {% if ln %}
+                            {{ ln }}<br>
+                            {% end %}
+                            {% end %}
+                        </p>
                     </div>
                 </div>
                 <div class="media-right">

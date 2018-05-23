@@ -366,7 +366,8 @@ class FollowingFollowerTask(Task):
             user_list_partial = json.loads(response.text)
             if len(user_list_partial) == 0:
                 break
-            user_list.extend([user['uid'] for user in user_list_partial])
+            #user_list.extend([user_detail['uid'] for user_detail in user_list_partial])
+            user_list.extend(user_list_partial)
             page_count += 1
 
         user_list.reverse()
@@ -379,9 +380,23 @@ class FollowingFollowerTask(Task):
         return [strip_username(item) for item in dom('dl.obu>dd>a')]
 
     @dbo.atomic()
+    def save_user_extras(self, user_extras):
+        for user, user_extra in user_extras.items():
+            now = datetime.datetime.now()
+            detail = user_extra.copy()
+            detail['updated_at'] = now
+            detail['user'] = user
+            del detail['id']
+            try:
+                db.UserExtra.safe_create(**detail)
+            except db.IntegrityError:
+                del detail['user']
+                db.UserExtra.safe_update(**detail).where(db.UserExtra.user == user).execute()
+
+    @dbo.atomic()
     def save_following(self, account_user, following_users):
         now = datetime.datetime.now()
-        for following_username, following_user in following_users.items():
+        for following_username, following_user in following_users:
             real_following_username = following_user.unique_name if following_user else following_username
             try:
                 kwargs = {
@@ -433,7 +448,7 @@ class FollowingFollowerTask(Task):
     @dbo.atomic()
     def save_followers(self, account_user, followers):
         now = datetime.datetime.now()
-        for follower_username, follower in followers.items():
+        for follower_username, follower in followers:
             try:
                 kwargs = {
                     'user': account_user,
@@ -482,7 +497,7 @@ class FollowingFollowerTask(Task):
     @dbo.atomic()
     def save_block_list(self, account_user, block_users):
         now = datetime.datetime.now()
-        for block_username, block_user in block_users.items():
+        for block_username, block_user in block_users:
             try:
                 kwargs = {
                     'user': account_user,
@@ -531,15 +546,19 @@ class FollowingFollowerTask(Task):
     def run(self):
         account = self.account
         following_user_list = self.fetch_follow_list(account.name, 'following')
-        following_users = {username: self.fetch_user(username) for username in following_user_list}
+        following_users = [(user_detail['uid'], self.fetch_user(user_detail['uid'])) for user_detail in following_user_list]
         self.save_following(account.user, following_users)
         
         follower_list = self.fetch_follow_list(account.name, 'followers')
-        follower_users = {username: self.fetch_user(username) for username in follower_list}
+        follower_users = [(user_detail['uid'], self.fetch_user(user_detail['uid'])) for user_detail in follower_list]
         self.save_followers(account.user, follower_users)
 
+        user_extras = {self.fetch_user(user_detail['uid']): user_detail for user_detail in following_user_list}
+        user_extras.update({self.fetch_user(user_detail['uid']): user_detail for user_detail in follower_list})
+        self.save_user_extras(user_extras)
+
         block_list = self.fetch_block_list()
-        block_users = {username: self.fetch_user(username) for username in block_list}
+        block_users = [(username, self.fetch_user(username)) for username in block_list]
         self.save_block_list(account.user, block_users)
 
 

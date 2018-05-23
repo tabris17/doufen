@@ -1,56 +1,110 @@
 {% extends "../themes/main.html" %} 
 
-{% block title %}我关注的{% end %}
+{% block title %}{{ '我听过的音乐' if status == 'done' else '我想听的音乐' if status == 'wish' else '我在听的音乐' }}{% end %}
 
 {% block main %}
+{% import ast %}
 <div class="container">
     <div class="columns is-mobile">
         <div class="column is-narrow">
-            {% module Template('my/_menu.html', active_page='following') %}
+            {% module Template('my/_menu.html', active_page='music/' + status) %}
         </div>
         <div class="column">
             {% block headline %}
             <nav class="level">
                 <div class="level-left">
                     <div class="level-item">
-                        <p class="subtitle is-5">我关注 <strong>{{ total_rows }}</strong> 人</p>
+                        <p class="subtitle is-5">{{ '听过' if status == 'done' else '想听' if status == 'wish' else '在听' }} <strong>{{ total_rows }}</strong> 张</p>
                     </div>
                 </div>
                 <div class="level-right">
                     <p class="level-item">
-                        <a class="button" href="{{ reverse_url('my.following.historical') }}">查看历史记录</a>
+                        <!--<a class="button" href="{{ reverse_url('my.music.historical') }}">查看历史记录</a>-->
                     </p>
                 </div>
             </nav>
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
-            <article class="media box{% if row.following_user.is_banned or row.following_user.is_suicide%} has-background-white-ter{% end %}">
+            <article class="media box" style="min-height: 220px;">
+                {% set arrts = ast.literal_eval(row.music.attrs) %}
                 <figure class="media-left">
-                    <p class="image is-48x48">
-                        <img src="{{ row.following_user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                    <p class="image is-128x128">
+                        <img src="{{ row.music.image }}">
                     </p>
                 </figure>
                 <div class="media-content">
                     <div class="content">
                         <p>
-                            <strong><a href="{{ row.following_user.alt }}" class="external-link">{{ row.following_user.name }}</a></strong>
-                            <small>(@{{ row.following_user.unique_name}})</small>
-                            <small class="has-text-grey-light">{{ row.following_user.signature }}</small>
+                            <strong><a href="{{ row.music.alt }}" class="external-link">{{ row.music.title }}</a></strong>
+                            {% if row.music.alt_title %}
+                            <br><small class="has-text-grey-light">({{ row.music.alt_title }})</small>
+                            {% end %}
                         </p>
                         <dl class="is-horizontal is-label-size-4">
-                            <dt class="has-text-left">加入时间</dt>
-                            <dd class="has-text-grey-light">{{ row.user.created }}</dd>
-                            <dt class="has-text-left">所在地</dt>
-                            <dd class="has-text-grey-light">{{ row.user.loc_name }}({{ row.user.loc_id }})</dd>
+                            {% if 'singer' in arrts and arrts['singer'] %}
+                            <dt class="has-text-left">表演者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['singer']) }}</dd>
+                            {% end %}
+
+                            {% if 'version' in arrts and arrts['version'] %}
+                            <dt class="has-text-left">专辑类型</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['version']) }}</dd>
+                            {% end %}
+
+                            {% if 'media' in arrts and arrts['media'] %}
+                            <dt class="has-text-left">介质</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['media']) }}</dd>
+                            {% end %}
+
+                            {% if 'pubdate' in arrts and arrts['pubdate'] %}
+                            <dt class="has-text-left">发行时间</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['pubdate']) }}</dd>
+                            {% end %}
+
+                            {% if 'publisher' in arrts and arrts['publisher'] %}
+                            <dt class="has-text-left">出版者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['publisher']) }}</dd>
+                            {% end %}
+
+                            {% if 'discs' in arrts and arrts['discs'] %}
+                            <dt class="has-text-left">唱片数</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['discs']) }}</dd>
+                            {% end %}
                         </dl>
-                        <p class="text-break">{{ row.following_user.desc }}</p>
+                        <dl class="is-horizontal is-label-size-4  is-marginless">
+                            <dt>我的评价</dt>
+                            <dd>
+                                {% if row.rating %}
+                                {% set my_rating = ast.literal_eval(row.rating) %}
+                                <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                                {% else %}
+                                <span class="rating-start star-00"></span>
+                                {% end %}
+                                <small class="has-text-grey-light">{{ row.create_time }}</small>
+                            </dd>
+                            {% if row.tags %}
+                            {% set tags = ast.literal_eval(row.tags) %}
+                            {% if len(tags) %}
+                            <dt>标签</dt>
+                            <dd>{{ ' / '.join(tags) }}</dd>
+                            {% end %}
+                            {% end %}
+                        </dl>
+                        <p class="text-break">{{ row.comment }}</p>
                     </div>
                 </div>
                 <div class="media-right">
-                    {% if row.following_user.version > 1 %}
-                    <a href="" class="button">历史记录</a>
-                    {% end if %}
+                    <p>
+                        {% if row.music.rating %}
+                        {% set rating = ast.literal_eval(row.music.rating) %}
+                        豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                        <a href="{{ row.music.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                        {% end %}
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <a href="" class="button">查看详情</a>
+                    </p>
                 </div>
             </article>
             {% end %}
@@ -61,4 +115,3 @@
 
 </div>
 {% end %}
-    

@@ -100,6 +100,22 @@ class BlocklistHistorical(BaseRequestHandler):
         self.list(query, 'my/blocklist_historical.html')
 
 
+class Movie(BaseRequestHandler):
+    def get(self, status):
+        query = db.MyMovie.select(db.MyMovie, db.Movie).join(
+            db.Movie, on=db.MyMovie.movie
+        ).where(db.MyMovie.user == self.get_current_user(), db.MyMovie.status == status).order_by(db.MyMovie.id.desc())
+        self.list(query, 'my/movie.html', status=status)
+
+
+class MovieHistorical(BaseRequestHandler):
+    def get(self):
+        query = db.MyMovieHistorical.select(db.MyMovieHistorical, db.Movie).join(
+            db.Movie, on=db.MyMovieHistorical.movie
+        ).where(db.MyMovieHistorical.user == self.get_current_user()).order_by(db.MyMovieHistorical.id.desc())
+        self.list(query, 'my/movie_historical.html')
+
+
 class Book(BaseRequestHandler):
     def get(self, status):
         query = db.MyBook.select(db.MyBook, db.Book).join(
@@ -110,7 +126,7 @@ class Book(BaseRequestHandler):
 
 class BookHistorical(BaseRequestHandler):
     def get(self):
-        query = db.MyBookHistorical.select(db.MyBookHistorical, db.User).join(
+        query = db.MyBookHistorical.select(db.MyBookHistorical, db.Book).join(
             db.Book, on=db.MyBookHistorical.book
         ).where(db.MyBookHistorical.user == self.get_current_user()).order_by(db.MyBookHistorical.id.desc())
         self.list(query, 'my/book_historical.html')
@@ -118,31 +134,15 @@ class BookHistorical(BaseRequestHandler):
 
 class Music(BaseRequestHandler):
     def get(self, status):
-        query = db.BlockUser.select(db.BlockUser, db.User).join(
-            db.User, on=db.BlockUser.block_user
-        ).where(db.BlockUser.user == self.get_current_user()).order_by(db.BlockUser.id.desc())
-        self.list(query, 'my/blocklist.html', status=status)
+        query = db.MyMusic.select(db.MyMusic, db.Music).join(
+            db.Music, on=db.MyMusic.music
+        ).where(db.MyMusic.user == self.get_current_user(), db.MyMusic.status == status).order_by(db.MyMusic.id.desc())
+        self.list(query, 'my/music.html', status=status)
 
 
 class MusicHistorical(BaseRequestHandler):
     def get(self):
-        query = db.BlockUserHistorical.select(db.BlockUserHistorical, db.User).join(
-            db.User, on=db.BlockUserHistorical.block_user
-        ).where(db.BlockUserHistorical.user == self.get_current_user()).order_by(db.BlockUserHistorical.id.desc())
-        self.list(query, 'my/blocklist_historical.html')
-
-
-class Movie(BaseRequestHandler):
-    def get(self, status):
-        query = db.BlockUser.select(db.BlockUser, db.User).join(
-            db.User, on=db.BlockUser.block_user
-        ).where(db.BlockUser.user == self.get_current_user()).order_by(db.BlockUser.id.desc())
-        self.list(query, 'my/blocklist.html', status=status)
-
-
-class MovieHistorical(BaseRequestHandler):
-    def get(self):
-        query = db.BlockUserHistorical.select(db.BlockUserHistorical, db.User).join(
-            db.User, on=db.BlockUserHistorical.block_user
-        ).where(db.BlockUserHistorical.user == self.get_current_user()).order_by(db.BlockUserHistorical.id.desc())
-        self.list(query, 'my/blocklist_historical.html')
+        query = db.MyMusicHistorical.select(db.MyMusicHistorical, db.Music).join(
+            db.User, on=db.MyMusicHistorical.music
+        ).where(db.MyMusicHistorical.user == self.get_current_user()).order_by(db.MyMusicHistorical.id.desc())
+        self.list(query, 'my/music_historical.html')

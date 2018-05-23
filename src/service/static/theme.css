@@ -65,3 +65,56 @@ dl.is-horizontal.is-label-size-4>dd {
     word-break: break-all;
     white-space: normal;
 }
+
+.rating-start {
+    display: inline-block;
+    width: 55px;
+    height: 11px;
+    margin-right: 4px;
+    background-image: url('start_matrix.png');
+}
+
+
+.rating-start.star-50 {
+    background-position: 0 0px
+}
+
+.rating-start.star-45 {
+    background-position: 0 -11px
+}
+
+.rating-start.star-40 {
+    background-position: 0 -22px
+}
+
+.rating-start.star-35 {
+    background-position: 0 -33px
+}
+
+.rating-start.star-30 {
+    background-position: 0 -44px
+}
+
+.rating-start.star-25 {
+    background-position: 0 -55px
+}
+
+.rating-start.star-20 {
+    background-position: 0 -66px
+}
+
+.rating-start.star-15 {
+    background-position: 0 -77px
+}
+
+.rating-start.star-10 {
+    background-position: 0 -88px
+}
+
+.rating-start.star-05 {
+    background-position: 0 -99px
+}
+
+.rating-start.star-00 {
+    background-position: 0 -110px
+}

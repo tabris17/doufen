@@ -44,7 +44,13 @@
                             <dt class="has-text-left">所在地</dt>
                             <dd class="has-text-grey-light">{{ row.user.loc_name }}({{ row.user.loc_id }})</dd>
                         </dl>
-                        <p class="text-break">{{ row.follower.desc }}</p>
+                        <p class="text-break">
+                            {% for ln in row.follower.desc.split("\n") %}
+                            {% if ln %}
+                            {{ ln }}<br>
+                            {% end %}
+                            {% end %}
+                        </p>
                     </div>
                 </div>
                 <div class="media-right">

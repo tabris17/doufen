@@ -21,6 +21,7 @@ def init(db_path, create_tables=True):
                 Account,
                 User,
                 UserHistorical,
+                UserExtra,
                 Movie,
                 MovieHistorical,
                 Book,
@@ -133,6 +134,22 @@ class UserHistorical(User):
     douban_id = IntegerField(help_text='豆瓣ID')
     unique_name = CharField(help_text='豆瓣域名')
     user = ForeignKeyField(User, field=User.id, help_text='原始对象ID')
+
+
+class UserExtra(BaseModel):
+    """
+    保存用户额外数据，不是每个用户都有
+    """
+    class Meta:
+        table_name = 'user_extra'
+
+    user = ForeignKeyField(User, unique=True, help_text='关联用户表')
+    followers_count = IntegerField(help_text='被关注人数', null=True)
+    following_count = IntegerField(help_text='关注人数', null=True)
+    statuses_count = IntegerField(help_text='广播数量', null=True)
+    verified = BooleanField(help_text='可能和是否通过手机验证有关', null=True)
+    is_first_visit = BooleanField(help_text='意义不明', null=True)
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
 class Account(BaseModel):

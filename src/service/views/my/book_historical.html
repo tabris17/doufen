@@ -1,12 +1,14 @@
-{% extends "following.html" %} 
+{% extends "book.html" %} 
 
-{% block title %}我关注的历史记录{% end %}
+
+{% block title %}读书的历史记录{% end %}
+
 
 {% block headline %}
 <nav class="level">
     <div class="level-left">
         <div class="level-item">
-            <p class="subtitle is-5">我曾经关注 <strong>{{ total_rows }}</strong> 人</p>
+            <p class="subtitle is-5">我曾标记过 <strong>{{ total_rows }}</strong> 本书</p>
         </div>
     </div>
     <div class="level-right">

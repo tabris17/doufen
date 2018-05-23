@@ -27,7 +27,7 @@
         <li><a class="pagination-link" href="?page={{ i }}">{{ i }}</a></li>
         {% end %}
         {% end %}
-        {% if end_page < total_pages - 1 %}
+        {% if end_page <= total_pages - 1 %}
         <li><span class="pagination-ellipsis">&hellip;</span></li>
         {% end %}
         {% if page == total_pages %}
