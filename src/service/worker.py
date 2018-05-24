@@ -8,7 +8,7 @@ from multiprocessing import Process, Queue
 import db
 
 REQUESTS_PER_MINUTE = 60
-LOCAL_OBJECT_DURATION = 60 * 60 * 24 * 7
+LOCAL_OBJECT_DURATION = 60 * 60 * 24 * 30
 
 
 class Worker:

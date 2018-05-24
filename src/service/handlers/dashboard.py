@@ -38,5 +38,5 @@ class AddTask(BaseRequestHandler):
                         self.server.add_task(task)
                     except Account.DoesNotExist:
                         pass
-    
+            self.server.push_task()
         self.write('OK')

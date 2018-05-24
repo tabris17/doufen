@@ -27,7 +27,7 @@
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
             <article class="media box" style="min-height: 220px;">
-                {% set arrts = ast.literal_eval(row.music.attrs) %}
+                {% set attrs = ast.literal_eval(row.music.attrs) %}
                 <figure class="media-left">
                     <p class="image is-128x128">
                         <img src="{{ row.music.image }}">
@@ -42,34 +42,34 @@
                             {% end %}
                         </p>
                         <dl class="is-horizontal is-label-size-4">
-                            {% if 'singer' in arrts and arrts['singer'] %}
+                            {% if 'singer' in attrs and attrs['singer'] %}
                             <dt class="has-text-left">表演者</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['singer']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['singer']) }}</dd>
                             {% end %}
 
-                            {% if 'version' in arrts and arrts['version'] %}
+                            {% if 'version' in attrs and attrs['version'] %}
                             <dt class="has-text-left">专辑类型</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['version']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['version']) }}</dd>
                             {% end %}
 
-                            {% if 'media' in arrts and arrts['media'] %}
+                            {% if 'media' in attrs and attrs['media'] %}
                             <dt class="has-text-left">介质</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['media']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['media']) }}</dd>
                             {% end %}
 
-                            {% if 'pubdate' in arrts and arrts['pubdate'] %}
+                            {% if 'pubdate' in attrs and attrs['pubdate'] %}
                             <dt class="has-text-left">发行时间</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['pubdate']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
                             {% end %}
 
-                            {% if 'publisher' in arrts and arrts['publisher'] %}
+                            {% if 'publisher' in attrs and attrs['publisher'] %}
                             <dt class="has-text-left">出版者</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['publisher']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['publisher']) }}</dd>
                             {% end %}
 
-                            {% if 'discs' in arrts and arrts['discs'] %}
+                            {% if 'discs' in attrs and attrs['discs'] %}
                             <dt class="has-text-left">唱片数</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(arrts['discs']) }}</dd>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['discs']) }}</dd>
                             {% end %}
                         </dl>
                         <dl class="is-horizontal is-label-size-4  is-marginless">
@@ -103,7 +103,7 @@
                         {% end %}
                     </p>
                     <p style="margin-top: 10px;">
-                        <a href="" class="button">查看详情</a>
+                        <a href="{{ reverse_url('music', row.music.douban_id) }}" class="button">查看详情</a>
                     </p>
                 </div>
             </article>

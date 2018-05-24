@@ -160,8 +160,7 @@ class Task:
         return user
 
     @dbo.atomic()
-    def save_movie(self, detail):
-        douban_id = detail['id']
+    def save_movie(self, detail, douban_id):
         detail['douban_id'] = douban_id
         detail['version'] = 1
         detail['updated_at'] = datetime.datetime.now()
@@ -267,7 +266,7 @@ class Task:
             return None
 
         detail = json.loads(response.text)
-        return self.save_movie(detail)
+        return self.save_movie(detail, douban_id)
 
     def fetch_book(self, douban_id):
         """
@@ -772,7 +771,7 @@ ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     MovieTask,
     MusicTask,
     NoteTask,
-    PhotoAlbumTask,
-    ReviewTask,
-    DoulistTask,
+    #PhotoAlbumTask,
+    #ReviewTask,
+    #DoulistTask,
 ]])

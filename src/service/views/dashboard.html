@@ -95,7 +95,11 @@
                         <div class="select is-multiple is-fullwidth">
                             <select multiple size="8" id="select-account">
                                 {% for row in accounts %}
+                                {% if row.user %}
+                                <option value="{{ row.id }}">{{ row.user.name }}({{ row.name }})</option>
+                                {% else %}
                                 <option value="{{ row.id }}">{{ row.name }}</option>
+                                {% end %}
                                 {% end %}
                             </select>
                         </div>

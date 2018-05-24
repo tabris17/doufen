@@ -143,7 +143,7 @@ class UserExtra(BaseModel):
     class Meta:
         table_name = 'user_extra'
 
-    user = ForeignKeyField(User, unique=True, help_text='关联用户表')
+    user = ForeignKeyField(User, unique=True, help_text='关联用户表', related_name='extra')
     followers_count = IntegerField(help_text='被关注人数', null=True)
     following_count = IntegerField(help_text='关注人数', null=True)
     statuses_count = IntegerField(help_text='广播数量', null=True)

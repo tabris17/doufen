@@ -137,7 +137,11 @@ class Server:
         try:
             task = self._tasks.popleft()
             self._worker_input.put(task)
-            self.application.broadcast('开始执行"{0}"任务'.format(task))
+            self.application.broadcast(json.dumps({
+                'sender': 'logger',
+                'message': '开始执行"{0}"任务'.format(task),
+                'level': 'info',
+            }))
         except IndexError:
             pass
 
@@ -157,15 +161,15 @@ class Server:
                         'level': ret.levelname,
                     }))
                 elif isinstance(ret, Worker.ReturnReady):
-                    logging.debug('"{0}" is ready'.format(ret.name))
-                    self._launch_task()
+                    logging.info('"{0}" is ready'.format(ret.name))
                     self.application.broadcast(json.dumps({
                         'sender': 'worker',
                         'src': ret.name,
                         'event': 'ready',
                     }))
+                    self._launch_task()
                 elif isinstance(ret, Worker.ReturnDone):
-                    logging.debug('"{0}" has done'.format(ret.name))
+                    logging.info('"{0}" has done'.format(ret.name))
                     self._workers[ret.name].toggle_task()
                     self.application.broadcast(json.dumps({
                         'sender': 'worker',
@@ -174,7 +178,7 @@ class Server:
                     }))
                     self._launch_task()
                 elif isinstance(ret, Worker.ReturnWorking):
-                    logging.debug('"{0}" is working for "{1}"'.format(ret.name, ret.task))
+                    logging.info('"{0}" is working for "{1}"'.format(ret.name, ret.task))
                     self._workers[ret.name].toggle_task(ret.task)
                     self.application.broadcast(json.dumps({
                         'sender': 'worker',
@@ -183,7 +187,7 @@ class Server:
                         'target': str(ret.task),
                     }))
                 elif isinstance(ret, Worker.ReturnError):
-                    logging.debug('"{0}" error: {1}'.format(ret.name, ret.exception))
+                    logging.error('"{0}" error: {1}'.format(ret.name, ret.exception))
                     self._workers[ret.name].toggle_task()
                     self.application.broadcast(json.dumps({
                         'event': 'worker',
@@ -191,29 +195,37 @@ class Server:
                         'event': 'error',
                         'message': str(ret.exception),
                     }))
+                    self._launch_task()
             except queues.Empty:
                 pass
             # 每隔0.1秒读取一下队列
             yield tornado.gen.sleep(0.1)
 
     def add_task(self, task, priority=False):
-        if len(self._tasks) == 0:
-            for worker in self._workers.values():
-                if worker.is_suspended():
-                    self._worker_input.put(task)
-                    logging.debug('put "{0}" to worker immediately'.format(task))
-                    return True
-
-        if filter(lambda t: not task.equals(t), self._tasks):
-            logging.debug('fail to add "{0}": task duplicated'.format(task))
+        """
+        添加任务
+        """
+        if list(filter(lambda t: task.equals(t), self._tasks)):
+            logging.warn('添加任务 "{0}" 失败: 任务重复'.format(task))
             return False
 
         if priority:
             self._tasks.appendleft(task)
         else:
             self._tasks.append(task)
-        logging.debug('add "{0}" to task queue'.format(task))
+        logging.info('添加任务 "{0}" 到任务队列'.format(task))
         return True
+
+    def push_task(self):
+        """
+        尝试推送任务到工作进程
+        """
+        if len(self._tasks) > 0:
+            for worker in self._workers.values():
+                if worker.is_suspended():
+                    self._launch_task()
+                    break
+
 
     def start_workers(self):
         self._create_workers()

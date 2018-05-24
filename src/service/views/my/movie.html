@@ -27,6 +27,7 @@
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
+            {% set attrs = ast.literal_eval(row.movie.attrs) %}
             <article class="media box" style="min-height: 220px;">
                 <figure class="media-left">
                     <p class="image is-128x128">
@@ -37,61 +38,54 @@
                     <div class="content">
                         <p>
                             <strong><a href="{{ row.movie.alt }}" class="external-link">{{ row.movie.title }}</a></strong>
-                            <small>{{ row.movie.subtitle }}</small>
                             {% if row.movie.alt_title %}
-                            <br><small class="has-text-grey-light">({{ row.movie.alt_title }})</small>
+                            ({{ row.movie.alt_title }})
                             {% end %}
                         </p>
                         <dl class="is-horizontal is-label-size-4">
-                            {% if row.movie.author %}
-                            {% set author = ast.literal_eval(row.movie.author) %}
-                            {% if len(row.movie.author) %}
-                            <dt class="has-text-left">作者</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
-                            {% end %}
+                            {% if 'director' in attrs and attrs['director'] %}
+                            <dt class="has-text-left">导演</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['director']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.translator %}
-                            {% set translator = ast.literal_eval(row.movie.translator) %}
-                            {% if len(translator) %}
-                            <dt class="has-text-left">译者</dt>
-                            <dd class="has-text-grey-light">{{ ' / '.join(translator) }}</dd>
-                            {% end %}
+                            {% if 'writer' in attrs and attrs['writer'] %}
+                            <dt class="has-text-left">编剧</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['writer']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.publisher %}
-                            <dt class="has-text-left">出版社</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.publisher }}</dd>
+                            {% if 'cast' in attrs and attrs['cast'] %}
+                            <dt class="has-text-left">主演</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['cast']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.origin_title %}
-                            <dt class="has-text-left">原作名</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.origin_title }}</dd>
+                            {% if 'movie_type' in attrs and attrs['movie_type'] %}
+                            <dt class="has-text-left">类型</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_type']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.pubdate %}
-                            <dt class="has-text-left">出版日期</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.pubdate }}</dd>
+                            {% if 'country' in attrs and attrs['country'] %}
+                            <dt class="has-text-left">国家地区</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['country']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.isbn10 or row.movie.isbn13 %}
-                            <dt class="has-text-left">ISBN</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.isbn10 }} / {{ row.movie.isbn13 }}</dd>
+                            {% if 'language' in attrs and attrs['language'] %}
+                            <dt class="has-text-left">语言</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['language']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.price %}
-                            <dt class="has-text-left">价格</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.price }}</dd>
+                            {% if 'pubdate' in attrs and attrs['pubdate'] %}
+                            <dt class="has-text-left">首播</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.pages %}
-                            <dt class="has-text-left">页数</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.pages }}</dd>
+                            {% if 'episodes' in attrs and attrs['episodes'] %}
+                            <dt class="has-text-left">集数</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['episodes']) }}</dd>
                             {% end %}
 
-                            {% if row.movie.binding %}
-                            <dt class="has-text-left">装帧</dt>
-                            <dd class="has-text-grey-light">{{ row.movie.binding }}</dd>
+                            {% if 'movie_duration' in attrs and attrs['movie_duration'] %}
+                            <dt class="has-text-left">单集片长</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_duration']) }}</dd>
                             {% end %}
                         </dl>
                         <dl class="is-horizontal is-label-size-4  is-marginless">
@@ -125,7 +119,7 @@
                         {% end %}
                     </p>
                     <p style="margin-top: 10px;">
-                        <a href="" class="button">查看详情</a>
+                        <a href="{{ reverse_url('movie', row.movie.douban_id) }}" class="button">查看详情</a>
                     </p>
                 </div>
             </article>

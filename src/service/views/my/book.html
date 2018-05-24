@@ -124,7 +124,7 @@
                         {% end %}
                     </p>
                     <p style="margin-top: 10px;">
-                        <a href="" class="button">查看详情</a>
+                        <a href="{{ reverse_url('book', row.book.douban_id) }}" class="button">查看详情</a>
                     </p>
                 </div>
             </article>

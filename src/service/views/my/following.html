@@ -28,7 +28,7 @@
             <article class="media box{% if row.following_user.is_banned or row.following_user.is_suicide%} has-background-white-ter{% end %}">
                 <figure class="media-left">
                     <p class="image is-48x48">
-                        <img src="{{ row.following_user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                        <img src="{{ row.following_user.avatar if row.following_user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
                     </p>
                 </figure>
                 <div class="media-content">
@@ -41,8 +41,10 @@
                         <dl class="is-horizontal is-label-size-4">
                             <dt class="has-text-left">加入时间</dt>
                             <dd class="has-text-grey-light">{{ row.following_user.created }}</dd>
+                            {% if row.following_user.loc_name %}
                             <dt class="has-text-left">所在地</dt>
                             <dd class="has-text-grey-light">{{ row.following_user.loc_name }}({{ row.following_user.loc_id }})</dd>
+                            {% end %}
                         </dl>
                         <p class="text-break">
                             {% for ln in row.following_user.desc.split("\n") %}
@@ -67,4 +69,3 @@
 
 </div>
 {% end %}
-    

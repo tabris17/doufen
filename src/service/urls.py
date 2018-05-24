@@ -13,6 +13,8 @@ patterns = [
     (r'/settings/accounts/', handlers.settings.accounts.Index, None, 'settings.accounts'),
     (r'/settings/accounts/login', handlers.settings.accounts.Login, None, 'settings.accounts.login'),
     (r'/settings/accounts/add', handlers.settings.accounts.Add, None, 'settings.accounts.add'),
+    (r'/settings/accounts/remove', handlers.settings.accounts.Remove, None, 'settings.accounts.remove'),
+    (r'/settings/accounts/activate', handlers.settings.accounts.Activate, None, 'settings.accounts.activate'),
     (r'/dashboard', handlers.dashboard.Index, None, 'dashboard'),
     (r'/dashboard/workers/restart', handlers.dashboard.RestartWorkers, None, 'dashboard.workers.restart'),
     (r'/dashboard/tasks/add', handlers.dashboard.AddTask, None, 'dashboard.tasks.add'),
@@ -31,4 +33,7 @@ patterns = [
     (r'/my/music/historical', handlers.my.MusicHistorical, None, 'my.music.historical'),
     (r'/my/movie/([^/]+)', handlers.my.Movie, None, 'my.movie'),
     (r'/my/movie/historical', handlers.my.MovieHistorical, None, 'my.movie.historical'),
+    (r'/book/([^/]+)', handlers.Book, None, 'book'),
+    (r'/movie/([^/]+)', handlers.Movie, None, 'movie'),
+    (r'/music/([^/]+)', handlers.Music, None, 'music'),
 ]

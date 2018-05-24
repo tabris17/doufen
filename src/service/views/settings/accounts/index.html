@@ -29,6 +29,9 @@
                     <p class="image is-48x48">
                         <img src="{{ row.user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
                     </p>
+                    {% if not row.is_activated %}
+                    <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">激活</a></p>
+                    {% end %}
                 </figure>
                 <div class="media-content">
                     <div class="content">
@@ -53,7 +56,7 @@
                     </div>
                 </div>
                 <div class="media-right">
-                    <button class="delete"></button>
+                    <button class="delete" data-id="{{ row.id }}"></button>
                 </div>
             </article>
             {% end %}
@@ -63,4 +66,35 @@
     </div>
 
 </div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        $('.delete').click(function() {
+            let id = $(this).data('id')
+            $.ajax({
+                url: '{{ reverse_url("settings.accounts.remove") }}',
+                method: 'POST',
+                data: { id: id }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('删除帐号失败：' + error, '错误')
+            })
+        })
+        $('.action-activate').click(function() {
+            let id = $(this).data('id')
+            $.ajax({
+                url: '{{ reverse_url("settings.accounts.activate") }}',
+                method: 'POST',
+                data: { id: id }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('激活帐号失败：' + error, '错误')
+            })
+        })
+    })
+</script>
 {% end %}

@@ -1,0 +1,135 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{{ subject.title }}{% end %}
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+    {% set attrs = ast.literal_eval(subject.attrs) %}
+    <article class="media" style="min-height: 220px;">
+        <figure class="media-left">
+            <p class="image is-128x128">
+                <img src="{{ subject.image }}">
+            </p>
+        </figure>
+        <div class="media-content">
+            <div class="content">
+                <p>
+                    <strong><a href="{{ subject.alt }}" class="external-link">{{ subject.title }}</a></strong>
+                    {% if subject.alt_title %}
+                    <br><small class="has-text-grey-light">({{ subject.alt_title }})</small>
+                    {% end %}
+                </p>
+                <dl class="is-horizontal is-label-size-4">
+                    {% if 'singer' in attrs and attrs['singer'] %}
+                    <dt class="has-text-left">表演者</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['singer']) }}</dd>
+                    {% end %}
+
+                    {% if 'version' in attrs and attrs['version'] %}
+                    <dt class="has-text-left">专辑类型</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['version']) }}</dd>
+                    {% end %}
+
+                    {% if 'media' in attrs and attrs['media'] %}
+                    <dt class="has-text-left">介质</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['media']) }}</dd>
+                    {% end %}
+
+                    {% if 'pubdate' in attrs and attrs['pubdate'] %}
+                    <dt class="has-text-left">发行时间</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
+                    {% end %}
+
+                    {% if 'publisher' in attrs and attrs['publisher'] %}
+                    <dt class="has-text-left">出版者</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['publisher']) }}</dd>
+                    {% end %}
+
+                    {% if 'discs' in attrs and attrs['discs'] %}
+                    <dt class="has-text-left">唱片数</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(attrs['discs']) }}</dd>
+                    {% end %}
+                </dl>
+                <dl class="is-horizontal is-label-size-4  is-marginless">
+                    <dt>我的评价</dt>
+                    <dd>
+                        {% if mine.rating %}
+                        {% set my_rating = ast.literal_eval(mine.rating) %}
+                        <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                        {% else %}
+                        <span class="rating-start star-00"></span>
+                        {% end %}
+                        <small class="has-text-grey-light">{{ mine.create_time }}</small>
+                    </dd>
+                    {% if mine.tags %}
+                    {% set tags = ast.literal_eval(mine.tags) %}
+                    {% if len(tags) %}
+                    <dt>标签</dt>
+                    <dd>{{ ' / '.join(tags) }}</dd>
+                    {% end %}
+                    {% end %}
+                </dl>
+                <p class="text-break">{{ mine.comment }}</p>
+            </div>
+        </div>
+        <div class="media-right">
+            <p>
+                {% if subject.rating %}
+                {% set rating = ast.literal_eval(subject.rating) %}
+                豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                <a href="{{ subject.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                {% end %}
+            </p>
+        </div>
+    </article>
+
+    <div class="content">
+            {% if subject.summary %}
+            <h2 class="subtitle is-size-5">简介</h2>
+            {% for ln in subject.summary.split("\n") %}
+                {% if ln %}
+                <p>{{ ln }}</p>
+                {% end %}
+            {% end %}
+            {% end %}
+
+            {% if 'tracks' in attrs %}
+            <h2 class="subtitle is-size-5">曲目</h2>
+            <p>
+                {% for ln in attrs['tracks'] %}
+                    {% for subln in ln.split("\n") %}
+                        {% if subln %}{{ subln }}<br>{% end %}
+                    {% end %}<br>
+                {% end %}
+            </p>
+            {% end %}
+    
+            {% if subject.tags %}
+            {% set tags = ast.literal_eval(subject.tags) %}
+            <h2 class="subtitle is-size-5">豆瓣成员常用的标签</h2>
+            {% for tag in tags %}
+            <span class="tag is-size-6">{{ tag['name'] }}({{ tag['count'] }})</span>
+            {% end %}
+            {% end %}
+        </div>
+
+</div>
+{% end %}

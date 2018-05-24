@@ -44,5 +44,30 @@ class Add(BaseRequestHandler):
             pass
 
         self.write('OK')
-        
-        
+
+
+class Remove(BaseRequestHandler):
+    """
+    添加帐号
+    """
+    def post(self):
+        account_id = self.get_argument('id')
+        try:
+            Account.delete().where(Account.id == account_id).execute()
+        except:
+            pass
+        self.write('OK')
+
+
+class Activate(BaseRequestHandler):
+    """
+    激活帐号
+    """
+    def post(self):
+        account_id = self.get_argument('id')
+        try:
+            Account.update(is_activated=False).execute()
+            Account.update(is_activated=True).where(Account.id == account_id).execute()
+        except:
+            pass
+        self.write('OK')
