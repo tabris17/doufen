@@ -256,11 +256,11 @@ class Task:
 
         return movie
 
-    def fetch_movie_by_api(self, id):
+    def fetch_movie_by_api(self, douban_id):
         """
         通过豆瓣API获取电影信息
         """
-        url = 'https://api.douban.com/v2/movie/{0}?apikey={1}'.format(id, FAKE_API_KEY)
+        url = 'https://api.douban.com/v2/movie/{0}?apikey={1}'.format(douban_id, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
             return None
@@ -351,7 +351,7 @@ class Task:
 
 
 class FollowingFollowerTask(Task):
-    _name = '我的友邻'
+    _name = '备份我的友邻'
 
     def fetch_follow_list(self, user, action):
         url = 'https://api.douban.com/shuo/v2/users/{user}/{action}?count=50&page={page}'
@@ -694,7 +694,7 @@ class InterestsTask(Task):
 
 
 class BookTask(InterestsTask):
-    _name = '我的书'
+    _name = '备份我的书'
 
     def run(self):
         return self._run(
@@ -706,7 +706,7 @@ class BookTask(InterestsTask):
 
 
 class MovieTask(InterestsTask):
-    _name = '我的影视'
+    _name = '备份我的影视'
 
     def run(self):
         return self._run(
@@ -718,7 +718,7 @@ class MovieTask(InterestsTask):
 
 
 class MusicTask(InterestsTask):
-    _name = '我的音乐'
+    _name = '备份我的音乐'
 
     def run(self):
         return self._run(
@@ -730,38 +730,57 @@ class MusicTask(InterestsTask):
 
 
 class BroadcastTask(Task):
-    _name = '我的广播'
+    _name = '备份我的广播'
+
+    @dbo.atomic()
+    def save_status(self, detail):
+        pass
+
+    def fetch_statuses_list(self):
+        url = self.account.user.alt + 'statuses?p={0}'
+        page = 1
+        while True:
+            response = self.fetch_url_content(url.format(page))
+            dom = PyQuery(response.text)
+            statuses_in_page = dom('.stream-items>.new-status.status-wrapper')
+            if len(statuses_in_page) == 0:
+                break
+            for status_wrapper in statuses_in_page:
+                status_div = PyQuery(status_wrapper)
+                print(status_div.attr('data-uid'))
+                print(status_div.attr('data-sid'))
+            page += 1
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        self.fetch_statuses_list()
 
 
 class NoteTask(Task):
-    _name = '我的日记'
+    _name = '备份我的日记'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        pass
 
 
 class PhotoAlbumTask(Task):
-    _name = '我的相册'
+    _name = '备份我的相册'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        pass
 
 
 class ReviewTask(Task):
-    _name = '我的评论'
+    _name = '备份我的评论'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        pass
 
 
 class DoulistTask(Task):
-    _name = '我的豆列'
+    _name = '备份我的豆列'
 
     def run(self):
-        user = self.fetch_user_by_api('tabris17')
+        pass
 
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [

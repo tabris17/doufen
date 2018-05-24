@@ -140,7 +140,7 @@ class Server:
             self.application.broadcast(json.dumps({
                 'sender': 'logger',
                 'message': '开始执行"{0}"任务'.format(task),
-                'level': 'info',
+                'level': 'INFO',
             }))
         except IndexError:
             pass
@@ -190,7 +190,7 @@ class Server:
                     logging.error('"{0}" error: {1}'.format(ret.name, ret.exception))
                     self._workers[ret.name].toggle_task()
                     self.application.broadcast(json.dumps({
-                        'event': 'worker',
+                        'sender': 'worker',
                         'src': ret.name,
                         'event': 'error',
                         'message': str(ret.exception),

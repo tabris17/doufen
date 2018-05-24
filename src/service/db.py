@@ -503,3 +503,18 @@ class Setting(BaseModel):
     """
     name = CharField(unique=True, help_text='名称')
     value = TextField(help_text='值')
+
+
+class Timeline(BaseModel):
+    """
+    广播时间轴
+    """
+    pass
+
+
+class Broadcast(BaseModel):
+    """
+    豆瓣广播
+    """
+    user = ForeignKeyField(User, help_text='发布者')
+    douban_id = CharField(unique=True, help_text='广播ID')
