@@ -516,5 +516,16 @@ class Broadcast(BaseModel):
     """
     豆瓣广播
     """
-    user = ForeignKeyField(User, help_text='发布者')
     douban_id = CharField(unique=True, help_text='广播ID')
+    douban_user_id = CharField(help_text='豆瓣用户ID')
+    user = ForeignKeyField(User, null=True, help_text='发布者')
+    text = TextField(null=True, help_text='发布的文字说')
+    attachments = TextField(null=True, help_text='图片附件')
+    reshared_count = IntegerField(null=True, help_text='转播数')
+    like_count = IntegerField(null=True, help_text='点赞数')
+    comments_count = IntegerField(null=True, help_text='回应数')
+    created = CharField(null=True, help_text='发布时间')
+    is_reshared = BooleanField(null=True, default=False, help_text='广播本身是一条转播')
+    is_saying = BooleanField(null=True, default=False, help_text='发出的文字图片链接类型的广播')
+    is_noreply = BooleanField(null=True, default=False, help_text='不能回复的广播（修改签名，添加豆列等动态）')
+    updated_at = DateTimeField(help_text='更新时间', default=datetime.datetime.now())
