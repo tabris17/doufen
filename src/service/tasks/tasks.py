@@ -733,26 +733,131 @@ class BroadcastTask(Task):
     _name = '备份我的广播'
 
     @dbo.atomic()
-    def save_status(self, detail):
-        pass
+    def save_status(self, statuses):
+        broadcasts = []
+        for status in statuses:
+            try:
+                broadcasts.append(db.Broadcast.safe_create(**status))
+            except db.IntegrityError:
+                douban_id = status['douban_id']
+                origin_status = db.Broadcast.get(db.Broadcast.douban_id == douban_id)
+                if not origin_status.equals(status):
+                    update_values = {
+                        'reshared_count': status['reshared_count'],
+                        'like_count': status['like_count'],
+                        'comments_count': status['comments_count'],
+                    }
+                    db.Broadcast.safe_update(**update_values).where(
+                        db.Broadcast.douban_id == douban_id
+                    ).execute()
+        return broadcasts
 
-    def fetch_statuses_list(self):
+    def fetch_statuses_list(self, now):
         url = self.account.user.alt + 'statuses?p={0}'
         page = 1
+        timeline_in_page = []
+        def parse_status(status_node):
+            status_div = PyQuery(status_node)
+            reshared_count = 0
+            like_count = 0
+            comments_count = 0
+            created_at = None
+            is_noreply = False
+            status_url = None
+            target_type = None
+            object_kind = None
+            object_id = None
+            
+            try:
+                created_span = status_div.find('.actions>.created_at')[0]
+            except:
+                is_noreply = True
+
+            if not is_noreply:
+                """
+                获取创建时间、回复、点赞、转播数
+                """
+                try:
+                    created_at = PyQuery(created_span).attr('title')
+                    reply_link = PyQuery(status_div.find('.actions>.new-reply'))
+                    comments_count = reply_link.attr('data-count')
+                    like_span = PyQuery(status_div.find('.actions>.like-count'))
+                    like_count = like_span.attr('data-count')
+                    if like_count is None:
+                        try:
+                            like_count = int(re.match(r'赞\((.*)\)', like_span.text())[1])
+                        except:
+                            like_count = 0
+                    reshared_span = PyQuery(status_div.find('.actions>.reshared-count'))
+                    reshared_count = reshared_span.attr('data-count')
+                    if reshared_count is None:
+                        reshared_count = 0
+                except:
+                    pass
+
+            try:
+                """
+                获取广播链接
+                """
+                exactly_link = PyQuery(status_div.find('.actions a').eq(0))
+                status_url = exactly_link.attr('href')
+            except:
+                pass
+
+            try:
+                """
+                获取关于广播类型的属性
+                """
+                status_item_div = PyQuery(status_div.find('.status-item').eq(0))
+                target_type = status_item_div.attr('data-target-type')
+                object_kind = status_item_div.attr('data-object-kind')
+                object_id = status_item_div.attr('data-object-id')
+            except:
+                pass
+
+            detail = {
+                'douban_user_id': status_div.attr('data-uid'),
+                'douban_id': status_div.attr('data-sid'),
+                'content': status_div.outer_html(),
+                'created': created_at,
+                'is_reshared': status_div.has_class('status-reshared-wrapper'),
+                'is_saying': status_div.has_class('saying'),
+                'is_noreply': is_noreply,
+                'updated_at': now,
+                'reshared_count': reshared_count,
+                'like_count': like_count,
+                'comments_count': comments_count,
+                'status_url': status_url,
+                'target_type': target_type,
+                'object_kind': object_kind,
+                'object_id': object_id,
+            }
+            return detail
+
         while True:
             response = self.fetch_url_content(url.format(page))
             dom = PyQuery(response.text)
             statuses_in_page = dom('.stream-items>.new-status.status-wrapper')
             if len(statuses_in_page) == 0:
                 break
+            status_details = []
             for status_wrapper in statuses_in_page:
-                status_div = PyQuery(status_wrapper)
-                print(status_div.attr('data-uid'))
-                print(status_div.attr('data-sid'))
+                status_details.append(parse_status(status_wrapper))
+            timeline_in_page.extend(self.save_status(status_details))
             page += 1
 
+        return timeline_in_page
+
+    @dbo.atomic()
+    def save_timeline(self, timeline):
+        print(len(timeline))
+
     def run(self):
-        self.fetch_statuses_list()
+        now = datetime.datetime.now()
+        timeline = []
+        timeline.extend(self.fetch_statuses_list(now))
+        timeline.reverse()
+        self.save_timeline(timeline)
 
 
 class NoteTask(Task):

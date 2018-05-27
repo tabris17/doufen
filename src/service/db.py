@@ -41,6 +41,7 @@ def init(db_path, create_tables=True):
                 MyMovieHistorical,
                 MyBookHistorical,
                 MyMusicHistorical,
+                Broadcast,
             ])
 
 
@@ -505,19 +506,23 @@ class Setting(BaseModel):
     value = TextField(help_text='值')
 
 
-class Timeline(BaseModel):
-    """
-    广播时间轴
-    """
-    pass
-
-
 class Broadcast(BaseModel):
     """
     豆瓣广播
     """
+    _attrs_to_compare_ = [
+        'reshared_count',
+        'like_count',
+        'comments_count',
+    ]
+
     douban_id = CharField(unique=True, help_text='广播ID')
     douban_user_id = CharField(help_text='豆瓣用户ID')
+    target_type = CharField(null=True, help_text='对应date-target-type')
+    object_kind = CharField(null=True, help_text='对应date-object-kind')
+    object_id = CharField(null=True, help_text='对应date-object-id')
+    status_url = CharField(null=True, help_text='链接')
+    reshared = ForeignKeyField('self', null=True, help_text='转播的广播')
     user = ForeignKeyField(User, null=True, help_text='发布者')
     text = TextField(null=True, help_text='发布的文字说')
     attachments = TextField(null=True, help_text='图片附件')
@@ -525,7 +530,26 @@ class Broadcast(BaseModel):
     like_count = IntegerField(null=True, help_text='点赞数')
     comments_count = IntegerField(null=True, help_text='回应数')
     created = CharField(null=True, help_text='发布时间')
+    content = TextField(null=True, help_text='原始HTML')
     is_reshared = BooleanField(null=True, default=False, help_text='广播本身是一条转播')
     is_saying = BooleanField(null=True, default=False, help_text='发出的文字图片链接类型的广播')
-    is_noreply = BooleanField(null=True, default=False, help_text='不能回复的广播（修改签名，添加豆列等动态）')
+    is_noreply = BooleanField(null=True, default=False, help_text='不能回复的广播')
     updated_at = DateTimeField(help_text='更新时间', default=datetime.datetime.now())
+
+
+class Timeline(BaseModel):
+    """
+    广播时间轴
+    """
+    user = ForeignKeyField(User, help_text='所属用户')
+    broadcast = ForeignKeyField(Broadcast, help_text='对应广播')
+
+
+class Attachment(BaseModel):
+    """
+    图片
+    """
+    url = CharField(unique=True, help_text='地址')
+    local = CharField(help_text='本地文件名')
+    ref_count = IntegerField(default=0, help_text='引用计数')
+    created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
