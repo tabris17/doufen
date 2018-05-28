@@ -42,6 +42,8 @@ def init(db_path, create_tables=True):
                 MyBookHistorical,
                 MyMusicHistorical,
                 Broadcast,
+                Attachment,
+                Timeline,
             ])
 
 
@@ -524,7 +526,7 @@ class Broadcast(BaseModel):
     status_url = CharField(null=True, help_text='链接')
     reshared = ForeignKeyField('self', null=True, help_text='转播的广播')
     user = ForeignKeyField(User, null=True, help_text='发布者')
-    text = TextField(null=True, help_text='发布的文字说')
+    blockquote = TextField(null=True, help_text='发布的文字内容')
     attachments = TextField(null=True, help_text='图片附件')
     reshared_count = IntegerField(null=True, help_text='转播数')
     like_count = IntegerField(null=True, help_text='点赞数')
@@ -541,7 +543,7 @@ class Timeline(BaseModel):
     """
     广播时间轴
     """
-    user = ForeignKeyField(User, help_text='所属用户')
+    user = ForeignKeyField(User, index=True, help_text='所属用户')
     broadcast = ForeignKeyField(Broadcast, help_text='对应广播')
 
 
@@ -550,6 +552,7 @@ class Attachment(BaseModel):
     图片
     """
     url = CharField(unique=True, help_text='地址')
-    local = CharField(help_text='本地文件名')
-    ref_count = IntegerField(default=0, help_text='引用计数')
+    mime_type = CharField(null=True, help_text='MIME类型')
+    local = CharField(null=True, help_text='本地文件名')
+    ref_count = IntegerField(default=0, help_text='引用计数(预留，暂不使用)')
     created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())

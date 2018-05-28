@@ -229,6 +229,17 @@ class Task:
         except db.User.DoesNotExist:
             user = self.fetch_user_by_api(name)
 
+    def fetch_user_by_id(self, douban_id):
+        """
+        尝试从本地获取用户信息，如果没有则从网上抓取
+        """
+        try:
+            user = db.User.get(db.User.douban_id == douban_id)
+            if self.is_oject_expired(user):
+                raise db.User.DoesNotExist()
+        except db.User.DoesNotExist:
+            user = self.fetch_user_by_api(douban_id)
+
         return user
 
     def fetch_user_by_api(self, name):
@@ -733,7 +744,7 @@ class BroadcastTask(Task):
     _name = '备份我的广播'
 
     @dbo.atomic()
-    def save_status(self, statuses):
+    def save_status_list(self, statuses):
         broadcasts = []
         for status in statuses:
             try:
@@ -750,14 +761,47 @@ class BroadcastTask(Task):
                     db.Broadcast.safe_update(**update_values).where(
                         db.Broadcast.douban_id == douban_id
                     ).execute()
+                broadcasts.append(origin_status)
         return broadcasts
 
     def fetch_statuses_list(self, now):
         url = self.account.user.alt + 'statuses?p={0}'
         page = 1
         timeline_in_page = []
-        def parse_status(status_node):
-            status_div = PyQuery(status_node)
+        def parse_status(status_div):
+            """
+            关于object_kind说明：
+            1001: 图书
+            1002: 电影
+            1003: 音乐
+            1011: 活动
+            1012: 评论
+            1013: 小组话题
+            1014: （电影）讨论
+            1015: 日记
+            1019: 小组
+            1020: 豆列
+            1021: 九点文章
+            1022: 网页
+            1025: 相册照片
+            1026: 相册
+            1043: 影人
+            1044: 艺术家
+            1062: board
+            2001: 线上活动
+            2004: 小站视频
+            3043: 豆瓣FM单曲
+            3049: 读书笔记
+            3065: 条目
+            3072: 豆瓣FM兆赫
+            3090: 东西
+            3114: 游戏
+            5021: 豆瓣阅读的图片
+            5022: 豆瓣阅读的作品
+
+            """
+            if not isinstance(status_div, PyQuery):
+                status_div = PyQuery(status_div)
             reshared_count = 0
             like_count = 0
             comments_count = 0
@@ -767,6 +811,12 @@ class BroadcastTask(Task):
             target_type = None
             object_kind = None
             object_id = None
+            reshared_detail = None
+            blockquote = None
+            douban_user_id = status_div.attr('data-uid')
+            douban_id = status_div.attr('data-sid')
+            is_saying = status_div.has_class('saying')
+            is_reshared = status_div.has_class('status-reshared-wrapper')
             
             try:
                 created_span = status_div.find('.actions>.created_at')[0]
@@ -812,16 +862,27 @@ class BroadcastTask(Task):
                 target_type = status_item_div.attr('data-target-type')
                 object_kind = status_item_div.attr('data-object-kind')
                 object_id = status_item_div.attr('data-object-id')
+                if not douban_user_id:
+                    douban_user_id = status_item_div.attr('data-uid')
+                if not douban_id:
+                    douban_id = status_div.attr('data-sid')
+                blockquote = PyQuery(status_item_div.find('blockquote')).html()
             except:
                 pass
 
+            if not douban_id or douban_id == 'None':
+                """
+                原广播已被删除
+                """
+                return None, None
+
             detail = {
-                'douban_user_id': status_div.attr('data-uid'),
-                'douban_id': status_div.attr('data-sid'),
+                'douban_id': douban_id,
+                'douban_user_id': douban_user_id,
                 'content': status_div.outer_html(),
                 'created': created_at,
-                'is_reshared': status_div.has_class('status-reshared-wrapper'),
-                'is_saying': status_div.has_class('saying'),
+                'is_reshared': is_reshared,
+                'is_saying': is_saying,
                 'is_noreply': is_noreply,
                 'updated_at': now,
                 'reshared_count': reshared_count,
@@ -831,8 +892,29 @@ class BroadcastTask(Task):
                 'target_type': target_type,
                 'object_kind': object_kind,
                 'object_id': object_id,
+                'user': self.fetch_user_by_id(douban_user_id),
+                'blockquote': blockquote,
             }
-            return detail
+
+            if is_reshared:
+                reshared_status_div = PyQuery(status_div.find('.status-real-wrapper').eq(0))
+                reshared_detail, _ = parse_status(reshared_status_div)
+                if reshared_detail:
+                    detail['reshared_id'] = reshared_detail['douban_id']
+
+            if target_type == 'sns':
+                attachments = []
+                images = status_div.find('.attachments-saying.group-pics img')
+                for img in images:
+                    attachments.append({
+                        'type': 'image',
+                        'url': PyQuery(img).attr('src')
+                    })
+                if attachments:
+                    self.save_attachments(attachments)
+                    detail['attachments'] = attachments
+
+            return detail, reshared_detail
 
         while True:
             response = self.fetch_url_content(url.format(page))
@@ -841,16 +923,45 @@ class BroadcastTask(Task):
             if len(statuses_in_page) == 0:
                 break
             status_details = []
+            reshared_details = []
             for status_wrapper in statuses_in_page:
-                status_details.append(parse_status(status_wrapper))
-            timeline_in_page.extend(self.save_status(status_details))
+                status_detail, reshared_detail = parse_status(status_wrapper)
+                status_details.append(status_detail)
+                if reshared_detail:
+                    reshared_details.append(reshared_detail)
+
+            reshared_objects = self.save_status_list(reshared_details)
+            reshared_mapping = {_.douban_id: _ for _ in reshared_objects}
+            for detail in status_details:
+                if 'reshared_id' in detail:
+                    detail['reshared'] = reshared_mapping[detail['reshared_id']]
+                    del detail['reshared_id']
+            status_objects = self.save_status_list(status_details)
+            timeline_in_page.extend(status_objects)
             page += 1
 
         return timeline_in_page
 
     @dbo.atomic()
     def save_timeline(self, timeline):
-        print(len(timeline))
+        timeline_objects = []
+        user = self.account.user
+        db.Timeline.delete().where(db.Timeline.user == user).execute()
+        for broadcast in timeline:
+            timeline_objects.append(db.Timeline.create(user=user, broadcast=broadcast))
+        return timeline_objects
+
+
+    @dbo.atomic()
+    def save_attachments(self, attachments):
+        attachment_objects = []
+        for attachment in attachments:
+            try:
+                attachment_object = db.Attachment.safe_create(**attachment)
+            except db.IntegrityError:
+                attachment_object = db.Attachment.get(db.Attachment.url == attachment['url'])
+            attachment_objects.append(attachment_object)
+        return attachment_objects
 
     def run(self):
         now = datetime.datetime.now()

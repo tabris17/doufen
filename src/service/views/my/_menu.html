@@ -24,7 +24,7 @@
     </ul>
     <p class="menu-label is-size-5">我的……</p>
     <ul class="menu-list">
-        <li><a {% if active_page == 'broadcast' %}class="is-active"{% else %} href=""{% end %}>广播</a></li>
+        <li><a {% if active_page == 'broadcast' %}class="is-active"{% else %} href="{{ reverse_url('my.broadcast') }}"{% end %}>广播</a></li>
         <li><a {% if active_page == 'notes' %}class="is-active"{% else %} href=""{% end %}>日记</a></li>
         <!--
         <li><a {% if active_page == 'photos' %}class="is-active"{% else %} href=""{% end %}>相册</a></li>

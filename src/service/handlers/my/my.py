@@ -146,3 +146,13 @@ class MusicHistorical(BaseRequestHandler):
             db.User, on=db.MyMusicHistorical.music
         ).where(db.MyMusicHistorical.user == self.get_current_user()).order_by(db.MyMusicHistorical.id.desc())
         self.list(query, 'my/music_historical.html')
+
+
+class Broadcast(BaseRequestHandler):
+    def get(self):
+        query = db.Timeline.select(
+            db.Timeline, 
+            db.Broadcast, 
+            db.User
+        ).join(db.Broadcast).join(db.User, db.JOIN.LEFT_OUTER, on=db.Timeline.broadcast.user).where(db.Timeline.user == self.get_current_user()).order_by(db.Timeline.id.desc())
+        self.list(query, 'my/broadcast.html')
