@@ -102,34 +102,34 @@
     </article>
 
     <div class="content">
-            {% if subject.summary %}
-            <h2 class="subtitle is-size-5">简介</h2>
-            {% for ln in subject.summary.split("\n") %}
-                {% if ln %}
-                <p>{{ ln }}</p>
-                {% end %}
+        {% if subject.summary %}
+        <h2 class="subtitle is-size-5">简介</h2>
+        {% for ln in subject.summary.split("\n") %}
+            {% if ln %}
+            <p>{{ ln }}</p>
             {% end %}
-            {% end %}
+        {% end %}
+        {% end %}
 
-            {% if 'tracks' in attrs %}
-            <h2 class="subtitle is-size-5">曲目</h2>
-            <p>
-                {% for ln in attrs['tracks'] %}
-                    {% for subln in ln.split("\n") %}
-                        {% if subln %}{{ subln }}<br>{% end %}
-                    {% end %}<br>
-                {% end %}
-            </p>
+        {% if 'tracks' in attrs %}
+        <h2 class="subtitle is-size-5">曲目</h2>
+        <p>
+            {% for ln in attrs['tracks'] %}
+                {% for subln in ln.split("\n") %}
+                    {% if subln %}{{ subln }}<br>{% end %}
+                {% end %}<br>
             {% end %}
-    
-            {% if subject.tags %}
-            {% set tags = ast.literal_eval(subject.tags) %}
-            <h2 class="subtitle is-size-5">豆瓣成员常用的标签</h2>
-            {% for tag in tags %}
-            <span class="tag is-size-6">{{ tag['name'] }}({{ tag['count'] }})</span>
-            {% end %}
-            {% end %}
-        </div>
+        </p>
+        {% end %}
+
+        {% if subject.tags %}
+        {% set tags = ast.literal_eval(subject.tags) %}
+        <h2 class="subtitle is-size-5">豆瓣成员常用的标签</h2>
+        {% for tag in tags %}
+        <span class="tag is-size-6">{{ tag['name'] }}({{ tag['count'] }})</span>
+        {% end %}
+        {% end %}
+    </div>
 
 </div>
 {% end %}

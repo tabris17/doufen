@@ -17,7 +17,7 @@
 
 <p>
 {% if broadcast.user %}
-    <strong>{{ broadcast.user.name }}</strong>
+    <strong><a href="{{ reverse_url('user', broadcast.user.douban_id) }}">{{ broadcast.user.name }}</a></strong>
     <a href="{{ broadcast.user.alt }}" class="external-link">
         <span class="icon">
             <i class="fas fa-external-link-alt"></i>
@@ -70,12 +70,14 @@
         <p>该广播已被<del>作者</del>管理员删除</p>
     </article>
     {% end %}
-{% elif broadcast.target_type == 'sns' %}
+{% elif broadcast.target_type == 'sns' and broadcast.object_kind == '1018' %}
     {% if broadcast.attachments %}
         {% set attachments = ast.literal_eval(broadcast.attachments) %}
         {% for attachment in attachments %}
             {% if attachment['type'] == 'image' %}
-                <img src="{{ attachment['url'] }}">
+                <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
+                    <img src="{{ attachment['url'] }}">
+                </figure>
             {% end %}
         {% end %}
     {% end %}
@@ -145,7 +147,7 @@
     </div>
     <div class="media-right">
         <ul class="menu has-text-centered">
-            <li><a href="" class="button is-primary">查看详情</a></li>
+            <li><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}" class="button is-primary">查看详情</a></li>
             {% if broadcast.status_url %}
             <li><a href="{{ broadcast.status_url }}" class="button external-link">豆瓣链接</a></li>
             {% end if %}

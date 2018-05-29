@@ -1,0 +1,171 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{subject.user.name}的广播{% end %}
+
+{% block main %}
+{% from pyquery import PyQuery %}
+{% import ast %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+
+    <article class="media" style="min-height: 220px;">
+        <figure class="media-left">
+            <p class="image is-48x48">
+                <img src="{{ subject.user.avatar if subject.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+            </p>
+        </figure>    
+        <div class="media-content">
+            <div class="content">
+
+<p>
+{% if subject.user %}
+    <strong><a href="{{ reverse_url('user', subject.user.douban_id) }}">{{ subject.user.name }}</a></strong>
+    <a href="{{ subject.user.alt }}" class="external-link">
+        <span class="icon">
+            <i class="fas fa-external-link-alt"></i>
+        </span>
+    </a>
+{% else %}
+    <strong>未知用户</strong>
+{% end %}
+<span>
+{% if subject.target_type == 'sns' %}
+说：
+{% elif subject.target_type == 'movie' %}
+看电影：
+{% elif subject.target_type == 'music' %}
+听音乐：
+{% elif subject.target_type == 'book' %}
+读书：
+{% elif subject.target_type == 'rec' %}
+分享：
+{% elif subject.target_type == 'fav' %}
+喜欢：
+{% elif subject.target_type == 'site' %}
+小站：
+{% elif subject.target_type == 'doulist' %}
+添加豆列：
+{% elif subject.target_type == 'game' %}
+玩游戏：
+{% elif subject.target_type == 'loc' %}
+参加活动：
+{% elif subject.target_type == 'ark' %}
+写评论：
+{% elif subject.target_type == 'arya' %}
+赞赏：
+{% elif subject.target_type == '' %}
+转播：
+{% else %}
+其他：
+{% end %}
+</span>
+</p>
+{% if subject.blockquote %}
+<p class="text-break">{{ PyQuery(subject.blockquote).text() }}</p>
+{% end %}
+
+{% if subject.is_reshared %}
+    {% if subject.reshared %}
+        {% module Template('my/_broadcast.html', fully=False, broadcast=subject.reshared) %}
+    {% else %}
+    <article class="content box">
+        <p>该广播已被<del>作者</del>管理员删除</p>
+    </article>
+    {% end %}
+{% elif subject.target_type == 'sns' and subject.object_kind == '1018' %}
+    {% if subject.attachments %}
+        {% set attachments = ast.literal_eval(subject.attachments) %}
+        {% for attachment in attachments %}
+            {% if attachment['type'] == 'image' %}
+                <figure class="image">
+                    <img src="{{ attachment['url'] }}">
+                </figure>
+            {% end %}
+        {% end %}
+    {% end %}
+{% elif subject.target_type == 'rec' %}
+    {% set rec = PyQuery(subject.content).find('.status-item>.mod>.bd.rec>.block') %}
+    {% set rec_video = PyQuery(subject.content).find('.status-item>.mod>.bd.rec>.block-video') %}
+    {% if rec %}
+    <article class="box media">
+        {% set rec_img = PyQuery(PyQuery(PyQuery(rec).find('.pic img').eq(0))) %}
+        {% if rec_img %}
+        <figure class="media-left is-marginless">
+            <p class="image is-64x64" style="overflow: hidden;">
+                <img src="{{ rec_img.attr('src') }}">
+            </p>
+        </figure>
+        {% end %}
+        <div class="media-content" style="margin-left: 0.75rem;">
+            <div class="content">
+                {% set rec_title = PyQuery(PyQuery(rec).find('.content>.title>a')) %}
+                <p class="is-size-5"><a href="{{ rec_title.attr('href') }}" class="external-link">{{ rec_title.text() }}</a></p>
+                
+                {% set rec_abstract = PyQuery(PyQuery(rec).find('.content>p').eq(0)) %}
+                <p class="text-break">{{ rec_abstract.text() }}</p>
+            </div>
+        </div>
+    </article>
+    {% elif rec_video %}
+    <article class="box content">
+        {% set rec_img = PyQuery(PyQuery(PyQuery(rec_video).find('.video-player img').eq(0))) %}
+        {% set rec_title = PyQuery(PyQuery(PyQuery(rec_video).find('.title>a').eq(0))) %}
+        <figure style="text-align: left;">
+            <p class="image" style="overflow: hidden; max-width: 480px;">
+                <img src="{{ rec_img.attr('src') }}">
+            </p>
+            <p class="is-size-5"><a href="{{ rec_title.attr('href') }}">{{ rec_title.text() }}</a></p>
+        </figure>
+    </article>
+    {% else %}
+    <blockquote class="text-break">{{ PyQuery(subject.content).text() }}</blockquote>
+    {% end %}
+{% elif subject.target_type == 'movie' and subject.object_kind == '1002' %}
+    {% module Movie(subject.object_id) %}
+{% elif subject.target_type == 'book' and subject.object_kind == '1001' %}
+    {% module Book(subject.object_id) %}
+{% elif subject.target_type == 'music' and subject.object_kind == '1002' %}
+    {% module Music(subject.object_id) %}
+{% else %}
+    <blockquote class="text-break">{{ PyQuery(subject.content).text() }}</blockquote>
+{% end %}
+
+{% if not subject.is_noreply %}
+<nav class="level">
+    <div class="level-left">
+        <div class="level-item">{{ subject.comments_count }}回应</div>
+        <div class="level-item">赞({{ subject.like_count }})</div>
+        <div class="level-item">转播({{ subject.reshared_count }})</div>
+    </div>
+    <div class="level-right">
+        <div class="level-item">{{ subject.created if subject.created else '' }}</div>
+    </div>
+</nav>
+{% end %}
+
+                            
+
+            </div>
+        </div>
+        <div class="media-right">
+        </div>
+    </article>
+
+</div>
+{% end %}

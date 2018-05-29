@@ -18,6 +18,16 @@ class BaseRequestHandler(RequestHandler):
     def server(self):
         return self.application.server
 
+    
+    def get_current_user(self):
+        """
+        获取当前用户，没有则返回None
+        """
+        try:
+            return db.Account.getDefault().user
+        except db.Account.DoesNotExist:
+            pass
+
 
 class Notifier(WebSocketHandler):
     """
@@ -68,7 +78,7 @@ class Book(BaseRequestHandler):
         except db.Book.DoesNotExist:
             raise tornado.web.HTTPError(404)
         try:
-            mine = db.MyBook.get(db.MyBook.book == subject)
+            mine = db.MyBook.get(db.MyBook.book == subject, db.MyBook.user == self.get_current_user())
         except db.MyBook.DoesNotExist:
             mine = None
         self.render('book.html', subject=subject, history=history, mine=mine)
@@ -85,7 +95,7 @@ class Music(BaseRequestHandler):
         except db.Music.DoesNotExist:
             raise tornado.web.HTTPError(404)
         try:
-            mine = db.MyMusic.get(db.MyMusic.music == subject)
+            mine = db.MyMusic.get(db.MyMusic.music == subject, db.MyMusic.user == self.get_current_user())
         except db.MyMusic.DoesNotExist:
             mine = None
         self.render('music.html', subject=subject, history=history, mine=mine)
@@ -102,7 +112,45 @@ class Movie(BaseRequestHandler):
         except db.Movie.DoesNotExist:
             raise tornado.web.HTTPError(404)
         try:
-            mine = db.MyMovie.get(db.MyMovie.movie == subject)
+            mine = db.MyMovie.get(db.MyMovie.movie == subject, db.MyMovie.user == self.get_current_user())
         except db.MyMovie.DoesNotExist:
             mine = None
         self.render('movie.html', subject=subject, history=history, mine=mine)
+
+
+class Broadcast(BaseRequestHandler):
+    """
+    广播
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.Broadcast.get(db.Broadcast.douban_id == douban_id)
+        except db.Broadcast.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        self.render('broadcast.html', subject=subject)
+
+
+
+class User(BaseRequestHandler):
+    """
+    用户
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.User.get(db.User.douban_id == douban_id)
+            history = db.UserHistorical.select().where(db.UserHistorical.id == subject.id)
+        except db.User.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        is_follower = db.Follower.select().where(
+            db.Follower.follower == subject,
+            db.Follower.user == self.get_current_user()
+        ).exists()
+
+        is_following = db.Following.select().where(
+            db.Following.following_user == subject,
+            db.Following.user == self.get_current_user()
+        ).exists()
+
+        self.render('user.html', subject=subject, history=history, is_follower=is_follower, is_following=is_following)

@@ -229,6 +229,8 @@ class Task:
         except db.User.DoesNotExist:
             user = self.fetch_user_by_api(name)
 
+        return user
+
     def fetch_user_by_id(self, douban_id):
         """
         尝试从本地获取用户信息，如果没有则从网上抓取
@@ -555,6 +557,7 @@ class FollowingFollowerTask(Task):
 
     def run(self):
         account = self.account
+
         following_user_list = self.fetch_follow_list(account.name, 'following')
         following_users = [(user_detail['uid'], self.fetch_user(user_detail['uid'])) for user_detail in following_user_list]
         self.save_following(account.user, following_users)
@@ -774,11 +777,13 @@ class BroadcastTask(Task):
             1001: 图书
             1002: 电影
             1003: 音乐
+            1005: 关注好友
             1011: 活动
             1012: 评论
             1013: 小组话题
             1014: （电影）讨论
             1015: 日记
+            1018: 图文广播
             1019: 小组
             1020: 豆列
             1021: 九点文章
@@ -908,8 +913,16 @@ class BroadcastTask(Task):
                 for img_lnk in images:
                     attachments.append({
                         'type': 'image',
-                        'url': PyQuery(img_lnk).attr('href')
+                        'url': PyQuery(img_lnk).attr('href'),
                     })
+                images = status_div.find('.attachments-saying.attachments-pic img')
+                for img in images:
+                    img_lnk = PyQuery(img).attr('data-raw-src')
+                    if img_lnk:
+                        attachments.append({
+                            'type': 'image',
+                            'url': img_lnk,
+                        })
                 if attachments:
                     self.save_attachments(attachments)
                     detail['attachments'] = attachments

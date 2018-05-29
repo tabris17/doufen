@@ -24,12 +24,9 @@ def require_login(func):
 
 
 class BaseRequestHandler(handlers.BaseRequestHandler):
-    def get_current_user(self):
-        try:
-            return db.Account.getDefault().user
-        except db.Account.DoesNotExist:
-            pass
-
+    """
+    基础类
+    """
     def prepare(self):
         user = self.get_current_user()
         if not user:
