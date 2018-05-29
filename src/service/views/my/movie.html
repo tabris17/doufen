@@ -37,7 +37,7 @@
                 <div class="media-content">
                     <div class="content">
                         <p>
-                            <strong><a href="{{ row.movie.alt }}" class="external-link">{{ row.movie.title }}</a></strong>
+                            <strong><a href="https://movie.douban.com/subject/{{ row.movie.douban_id }}/" class="external-link">{{ row.movie.title }}</a></strong>
                             {% if row.movie.alt_title %}
                             ({{ row.movie.alt_title }})
                             {% end %}

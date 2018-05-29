@@ -33,7 +33,7 @@
         <div class="media-content">
             <div class="content">
                 <p>
-                    <strong><a href="{{ subject.alt }}" class="external-link">{{ subject.title }}</a></strong>
+                    <strong><a href="https://movie.douban.com/subject/{{ subject.douban_id }}/" class="external-link">{{ subject.title }}</a></strong>
                     {% if subject.alt_title %}
                     ({{ subject.alt_title }})
                     {% end %}
@@ -84,6 +84,7 @@
                     <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_duration']) }}</dd>
                     {% end %}
                 </dl>
+                {% if mine %}
                 <dl class="is-horizontal is-label-size-4  is-marginless">
                     <dt>我的评价</dt>
                     <dd>
@@ -104,6 +105,7 @@
                     {% end %}
                 </dl>
                 <p class="text-break">{{ mine.comment }}</p>
+                {% end %}
             </div>
         </div>
         <div class="media-right">

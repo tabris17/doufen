@@ -2,8 +2,10 @@
 
 {% block title %}我的广播{% end %}
 
+
 {% block main %}
 {% import ast %}
+
 {% from pyquery import PyQuery %}
 <div class="container">
     <div class="columns is-mobile">
@@ -20,87 +22,14 @@
                 </div>
                 <div class="level-right">
                     <p class="level-item">
-                        <!--<a class="button" href="{{ reverse_url('my.book.historical') }}">查看历史记录</a>-->
+                        <!--<a class="button" href="">查看历史记录</a>-->
                     </p>
                 </div>
             </nav>
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
-            {% set user = row.broadcast.user %}
-            {% set broadcast = row.broadcast %}
-            <article class="media box" style="min-height: 120px;">
-                <figure class="media-left">
-                    <p class="image is-48x48">
-                        <img src="{{ user.avatar if user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
-                    </p>
-                </figure>
-                <div class="media-content">
-                    <div class="content">
-                        <p>
-                        {% if user %}
-                            <strong>{{ user.name }}</strong>
-                            <a href="{{ user.alt }}" class="external-link">
-                                <span class="icon">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </span>
-                            </a>
-                        {% else %}
-                            <strong>未知用户</strong>
-                        {% end %}
-                        </p>
-                        {% if broadcast.blockquote %}
-                        <p class="text-break">{{ PyQuery(broadcast.blockquote).text() }}</p>
-                        {% end %}
-                        {% if broadcast.is_reshared %}
-                        {% set reshared = broadcast.reshared %}
-                        <article class="content box">
-                            {% if reshared %}
-                            <p>
-                            {% if reshared.user %}
-                                <strong>{{ reshared.user.name }}</strong>
-                                <a href="{{ reshared.user.alt }}" class="external-link">
-                                    <span class="icon">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </span>
-                                </a>
-                            {% else %}
-                                <strong>未知用户</strong>
-                            {% end %}
-                            </p>
-                            {% if reshared.blockquote %}
-                            <p class="text-break">{{ PyQuery(reshared.blockquote).text() }}</p>
-                            {% end %}
-
-                            {% if reshared.attachments %}
-                            {% set attachments = ast.literal_eval(reshared.attachments) %}
-                            {% for attachment in attachments %}
-                                {% if attachment['type'] == 'image' %}
-                                <img src="{{ attachment['url'] }}">
-                                {% end %}
-                            {% end %}
-                            {% end %}
-
-                            {% else %}
-                            <p>该广播已被<del>作者</del>管理员删除</p>
-                            {% end %}
-                        </article>
-                        {% elif broadcast.attachments %}
-                        {% set attachments = ast.literal_eval(broadcast.attachments) %}
-                        {% for attachment in attachments %}
-                            {% if attachment['type'] == 'image' %}
-                            <img src="{{ attachment['url'] }}">
-                            {% end %}
-                        {% end %}
-                        {% end %}
-                    </div>
-                </div>
-                <div class="media-right">
-                    {% if broadcast.status_url %}
-                    <a href="{{ broadcast.status_url }}" class="button external-link">查看网页</a>
-                    {% end if %}
-                </div>
-            </article>
+                {% module Template('my/_broadcast.html', fully=True, broadcast=row.broadcast) %}
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
         </div>

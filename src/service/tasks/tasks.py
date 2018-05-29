@@ -787,7 +787,7 @@ class BroadcastTask(Task):
             1026: 相册
             1043: 影人
             1044: 艺术家
-            1062: board
+            1062: board(???)
             2001: 线上活动
             2004: 小站视频
             3043: 豆瓣FM单曲
@@ -823,28 +823,6 @@ class BroadcastTask(Task):
             except:
                 is_noreply = True
 
-            if not is_noreply:
-                """
-                获取创建时间、回复、点赞、转播数
-                """
-                try:
-                    created_at = PyQuery(created_span).attr('title')
-                    reply_link = PyQuery(status_div.find('.actions>.new-reply'))
-                    comments_count = reply_link.attr('data-count')
-                    like_span = PyQuery(status_div.find('.actions>.like-count'))
-                    like_count = like_span.attr('data-count')
-                    if like_count is None:
-                        try:
-                            like_count = int(re.match(r'赞\((.*)\)', like_span.text())[1])
-                        except:
-                            like_count = 0
-                    reshared_span = PyQuery(status_div.find('.actions>.reshared-count'))
-                    reshared_count = reshared_span.attr('data-count')
-                    if reshared_count is None:
-                        reshared_count = 0
-                except:
-                    pass
-
             try:
                 """
                 获取广播链接
@@ -869,6 +847,28 @@ class BroadcastTask(Task):
                 blockquote = PyQuery(status_item_div.find('blockquote')).html()
             except:
                 pass
+
+            if not is_noreply:
+                """
+                获取创建时间、回复、点赞、转播数
+                """
+                try:
+                    created_at = PyQuery(created_span).attr('title')
+                    reply_link = PyQuery(status_item_div.find('.actions>.new-reply'))
+                    comments_count = reply_link.attr('data-count')
+                    like_span = PyQuery(status_item_div.find('.actions>.like-count'))
+                    like_count = like_span.attr('data-count')
+                    if like_count is None:
+                        try:
+                            like_count = int(re.match(r'赞\((.*)\)', like_span.text().strip())[1])
+                        except:
+                            like_count = 0
+                    reshared_span = PyQuery(status_item_div.find('.actions>.reshared-count'))
+                    reshared_count = reshared_span.attr('data-count')
+                    if reshared_count is None:
+                        reshared_count = 0
+                except:
+                    pass
 
             if not douban_id or douban_id == 'None':
                 """
@@ -904,15 +904,21 @@ class BroadcastTask(Task):
 
             if target_type == 'sns':
                 attachments = []
-                images = status_div.find('.attachments-saying.group-pics img')
-                for img in images:
+                images = status_div.find('.attachments-saying.group-pics a.view-large')
+                for img_lnk in images:
                     attachments.append({
                         'type': 'image',
-                        'url': PyQuery(img).attr('src')
+                        'url': PyQuery(img_lnk).attr('href')
                     })
                 if attachments:
                     self.save_attachments(attachments)
                     detail['attachments'] = attachments
+            elif target_type == 'movie' and object_kind == '1002':
+                self.fetch_movie(object_id)
+            elif target_type == 'book' and object_kind == '1001':
+                self.fetch_book(object_id)
+            elif target_type == 'music' and object_kind == '1003':
+                self.fetch_music(object_id)
 
             return detail, reshared_detail
 
@@ -943,12 +949,21 @@ class BroadcastTask(Task):
         return timeline_in_page
 
     @dbo.atomic()
-    def save_timeline(self, timeline):
+    def save_timeline(self, timeline, now):
         timeline_objects = []
         user = self.account.user
-        db.Timeline.delete().where(db.Timeline.user == user).execute()
+        #db.Timeline.delete().where(db.Timeline.user == user).execute()
         for broadcast in timeline:
-            timeline_objects.append(db.Timeline.create(user=user, broadcast=broadcast))
+            try:
+                timeline_item = db.Timeline.create(user=user, broadcast=broadcast, updated_at=now)
+            except db.IntegrityError:
+                timeline_item = db.Timeline.get(
+                    db.Timeline.user == user,
+                    db.Timeline.broadcast == broadcast
+                )
+                timeline_item.updated_at = now
+                timeline_item.save()
+            timeline_objects.append(timeline_item)
         return timeline_objects
 
 
@@ -968,7 +983,7 @@ class BroadcastTask(Task):
         timeline = []
         timeline.extend(self.fetch_statuses_list(now))
         timeline.reverse()
-        self.save_timeline(timeline)
+        self.save_timeline(timeline, now)
 
 
 class NoteTask(Task):

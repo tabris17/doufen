@@ -1,0 +1,47 @@
+
+{% import ast %}
+
+{% if music %}
+<article class="media box">
+    <figure class="media-left is-marginless" style="min-height: 160px;">
+        <p class="image is-96x96">
+            <img src="{{ music.image }}">
+        </p>
+    </figure>
+    <div class="media-content" style="margin-left: 0.75rem;">
+        <div class="content">
+            <p>
+                <strong><a href="{{ music.alt }}" class="external-link">{{ music.title }}</a></strong>
+                {% if music.alt_title %}({{ music.alt_title }}){% end %}
+            </p>
+            {% set attrs = ast.literal_eval(music.attrs) %}
+            <p class="text-break">{{ music.summary[0:100] }}...</p>
+            <dl class="is-horizontal is-label-size-4">
+                {% if 'singer' in attrs and attrs['singer'] %}
+                <dt class="has-text-left">表演者</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(attrs['singer']) }}</dd>
+                {% end %}
+
+                {% if 'pubdate' in attrs and attrs['pubdate'] %}
+                <dt class="has-text-left">发行时间</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
+                {% end %}
+            </dl>
+        </div>
+    </div>
+    <div class="media-right">
+        <p>
+            {% if music.rating %}
+            {% set rating = ast.literal_eval(music.rating) %}
+            豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+            <a href="{{ music.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+            {% end %}
+        </p>
+        <p style="margin-top: 10px;">
+            <a href="{{ reverse_url('music', music.douban_id) }}" class="text">查看详情</a>
+        </p>
+    </div>
+</article>
+{% else %}
+<p class="box">唱片可能已被删除</p>
+{% end %}

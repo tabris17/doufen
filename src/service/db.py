@@ -53,11 +53,16 @@ class BaseModel(Model):
 
     _attrs_to_compare_ = []
 
-    def equals(self, field_values):
+    def equals(self, field_values, strict=False):
         """
-        比较两个模型的值是否相等
+        比较模型数据和字典内容是否一致
         """
         for attr in self._attrs_to_compare_:
+            if not hasattr(self, attr):
+                if strict:
+                    return False
+                else:
+                    break
             if str(getattr(self, attr)) != str(field_values.get(attr)):
                 return False
         return True
@@ -543,8 +548,14 @@ class Timeline(BaseModel):
     """
     广播时间轴
     """
+    class Meta:
+        indexes = (
+            (('user', 'broadcast'), True),
+        )
+
     user = ForeignKeyField(User, index=True, help_text='所属用户')
     broadcast = ForeignKeyField(Broadcast, help_text='对应广播')
+    updated_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
 
 
 class Attachment(BaseModel):
