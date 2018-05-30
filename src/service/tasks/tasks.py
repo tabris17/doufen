@@ -116,6 +116,9 @@ class Task:
                 logging.info('fetch URL {0}'.format(url))
                 response = self._request_session.get(url, proxies=self._proxy, timeout=REQUEST_TIMEOUT)
                 response.raise_for_status()
+                if response.history and response.url.startswith('https://www.douban.com/accounts/login'):
+                    response.status_code = 403
+                    raise requests.exceptions.HTTPError()
                 return response
             except requests.exceptions.HTTPError as e:
                 if response.status_code == 403:
@@ -137,9 +140,9 @@ class Task:
         def prepare_file(url, retries):
             _, file_ext = os.path.splitext(url)
             hash_str = hashlib.md5('{0}|{1}'.format(retries, url).encode()).hexdigest()
-            file_path = '{0}/{1}/{2}/{3}'.format(hash_str[0:2], hash_str[2:4], hash_str[4:6], hash_str[6:8])
+            file_path = '{0}/{1}'.format(hash_str[0:2], hash_str[2:4])
 
-            local_filename = '{0}/{1}'.format(file_path, hash_str[8:] + file_ext)
+            local_filename = '{0}/{1}'.format(file_path, hash_str[4:] + file_ext)
             cache_path = settings.get('cache')
             directory = '{0}/{1}'.format(cache_path, file_path)
             full_path_filename = '{0}/{1}'.format(cache_path, local_filename)
@@ -1078,6 +1081,9 @@ class BroadcastTask(Task):
         timeline.extend(self.fetch_statuses_list(now))
         timeline.reverse()
         self.save_timeline(timeline, now)
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
 
 
 class NoteTask(Task):

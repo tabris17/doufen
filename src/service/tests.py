@@ -16,10 +16,6 @@ task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
 task = tasks.BroadcastTask(db.Account.get_by_id(1))
 
-while task.fetch_attachment():
-    pass
-exit()
-
 result = task(
     requests_per_minute=30, 
     local_object_duration=60*60*24*300,

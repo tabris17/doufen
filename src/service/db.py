@@ -555,7 +555,7 @@ class Timeline(BaseModel):
 
     user = ForeignKeyField(User, index=True, help_text='所属用户')
     broadcast = ForeignKeyField(Broadcast, help_text='对应广播')
-    updated_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
 
 class Attachment(BaseModel):
@@ -567,3 +567,66 @@ class Attachment(BaseModel):
     local = CharField(unique=True, null=True, help_text='本地文件名')
     ref_count = IntegerField(default=0, help_text='引用计数(预留，暂不使用)')
     created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())
+
+
+class Note(BaseModel):
+    """
+    日记
+    """
+    _attrs_to_compare_ = [
+        'title',
+        'created',
+        'introduction',
+        'content',
+        'attachments',
+        'views_count',
+        'comments_count',
+    ]
+
+    douban_id = CharField(unique=True, help_text='日记ID')
+    user = ForeignKeyField(User, index=True, help_text='用户')
+    url = CharField(null=True, help_text='地址')
+    title = CharField(null=True, help_text='标题')
+    created = CharField(null=True, help_text='发布时间')
+    introduction = TextField(null=True, help_text='导读')
+    content = TextField(null=True, help_text='正文')
+    attachments = TextField(null=True, help_text='附件')
+    views_count = IntegerField(null=True, help_text='浏览人数')
+    comments_count = IntegerField(null=True, help_text='评论人数')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class NoteHistorical(Note):
+    """
+    日记历史数据
+    """
+    class Meta:
+        table_name = 'note_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    note = ForeignKeyField(Note, field=Note.id)
+
+
+class Commentable(BaseModel):
+    """
+    可评论的对象（广播、日记、相册、照片）
+    """
+    class Meta:
+        indexes = (
+            (('type', 'object_id'), True),
+        )
+
+    type = CharField(help_text='类型')
+    object_id = IntegerField(help_text='对象ID')
+
+
+class Comment(BaseModel):
+    """
+    评论
+    """
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    commentable = ForeignKeyField(Commentable)
+    user = ForeignKeyField(User)
+    content = TextField(null=True)
+    created = CharField()
