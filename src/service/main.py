@@ -9,10 +9,7 @@ import db
 import version
 from server import Server
 from worker import Worker
-
-DEFAULT_SERVICE_PORT = 8398
-DEFAULT_SERVICE_HOST = '127.0.0.1'
-DEFAULT_DATEBASE = 'var/data/graveyard.db'
+from setting import settings, DEFAULT_SERVICE_PORT, DEFAULT_DATEBASE, DEFAULT_CACHE_PATH, DEFAULT_SERVICE_HOST
 
 
 def parse_args(args):
@@ -29,6 +26,8 @@ def parse_args(args):
                         metavar='port', help='specify the port to listen')
     parser.add_argument('-s', '--save', default=DEFAULT_DATEBASE,
                         metavar='database', dest='database', help='specify the database file')
+    parser.add_argument('-c', '--cache', default=DEFAULT_CACHE_PATH,
+                        metavar='cache', dest='cache', help='specify the cache path')
     return parser.parse_args(args)
 
 
@@ -38,15 +37,21 @@ def main(args):
     """
     parsed_args = parse_args(args)
 
+    settings.update({
+        'cache': parsed_args.cache,
+        'database': parsed_args.database,
+        'port': parsed_args.port,
+    })
+
     logging.basicConfig(
-        level=logging.DEBUG if __debug__ else logging.INFO,
+        level=logging.DEBUG if settings.get('debug') else logging.INFO,
         format='[%(asctime)s] (%(pathname)s:%(lineno)s) [%(levelname)s] %(name)s: %(message)s',
         datefmt='%m-%d %H:%M'
     )
 
     db.init(parsed_args.database)
 
-    server = Server(parsed_args.port, DEFAULT_SERVICE_HOST)
+    server = Server(parsed_args.port, DEFAULT_SERVICE_HOST, parsed_args.cache)
     server.run()
 
 

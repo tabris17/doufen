@@ -37,6 +37,7 @@ class Add(BaseRequestHandler):
             name = re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', homepage).pop(0)
             account = Account.get(Account.name == name)
             account.session = session
+            account.is_invalid = False
             account.save()
         except Account.DoesNotExist:
             Account.create(session=session, name=name)
@@ -48,7 +49,7 @@ class Add(BaseRequestHandler):
 
 class Remove(BaseRequestHandler):
     """
-    添加帐号
+    删除帐号
     """
     def post(self):
         account_id = self.get_argument('id')

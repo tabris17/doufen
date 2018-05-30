@@ -173,6 +173,11 @@
                 event.preventDefault()
                 modal.toggleClass('is-active').removeClass('is-hidden')
             })
+    
+            $('.load-from-cache').each(function () {
+                let $img = $(this)
+                $img.attr('src', '{{ reverse_url("attachment", "") }}' + encodeURIComponent($img.data('src')))
+            })
         })
     </script>
     {% block body_extra %}{% end %}
@@ -180,4 +185,4 @@
 
 </html>
 
-{% block login %} {% end %}
+{% block login %}{% end %}

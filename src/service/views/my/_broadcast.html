@@ -18,11 +18,13 @@
 <p>
 {% if broadcast.user %}
     <strong><a href="{{ reverse_url('user', broadcast.user.douban_id) }}">{{ broadcast.user.name }}</a></strong>
-    <a href="{{ broadcast.user.alt }}" class="external-link">
+    {% if broadcast.status_url %}
+    <a href="{{ broadcast.status_url }}" title="访问广播的豆瓣网页" class="external-link">
         <span class="icon">
             <i class="fas fa-external-link-alt"></i>
         </span>
     </a>
+    {% end %}
 {% else %}
     <strong>未知用户</strong>
 {% end %}
@@ -76,7 +78,7 @@
         {% for attachment in attachments %}
             {% if attachment['type'] == 'image' %}
                 <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
-                    <img src="{{ attachment['url'] }}">
+                    <a href="#" class="preview action-open" data-target="#modal-preview"><img class="load-from-cache" data-src="{{ attachment['url'] }}"></a>
                 </figure>
             {% end %}
         {% end %}
@@ -134,6 +136,9 @@
         <div class="level-item">{{ broadcast.comments_count }}回应</div>
         <div class="level-item">赞({{ broadcast.like_count }})</div>
         <div class="level-item">转播({{ broadcast.reshared_count }})</div>
+        {% if not fully %}
+        <div class="level-item"><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}">查看详情</a></div>
+        {% end %}
     </div>
     <div class="level-right">
         <div class="level-item">{{ broadcast.created if broadcast.created else '' }}</div>
@@ -147,10 +152,7 @@
     </div>
     <div class="media-right">
         <ul class="menu has-text-centered">
-            <li><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}" class="button is-primary">查看详情</a></li>
-            {% if broadcast.status_url %}
-            <li><a href="{{ broadcast.status_url }}" class="button external-link">豆瓣链接</a></li>
-            {% end if %}
+            <li><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}" class="button">查看详情</a></li>
         </ul>
     </div>
 </article>

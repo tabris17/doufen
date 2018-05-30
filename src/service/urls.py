@@ -5,8 +5,10 @@ import handlers.settings.accounts
 import handlers.dashboard
 import handlers.my
 
+
 patterns = [
     (r'/', handlers.Main, None, 'index'),
+    (r'/attachment/(.+)', handlers.Attachment, None, 'attachment'),
     (r'/settings', handlers.settings.General, None, 'settings'),
     (r'/settings/general', handlers.settings.General, None, 'settings.general'),
     (r'/settings/network', handlers.settings.Network, None, 'settings.network'),

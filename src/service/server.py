@@ -13,7 +13,8 @@ import db
 import urls
 import setting
 import uimodules
-from worker import Worker, REQUESTS_PER_MINUTE, LOCAL_OBJECT_DURATION
+from worker import Worker, REQUESTS_PER_MINUTE, LOCAL_OBJECT_DURATION, BROADCAST_ACTIVE_DURATION, BROADCAST_INCREMENTAL_BACKUP, IMAGE_LOCAL_CACHE
+from setting import settings
 
 
 class Client:
@@ -81,10 +82,10 @@ class Server:
     主服务
     """
 
-    def __init__(self, port, address):
+    def __init__(self, port, address, cache_path):
         base_path = os.path.dirname(__file__)
-        settings = {
-            'debug': __debug__,
+        app_settings = {
+            'debug': settings.get('debug'),
             'template_path': os.path.join(base_path, 'views'),
             'static_path': os.path.join(base_path, 'static'),
             'static_url_prefix': '/static/',
@@ -92,7 +93,10 @@ class Server:
             'ui_modules': uimodules,
         }
 
-        application = Application(urls.patterns, **settings)
+        urls.patterns.append(    
+            (r'/cache/(.*)', tornado.web.StaticFileHandler, {'path': cache_path}, 'cache')
+        )
+        application = Application(urls.patterns, **app_settings)
         application.listen(port, address)
         self.application = application
 
@@ -116,11 +120,18 @@ class Server:
         self._workers.clear()
         requests_per_minute = setting.get('worker.requests-per-minute', int, REQUESTS_PER_MINUTE)
         local_object_duration = setting.get('worker.local-object-duration', int, LOCAL_OBJECT_DURATION)
+        broadcast_incremental_backup = setting.get('worker.broadcast-incremental-backup', bool, BROADCAST_INCREMENTAL_BACKUP)
+        broadcast_active_duration = setting.get('worker.broadcast-active-duration', int, BROADCAST_ACTIVE_DURATION)
+        image_local_cache = setting.get('worker.image-local-cache', bool, IMAGE_LOCAL_CACHE)
+        
         worker_args = {
             'queue_in': self._worker_input,
             'queue_out': self._worker_output,
             'requests_per_minute': requests_per_minute,
             'local_object_duration': local_object_duration,
+            'broadcast_incremental_backup': broadcast_incremental_backup,
+            'image_local_cache': image_local_cache,
+            'broadcast_active_duration': broadcast_active_duration,
             'db_path': db.DATEBASE_PATH,
         }
         worker = Worker(**worker_args)

@@ -1,42 +1,23 @@
-{% extends "../themes/main.html" %} 
+{% extends "settings.html" %}
 
-{% block title %}设置{% end %}
+{% block setting_menu %}
+{% module Template('settings/_menu.html', active_page='network') %}
+{% end %}
 
-{% block main %}
-<div class="container">
-    <nav class="breadcrumb" aria-label="breadcrumbs">
-        <ul>
-            <li>
-                <a>工具</a>
-            </li>
-            <li class="is-active">
-                <a aria-current="page">设置</a>
-            </li>
-        </ul>
-    </nav>
-
-    <div class="columns is-mobile">
-        <div class="column is-narrow">
-        {% module Template('settings/_menu.html', active_page='network') %}
+{% block setting_content %}
+<form method="post">
+    <label class="label">代理服务器</label>
+    <p class="control">
+        <textarea name="proxies" class="textarea">{{ proxies }}</textarea>
+    </p>
+    <p class="help is-size-6 has-text-danger">每行一个代理服务器地址</p>
+    <div class="field is-grouped is-grouped-centered">
+        <div class="control">
+            <button class="button is-link">确定</button>
         </div>
-        <div class="column">
-            <form method="post">
-                <label class="label">代理服务器</label>
-                <p class="control">
-                    <textarea name="proxies" class="textarea">{{ proxies }}</textarea>
-                </p>
-                <p class="help is-size-6 has-text-danger">每行一个代理服务器地址</p>
-                <div class="field is-grouped is-grouped-centered">
-                    <div class="control">
-                        <button class="button is-link">确定</button>
-                    </div>
-                    <div class="control">
-                        <button class="button is-text" type="reset">重置</button>
-                    </div>
-                </div>
-            </form>
+        <div class="control">
+            <button class="button is-text" type="reset">重置</button>
         </div>
     </div>
-
-</div>
+</form>
 {% end %}

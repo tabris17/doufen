@@ -1,0 +1,35 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}设置{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a>工具</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">设置</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% block setting_menu %}{% end %}
+        </div>
+        <div class="column">
+            {% if flash %}
+            <div class="notification is-success" id="flash-message">
+                <button class="delete" data-target="#flash-message"></button>
+                {{ flash }}
+            </div>
+            {% end %}
+
+            {% block setting_content %}{% end %}
+        </div>
+    </div>
+
+</div>
+{% end %}

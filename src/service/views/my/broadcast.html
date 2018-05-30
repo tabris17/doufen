@@ -37,4 +37,25 @@
     </div>
 
 </div>
+
+<div class="modal" id="modal-preview">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <p class="image">
+        <img src="" alt="" class="preview">
+        </p>
+    </div>
+    <button class="modal-close is-large action-close" aria-label="close" data-target="#modal-preview"></button>
+</div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        let $modalPreview = $('#modal-preview')
+        $('.preview').click(function () {
+            $modalPreview.find('img.preview').attr('src', $(this).find('img').attr('src'))
+        })
+    })
+</script>
 {% end %}

@@ -1,73 +1,144 @@
-{% extends "../themes/main.html" %} 
+{% extends "settings.html" %}
 
-{% block title %}设置{% end %}
+{% block setting_menu %}
+{% module Template('settings/_menu.html', active_page='general') %}
+{% end %}
 
-{% block main %}
-<div class="container">
-    <nav class="breadcrumb" aria-label="breadcrumbs">
-        <ul>
-            <li>
-                <a>工具</a>
-            </li>
-            <li class="is-active">
-                <a aria-current="page">设置</a>
-            </li>
-        </ul>
-    </nav>
-
-    <div class="columns is-mobile">
-        <div class="column is-narrow">
-        {% module Template('settings/_menu.html', active_page='general') %}
+{% block setting_content %}
+<form method="post">
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">抓取频率</label>
         </div>
-        <div class="column">
-            <form method="post">
-                <div class="field is-horizontal">
-                    <div class="field-label is-normal">
-                        <label class="label">抓取频率</label>
-                    </div>
-                    <div class="field-body">
-                        <div class="field is-expanded">
-                            <div class="field has-addons">
-                                <p class="control">
-                                    <input name="requests-per-minute" class="input" type="text" value="{{ requests_per_minute }}">
-                                </p>
-                                <p class="control">
-                                    <a class="button is-static">次/分钟</a>
-                                </p>
-                            </div>
-                            <p class="help is-size-6 has-text-danger">豆瓣网站对单个IP发起的请求频率有限制。如果数字设置过大，可能导致IP被豆瓣封杀。</p>
-                        </div>
-                    </div>
+        <div class="field-body">
+            <div class="field is-expanded">
+                <div class="field has-addons">
+                    <p class="control">
+                        <input name="requests-per-minute" class="input" type="text" value="{{ requests_per_minute }}">
+                    </p>
+                    <p class="control">
+                        <a class="button is-static">次/分钟</a>
+                    </p>
                 </div>
-                <div class="field is-horizontal">
-                    <div class="field-label is-normal">
-                        <label class="label">本地数据有效期</label>
-                    </div>
-                    <div class="field-body">
-                        <div class="field is-expanded">
-                            <div class="field has-addons">
-                                <p class="control">
-                                    <input name="local-object-duration" class="input" type="text" value="{{ local_object_duration }}">
-                                </p>
-                                <p class="control">
-                                    <a class="button is-static">天</a>
-                                </p>
-                            </div>
-                            <p class="help is-size-6 has-text-danger">本地数据在超过这个周期后，会尝试从网上获取最新的数据。</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="field is-grouped is-grouped-centered">
-                    <div class="control">
-                        <button class="button is-link">确定</button>
-                    </div>
-                    <div class="control">
-                        <button class="button is-text" type="reset">重置</button>
-                    </div>
-                </div>
-            </form>
+                <p class="help is-size-6 has-text-danger">豆瓣网站对单个IP发起的请求频率有限制。如果数字设置过大，可能导致IP被豆瓣封杀。</p>
+            </div>
         </div>
     </div>
 
-</div>
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">本地数据有效期</label>
+        </div>
+        <div class="field-body">
+            <div class="field is-expanded">
+                <div class="field has-addons">
+                    <p class="control">
+                        <input name="local-object-duration" class="input" type="text" value="{{ local_object_duration }}">
+                    </p>
+                    <p class="control">
+                        <a class="button is-static">天</a>
+                    </p>
+                </div>
+                <p class="help is-size-6 has-text-danger">本地数据（包括书、影、音、用户）在超过这个周期后，会尝试从网上获取最新的数据。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">广播回应活跃期</label>
+        </div>
+        <div class="field-body">
+            <div class="field is-expanded">
+                <div class="field has-addons">
+                    <p class="control">
+                        <input name="broadcast-active-duration" class="input" type="text" value="{{ broadcast_active_duration }}">
+                    </p>
+                    <p class="control">
+                        <a class="button is-static">天</a>
+                    </p>
+                </div>
+                <p class="help is-size-6 has-text-danger">只更新活跃期内的广播回应。早于活跃期范围的广播评论将不再更新。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">广播增量备份</label>
+        </div>
+        <div class="field-body">
+            <div class="field is-expanded">
+                <div class="field has-addons">
+                    <div class="control" style="padding-top: .5em;">
+                        {% if broadcast_incremental_backup %}
+                        <label class="radio">
+                            <input type="radio" name="broadcast-incremental-backup" value="1" checked>
+                            是
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="broadcast-incremental-backup" value="0">
+                            否
+                        </label>
+                        {% else %}
+                        <label class="radio">
+                            <input type="radio" name="broadcast-incremental-backup" value="1">
+                            是
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="broadcast-incremental-backup" value="0" checked>
+                            否
+                        </label>
+                        {% end %}
+                    </div>
+                </div>
+                <p class="help is-size-6 has-text-danger">只获取并备份新增的广播。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">下载图片</label>
+        </div>
+        <div class="field-body">
+            <div class="field is-expanded">
+                <div class="field has-addons">
+                    <div class="control" style="padding-top: .5em;">
+                        {% if image_local_cache %}
+                        <label class="radio">
+                            <input type="radio" name="image-local-cache" value="1" checked>
+                            是
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="image-local-cache" value="0">
+                            否
+                        </label>
+                        {% else %}
+                        <label class="radio">
+                            <input type="radio" name="image-local-cache" value="1">
+                            是
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="image-local-cache" value="0" checked>
+                            否
+                        </label>
+                        {% end %}
+                    </div>
+                </div>
+                <p class="help is-size-6 has-text-danger">将广播、相册、日记中的图片下载到本地。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="field is-grouped is-grouped-centered">
+        <div class="control">
+            <button class="button is-link">确定</button>
+        </div>
+        <div class="control">
+            <button class="button is-text" type="reset">重置</button>
+        </div>
+    </div>
+</form>
+
 {% end %}

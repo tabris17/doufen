@@ -94,7 +94,7 @@
         {% for attachment in attachments %}
             {% if attachment['type'] == 'image' %}
                 <figure class="image">
-                    <img src="{{ attachment['url'] }}">
+                    <img class="load-from-cache" data-src="{{ attachment['url'] }}">
                 </figure>
             {% end %}
         {% end %}

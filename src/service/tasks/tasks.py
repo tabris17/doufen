@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 import re
+import os
+import hashlib
 from abc import abstractmethod
 from collections import OrderedDict
 from time import sleep, time
@@ -15,6 +17,7 @@ from requests.exceptions import TooManyRedirects
 
 import db
 from db import dbo
+from setting import settings
 from .exceptions import *
 
 
@@ -57,6 +60,9 @@ class Task:
         requests_per_minute = kwargs['requests_per_minute']
         self._min_request_interval = 60 / requests_per_minute
         self._local_object_duration = kwargs['local_object_duration']
+        self._broadcast_incremental_backup = kwargs['broadcast_incremental_backup']
+        self._image_local_cache = kwargs['image_local_cache']
+        self._broadcast_active_duration = kwargs['broadcast_active_duration']
         self._last_request_at = time()
         session = requests.Session()
         session.headers.update({
@@ -112,6 +118,9 @@ class Task:
                 response.raise_for_status()
                 return response
             except requests.exceptions.HTTPError as e:
+                if response.status_code == 403:
+                    db.Account.update(is_invalid=True).where(db.Account.id == self.account.id).execute()
+                    raise Exception('登录凭证失效，请重新登录')
                 logging.error('fetch URL "{0}" error, response code: {1}'.format(url, response.status_code))
                 break
             except Exception as e:
@@ -119,6 +128,62 @@ class Task:
                 logging.warn('fetch URL "{0}" error: {1}'.format(url, e))
 
         logging.error('fetch URL "{0}" error: retries exceeded'.format(url))
+
+    @dbo.atomic()
+    def fetch_attachment(self):
+        """
+        将附件下载到本地
+        """
+        def prepare_file(url, retries):
+            _, file_ext = os.path.splitext(url)
+            hash_str = hashlib.md5('{0}|{1}'.format(retries, url).encode()).hexdigest()
+            file_path = '{0}/{1}/{2}/{3}'.format(hash_str[0:2], hash_str[2:4], hash_str[4:6], hash_str[6:8])
+
+            local_filename = '{0}/{1}'.format(file_path, hash_str[8:] + file_ext)
+            cache_path = settings.get('cache')
+            directory = '{0}/{1}'.format(cache_path, file_path)
+            full_path_filename = '{0}/{1}'.format(cache_path, local_filename)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+            return full_path_filename, local_filename
+
+        try:
+            attachment = db.Attachment.get(db.Attachment.local == None)
+        except db.Attachment.DoesNotExist:
+            return False
+
+        max_retries = 100
+        retries = 0
+        while retries < max_retries:
+            url = attachment.url
+            filename, local_filename = prepare_file(url, retries)
+            try:
+                with open(filename, 'xb') as f:
+                    logging.info('download url: {0}'.format(url))
+                    response = requests.get(url)
+                    for chunk in response.iter_content(chunk_size=1024): 
+                        if chunk:
+                            f.write(chunk)
+            except FileExistsError:
+                pass
+
+            break
+
+        if retries == max_retries:
+            logging.warn('创建缓存文件失败')
+            return False
+
+        try:
+            db.Attachment.update(local=local_filename).where(
+                db.Attachment.id == attachment.id,
+                db.Attachment.local == None
+            ).execute()
+        except db.IntegrityError:
+            pass
+
+        return local_filename
+
 
     @property
     def account(self):
@@ -744,14 +809,21 @@ class MusicTask(InterestsTask):
 
 
 class BroadcastTask(Task):
+    # _conflict_count 超过最大_MAX_CONFLICT_ALLOWED 则认为已经完成增量备份
+    # 增量备份满足条件比较苛刻，必须存在连续N条广播都是自己发的且之前备份过，否则永远无法满足条件，升级成完整备份
+    # 如果连续转播自己之前的N条广播，也会触发增量备份停止的条件，不过一般不会有人这么干吧
+    _MAX_CONFLICT_ALLOWED = 10
+    _conflict_count = 0
     _name = '备份我的广播'
 
     @dbo.atomic()
     def save_status_list(self, statuses):
+        current_user = self.account.user
         broadcasts = []
         for status in statuses:
             try:
                 broadcasts.append(db.Broadcast.safe_create(**status))
+                self._conflict_count = 0
             except db.IntegrityError:
                 douban_id = status['douban_id']
                 origin_status = db.Broadcast.get(db.Broadcast.douban_id == douban_id)
@@ -765,6 +837,11 @@ class BroadcastTask(Task):
                         db.Broadcast.douban_id == douban_id
                     ).execute()
                 broadcasts.append(origin_status)
+                if current_user.id == origin_status.user.id:
+                    # 必须是本人的广播才累计
+                    self._conflict_count += 1
+                else:
+                    self._conflict_count = 0
         return broadcasts
 
     def fetch_statuses_list(self, now):
@@ -958,6 +1035,10 @@ class BroadcastTask(Task):
             status_objects = self.save_status_list(status_details)
             timeline_in_page.extend(status_objects)
             page += 1
+
+            if self._broadcast_incremental_backup and self._conflict_count >= self._MAX_CONFLICT_ALLOWED:
+                logging.info('增量备份完成')
+                break
 
         return timeline_in_page
 

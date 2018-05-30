@@ -564,6 +564,6 @@ class Attachment(BaseModel):
     """
     url = CharField(unique=True, help_text='地址')
     mime_type = CharField(null=True, help_text='MIME类型')
-    local = CharField(null=True, help_text='本地文件名')
+    local = CharField(unique=True, null=True, help_text='本地文件名')
     ref_count = IntegerField(default=0, help_text='引用计数(预留，暂不使用)')
     created_at = DateTimeField(help_text='创建时间', default=datetime.datetime.now())

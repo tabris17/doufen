@@ -154,3 +154,21 @@ class User(BaseRequestHandler):
         ).exists()
 
         self.render('user.html', subject=subject, history=history, is_follower=is_follower, is_following=is_following)
+
+
+class Attachment(BaseRequestHandler):
+    """
+    从本地缓存载入附件
+    """
+
+    def get(self, url):
+        try:
+            attachment = db.Attachment.get(db.Attachment.url == url)
+            if attachment.local:
+                self.redirect(self.reverse_url('cache', attachment.local))
+                return
+        except db.Attachment.DoesNotExist:
+            pass
+
+        self.redirect(url)
+

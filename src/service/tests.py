@@ -14,6 +14,17 @@ db.init('var/data/graveyard.db')
 
 task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
-#task(requests_per_minute=50, local_object_duration = 60*60*24*7, proxy='http://127.0.0.1:8118')
-result = task(requests_per_minute=30, local_object_duration = 60*60*24*7)
+task = tasks.BroadcastTask(db.Account.get_by_id(1))
+
+while task.fetch_attachment():
+    pass
+exit()
+
+result = task(
+    requests_per_minute=30, 
+    local_object_duration=60*60*24*300,
+    broadcast_active_duration=60*60*24*300,
+    broadcast_incremental_backup=True,
+    image_local_cache=True
+)
 print(result)
