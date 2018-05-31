@@ -167,5 +167,25 @@
         </div>
     </article>
 
+    <hr>
+
+    {% for comment in comments %}
+    <article class="media">
+        <figure class="media-left">
+            <p class="image is-32x32">
+                <img src="{{ comment.user.avatar }}">
+            </p>
+        </figure>
+        <div class="media-content">
+            <p>
+                <strong><a href="{{ comment.user.alt }}" class="external-link">{{ comment.user.name }}</a></strong>
+                <small>(@{{ comment.user.unique_name}})</small>
+                <small class="has-text-grey-light">{{ comment.user.signature }}</small>
+                <span>{{ comment.created}}</span>
+            </p>
+            <p class="text-break">{{ comment.text }}</p>
+        </div>
+    </article>
+    {% end %}
 </div>
 {% end %}

@@ -44,6 +44,7 @@ def init(db_path, create_tables=True):
                 Broadcast,
                 Attachment,
                 Timeline,
+                Comment,
             ])
 
 
@@ -608,25 +609,20 @@ class NoteHistorical(Note):
     note = ForeignKeyField(Note, field=Note.id)
 
 
-class Commentable(BaseModel):
-    """
-    可评论的对象（广播、日记、相册、照片）
-    """
-    class Meta:
-        indexes = (
-            (('type', 'object_id'), True),
-        )
-
-    type = CharField(help_text='类型')
-    object_id = IntegerField(help_text='对象ID')
-
-
 class Comment(BaseModel):
     """
     评论
     """
-    douban_id = CharField(unique=True, help_text='豆瓣ID')
-    commentable = ForeignKeyField(Commentable)
-    user = ForeignKeyField(User)
-    content = TextField(null=True)
-    created = CharField()
+    class Meta:
+        indexes = (
+            (('target_type', 'target_douban_id', 'douban_id'), True),
+        )
+    target_type = CharField(help_text='类型')
+    target_douban_id = IntegerField(help_text='评论对象的豆瓣ID')
+    douban_id = CharField(help_text='豆瓣ID')
+    user = ForeignKeyField(User, help_text='用户')
+    text = TextField(null=True, help_text='评论文本')
+    quote = TextField(null=True, help_text='引用文本')
+    content = TextField(null=True, help_text='原始HTML')
+    created = CharField(null=True, help_text='创建时间')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())

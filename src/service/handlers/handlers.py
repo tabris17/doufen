@@ -128,7 +128,12 @@ class Broadcast(BaseRequestHandler):
         except db.Broadcast.DoesNotExist:
             raise tornado.web.HTTPError(404)
 
-        self.render('broadcast.html', subject=subject)
+        comments = db.Comment.select().join(db.User).where(
+            db.Comment.target_type == 'broadcast',
+            db.Comment.target_douban_id == subject.douban_id
+        )
+
+        self.render('broadcast.html', subject=subject, comments=comments)
 
 
 

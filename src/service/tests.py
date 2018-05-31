@@ -14,12 +14,12 @@ db.init('var/data/graveyard.db')
 
 task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
-task = tasks.BroadcastTask(db.Account.get_by_id(1))
+task = tasks.BroadcastCommentTask(db.Account.get_by_id(1))
 
 result = task(
     requests_per_minute=30, 
     local_object_duration=60*60*24*300,
-    broadcast_active_duration=60*60*24*300,
+    broadcast_active_duration=60*60*24*10,
     broadcast_incremental_backup=True,
     image_local_cache=True
 )

@@ -1063,7 +1063,6 @@ class BroadcastTask(Task):
             timeline_objects.append(timeline_item)
         return timeline_objects
 
-
     @dbo.atomic()
     def save_attachments(self, attachments):
         attachment_objects = []
@@ -1084,6 +1083,52 @@ class BroadcastTask(Task):
         if self._image_local_cache:
             while self.fetch_attachment():
                 pass
+
+
+class BroadcastCommentTask(Task):
+    _name = '备份广播评论'
+
+    def fetch_comment_list(self, broadcast_url, broadcast_douban_id):
+        url = broadcast_url
+        comments = []
+        while True:
+            response = self.fetch_url_content(url)
+            dom = PyQuery(response.text)
+            comment_items = dom('#comments>.comment-item')
+            for comment_item in comment_items:
+                item_div = PyQuery(comment_item)
+                comments.append({
+                    'content': item_div.outer_html(),
+                    'target_type': 'broadcast',
+                    'target_douban_id': broadcast_douban_id,
+                    'douban_id': item_div.attr('data-cid'),
+                    'user': self.fetch_user(PyQuery(item_div('.pic>a')).attr('data-uid')),
+                    'text': PyQuery(item_div('.content>p.text')).text(),
+                    'created': PyQuery(item_div('.content>.author>.created_at')).text(),
+                })
+            next_page = dom('#comments>.paginator>.next>a')
+            if next_page:
+                url = broadcast_url + next_page.attr('href')
+            else:
+                break
+        return comments
+
+    @dbo.atomic()
+    def save_comment_list(self, comments):
+        for detail in comments:
+            try:
+                db.Comment.safe_create(**detail)
+            except db.IntegrityError:
+                pass
+
+
+    def run(self):
+        now = datetime.datetime.now()
+        active_duration = datetime.timedelta(seconds=self._broadcast_active_duration)
+        query = db.Broadcast.select().where(db.Broadcast.created > now - active_duration)
+        for row in query:
+            comment_list = self.fetch_comment_list(row.status_url, row.douban_id)
+            self.save_comment_list(comment_list)
 
 
 class NoteTask(Task):
@@ -1120,7 +1165,7 @@ ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     BookTask,
     MovieTask,
     MusicTask,
-    NoteTask,
+    BroadcastCommentTask,
     #PhotoAlbumTask,
     #ReviewTask,
     #DoulistTask,
