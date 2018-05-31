@@ -6,11 +6,12 @@
         "test": "test"
     },
     "scripts": {
-        "start": "source ./scripts/launch.sh",
+        "start": "echo please use \"npm run app\" and \"npm run service\"",
         "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt && mkdir var && mkdir var/data && mkdir var/log",
-        "start-app": "electron ./src/app --debug",
-        "start-service": "source ./.venv/Scripts/activate && python ./src/service/main.py",
-        "python-packages": "source ./.venv/Scripts/activate && pip list"
+        "app": "electron ./src/app --debug",
+        "service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
+        "build-service": "source ./.venv/Scripts/activate && source ./scripts/build.sh",
+        "build-app": "electron-builder -w --x64"
     },
     "repository": {
         "type": "git",
@@ -26,5 +27,15 @@
     "devDependencies": {
         "electron": "^1.8.4",
         "electron-builder": "^20.8.0"
+    },
+    "build": {
+        "appId": "doufen.app",
+        "productName": "doufen",
+        "win": {
+            "icon": "src/app/app.ico"
+        },
+        "directories": {
+            "output": "./dist"
+        }
     }
 }

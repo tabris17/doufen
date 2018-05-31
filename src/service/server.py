@@ -83,7 +83,8 @@ class Server:
     """
 
     def __init__(self, port, address, cache_path):
-        base_path = os.path.dirname(__file__)
+        # PyInstaller patch
+        base_path = sys.path[0] if not hasattr(sys, 'frozen') else getattr(sys, '_MEIPASS')
         app_settings = {
             'debug': settings.get('debug'),
             'template_path': os.path.join(base_path, 'views'),
@@ -125,6 +126,7 @@ class Server:
         image_local_cache = setting.get('worker.image-local-cache', bool, IMAGE_LOCAL_CACHE)
         
         worker_args = {
+            'debug': settings.get('debug'),
             'queue_in': self._worker_input,
             'queue_out': self._worker_output,
             'requests_per_minute': requests_per_minute,

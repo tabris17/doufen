@@ -72,7 +72,7 @@ class Worker:
         def __init__(self, message):
             self.message = message
 
-    def __init__(self, queue_in=None, queue_out=None, **settings):
+    def __init__(self, debug=False, queue_in=None, queue_out=None, **settings):
         class_type = type(self)
         self._name = '{name}#{id}'.format(name=class_type._name, id=class_type._id)
         class_type._id += 1
@@ -82,6 +82,7 @@ class Worker:
         self._queue_out = queue_out
         self._settings = settings
         self._current_task = None
+        self._debug = debug
 
     @property
     def queue_in(self):
@@ -119,7 +120,7 @@ class Worker:
         queue_out = self.queue_out
         logger = logging.getLogger()
         logger.addHandler(QueueHandler(queue_out))
-        logger.setLevel(logging.DEBUG if __debug__ else logging.INFO)
+        logger.setLevel(logging.DEBUG if self._debug else logging.INFO)
         db.init(self._settings['db_path'], False)
 
         self._ready()
