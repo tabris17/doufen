@@ -4,7 +4,7 @@ import os
 import sys
 import json
 from collections import deque
-from multiprocessing import Queue, Process
+from multiprocessing import Queue
 from multiprocessing import queues
 
 import tornado
@@ -15,6 +15,7 @@ import setting
 import uimodules
 from worker import Worker, REQUESTS_PER_MINUTE, LOCAL_OBJECT_DURATION, BROADCAST_ACTIVE_DURATION, BROADCAST_INCREMENTAL_BACKUP, IMAGE_LOCAL_CACHE
 from setting import settings
+from tasks import Task
 
 
 class Client:
@@ -98,7 +99,11 @@ class Server:
             (r'/cache/(.*)', tornado.web.StaticFileHandler, {'path': cache_path}, 'cache')
         )
         application = Application(urls.patterns, **app_settings)
-        application.listen(port, address)
+        try:
+            application.listen(port, address)
+        except OSError:
+            logging.error('system already running.')
+            exit()
         self.application = application
 
         self._worker_output = Queue()
@@ -218,6 +223,8 @@ class Server:
         """
         添加任务
         """
+        if not isinstance(task, Task):
+            raise RuntimeError('task 参数必须是 Task 对象')
         if list(filter(lambda t: task.equals(t), self._tasks)):
             logging.warn('添加任务 "{0}" 失败: 任务重复'.format(task))
             return False
@@ -248,17 +255,11 @@ class Server:
 
     def stop_workers(self):
         """
-        暂停工作进程
-        并将正在执行的任务重新放回任务队列
+        停止工作进程
         """
-        running_tasks = []
         for worker in self._workers.values():
             if worker.is_running():
-                if worker.current_task:
-                    running_tasks.append(worker.current_task)
                 worker.stop()
-        for task in running_tasks:
-            self.add_task(task, True)
 
     def run(self):
         ioloop = tornado.ioloop.IOLoop.current()

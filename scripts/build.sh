@@ -1,1 +1,1 @@
-pyinstaller -y -F -n service -i src/app/app.ico --add-data="src/service/views;views" --add-binary="src/service/static;static" src/service/main.py
+pyinstaller -y -w -F -n service -i src/app/app.ico --add-data="src/service/views;views" --add-binary="src/service/static;static" src/service/main.py

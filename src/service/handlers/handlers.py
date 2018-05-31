@@ -58,6 +58,20 @@ class Main(BaseRequestHandler):
         self.render('index.html')
 
 
+class Shutdown(BaseRequestHandler):
+    """
+    退出系统
+    """
+    def shutdown(self):
+        self.server.stop_workers()
+        tornado.ioloop.IOLoop.current().stop()
+
+    def get(self):
+        ioloop = tornado.ioloop.IOLoop.current()
+        ioloop.add_callback(self.shutdown)
+        self.write('OK')
+
+
 class Manual(BaseRequestHandler):
     """
     使用手册

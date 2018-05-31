@@ -1127,8 +1127,11 @@ class BroadcastCommentTask(Task):
         active_duration = datetime.timedelta(seconds=self._broadcast_active_duration)
         query = db.Broadcast.select().where(db.Broadcast.created > now - active_duration)
         for row in query:
-            comment_list = self.fetch_comment_list(row.status_url, row.douban_id)
-            self.save_comment_list(comment_list)
+            try:
+                comment_list = self.fetch_comment_list(row.status_url, row.douban_id)
+                self.save_comment_list(comment_list)
+            except:
+                pass
 
 
 class NoteTask(Task):

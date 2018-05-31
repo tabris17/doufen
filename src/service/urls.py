@@ -8,6 +8,7 @@ import handlers.my
 
 patterns = [
     (r'/', handlers.Main, None, 'index'),
+    (r'/shutdown', handlers.Shutdown, None, 'shutdown'),
     (r'/attachment/(.+)', handlers.Attachment, None, 'attachment'),
     (r'/settings', handlers.settings.General, None, 'settings'),
     (r'/settings/general', handlers.settings.General, None, 'settings.general'),
