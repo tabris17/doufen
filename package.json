@@ -1,0 +1,28 @@
+{
+    "name": "doufen-platform",
+    "version": "0.1.0",
+    "description": "",
+    "scripts": {
+        "start": "echo please use \"npm run app\" and \"npm run service\"",
+        "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt && mkdir var && mkdir var/data && mkdir var/log",
+        "app": "electron ./src/app --debug",
+        "service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
+        "build:service": "source ./.venv/Scripts/activate && source ./scripts/build.sh",
+        "build:app": "electron-builder --win --x64 --project ./src/app"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tabris17/doufen.git"
+    },
+    "author": "tabris17",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/tabris17/doufen/issues"
+    },
+    "homepage": "https://github.com/tabris17/doufen#readme",
+    "dependencies": {},
+    "devDependencies": {
+        "electron": "^1.8.4",
+        "electron-builder": "^20.8.0"
+    }
+}

@@ -1,0 +1,5 @@
+tornado==5.0.1
+pyinstaller==3.3.1
+peewee==3.3.2
+requests==2.18.4
+pyquery==1.4.0

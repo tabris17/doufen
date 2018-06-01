@@ -1,0 +1,72 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}关注我的{% end %}
+
+{% block main %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='followers') %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">我被 <strong>{{ total_rows }}</strong> 人关注</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <a class="button" href="{{ reverse_url('my.followers.historical') }}">查看历史记录</a>
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+            <article class="media box{% if row.follower.is_banned or row.follower.is_suicide%} has-background-white-ter{% end %}">
+                <figure class="media-left">
+                    <p class="image is-48x48">
+                        <img src="{{ row.follower.avatar if row.follower else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p>
+                            <strong><a href="{{ row.follower.alt }}" class="external-link">{{ row.follower.name }}</a></strong>
+                            <small>(@{{ row.follower.unique_name}})</small>
+                            <small class="has-text-grey-light">{{ row.follower.signature }}</small>
+                        </p>
+                        <dl class="is-horizontal is-label-size-4">
+                            <dt class="has-text-left">加入时间</dt>
+                            <dd class="has-text-grey-light">{{ row.follower.created }}</dd>
+                            {% if row.follower.loc_name %}
+                            <dt class="has-text-left">所在地</dt>
+                            <dd class="has-text-grey-light">{{ row.follower.loc_name }}({{ row.follower.loc_id }})</dd>
+                            {% end %}
+                        </dl>
+                        <p class="text-break">
+                            {% for ln in row.follower.desc.split("\n") %}
+                            {% if ln %}
+                            {{ ln }}<br>
+                            {% end %}
+                            {% end %}
+                        </p>
+                    </div>
+                </div>
+                <div class="media-right">
+                    {% if row.follower.version > 1 %}
+                    <a href="" class="button">历史记录</a>
+                    {% end if %}
+                </div>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}
+    

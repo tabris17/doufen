@@ -1,0 +1,52 @@
+
+{% import ast %}
+
+{% if movie %}
+<article class="media box">
+    <figure class="media-left is-marginless" style="min-height: 160px;">
+        <p class="image is-96x96">
+            <img src="{{ movie.image }}">
+        </p>
+    </figure>
+    <div class="media-content" style="margin-left: 0.75rem;">
+        <div class="content">
+            <p>
+                <strong><a href="https://movie.douban.com/subject/{{ movie.douban_id }}/" class="external-link">{{ movie.title }}</a></strong>
+                {% if movie.alt_title %}({{ movie.alt_title }}){% end %}
+            </p>
+            {% set attrs = ast.literal_eval(movie.attrs) %}
+            <p class="text-break">{{ movie.summary[0:100] }}...</p>
+            <dl class="is-horizontal is-label-size-4">
+                {% if 'director' in attrs and attrs['director'] %}
+                <dt class="has-text-left">导演</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(attrs['director']) }}</dd>
+                {% end %}
+
+                {% if 'cast' in attrs and attrs['cast'] %}
+                <dt class="has-text-left">主演</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(attrs['cast']) }}</dd>
+                {% end %}
+
+                {% if 'movie_type' in attrs and attrs['movie_type'] %}
+                <dt class="has-text-left">类型</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_type']) }}</dd>
+                {% end %}
+            </dl>
+        </div>
+    </div>
+    <div class="media-right">
+        <p>
+            {% if movie.rating %}
+            {% set rating = ast.literal_eval(movie.rating) %}
+            豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+            <a href="{{ movie.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+            {% end %}
+        </p>
+        <p style="margin-top: 10px;">
+            <a href="{{ reverse_url('movie', movie.douban_id) }}" class="text">查看详情</a>
+        </p>
+    </div>
+</article>
+{% else %}
+<p class="box">电影可能已被删除</p>
+{% end %}

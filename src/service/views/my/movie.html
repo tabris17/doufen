@@ -1,0 +1,133 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}{{ '我看过的影视' if status == 'done' else '我想看的影视' if status == 'wish' else '我在看的影视' }}{% end %}
+
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='movie/' + status) %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">{{ '看过' if status == 'done' else '想看' if status == 'wish' else '在看' }} <strong>{{ total_rows }}</strong> 部</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+            {% set attrs = ast.literal_eval(row.movie.attrs) %}
+            <article class="media box" style="min-height: 220px;">
+                <figure class="media-left">
+                    <p class="image is-128x128">
+                        <img src="{{ row.movie.image }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p>
+                            <strong><a href="https://movie.douban.com/subject/{{ row.movie.douban_id }}/" class="external-link">{{ row.movie.title }}</a></strong>
+                            {% if row.movie.alt_title %}
+                            ({{ row.movie.alt_title }})
+                            {% end %}
+                        </p>
+                        <dl class="is-horizontal is-label-size-4">
+                            {% if 'director' in attrs and attrs['director'] %}
+                            <dt class="has-text-left">导演</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['director']) }}</dd>
+                            {% end %}
+
+                            {% if 'writer' in attrs and attrs['writer'] %}
+                            <dt class="has-text-left">编剧</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['writer']) }}</dd>
+                            {% end %}
+
+                            {% if 'cast' in attrs and attrs['cast'] %}
+                            <dt class="has-text-left">主演</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['cast']) }}</dd>
+                            {% end %}
+
+                            {% if 'movie_type' in attrs and attrs['movie_type'] %}
+                            <dt class="has-text-left">类型</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_type']) }}</dd>
+                            {% end %}
+
+                            {% if 'country' in attrs and attrs['country'] %}
+                            <dt class="has-text-left">国家地区</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['country']) }}</dd>
+                            {% end %}
+
+                            {% if 'language' in attrs and attrs['language'] %}
+                            <dt class="has-text-left">语言</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['language']) }}</dd>
+                            {% end %}
+
+                            {% if 'pubdate' in attrs and attrs['pubdate'] %}
+                            <dt class="has-text-left">首播</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
+                            {% end %}
+
+                            {% if 'episodes' in attrs and attrs['episodes'] %}
+                            <dt class="has-text-left">集数</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['episodes']) }}</dd>
+                            {% end %}
+
+                            {% if 'movie_duration' in attrs and attrs['movie_duration'] %}
+                            <dt class="has-text-left">单集片长</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['movie_duration']) }}</dd>
+                            {% end %}
+                        </dl>
+                        <dl class="is-horizontal is-label-size-4  is-marginless">
+                            <dt>我的评价</dt>
+                            <dd>
+                                {% if row.rating %}
+                                {% set my_rating = ast.literal_eval(row.rating) %}
+                                <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                                {% else %}
+                                <span class="rating-start star-00"></span>
+                                {% end %}
+                                <small class="has-text-grey-light">{{ row.create_time }}</small>
+                            </dd>
+                            {% if row.tags %}
+                            {% set tags = ast.literal_eval(row.tags) %}
+                            {% if len(tags) %}
+                            <dt>标签</dt>
+                            <dd>{{ ' / '.join(tags) }}</dd>
+                            {% end %}
+                            {% end %}
+                        </dl>
+                        <p class="text-break">{{ row.comment }}</p>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <p>
+                        {% if row.movie.rating %}
+                        {% set rating = ast.literal_eval(row.movie.rating) %}
+                        豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                        <a href="{{ row.movie.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                        {% end %}
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <a href="{{ reverse_url('movie', row.movie.douban_id) }}" class="button">查看详情</a>
+                    </p>
+                </div>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

@@ -1,0 +1,192 @@
+{% extends "themes/main.html" %}
+
+{% block title %}控制台{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a>工具</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">控制台</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="tile is-ancestor">
+        <div class="tile is-4 is-vertical is-parent">
+            <div class="tile is-child box">
+                <p class="title">工作进程</p>
+                {% if len(workers) == 0 %}
+                <p class="has-text-centered" style="margin-bottom: 20px;">进程未启动</p>
+                {% else %}
+                <table class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>状态</th>
+                            <th>任务</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for worker in workers %}
+                        <tr>
+                            <td>{{ worker.name }}</td>
+                            <td>{{ worker.status_text }}</td>
+                            <td>{{ worker.current_task }}</td>
+                        </tr>
+                        {% end %}
+                    </tbody>
+                </table>
+                <p class="has-text-centered">
+                    <a class="button" id="button-restart-workers">重启</a>
+                    <a class="button action-reload">刷新</a>
+                </p>
+                {% end %}
+            </div>
+            <div class="tile is-child box">
+                <p class="title">任务</p>
+                {% if len(pedding_tasks) == 0 %}
+                <p class="has-text-centered" style="margin-bottom: 20px;">没有等待运行的任务</p>
+                {% else %}
+                <table class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in pedding_tasks %}
+                        <tr>
+                            <td>{{ task.name }}</td>
+                        </tr>
+                        {% end %}
+                    </tbody>
+                </table>
+                {% end %}
+                <p class="has-text-centered">
+                    <a class="button is-primary action-open" data-target="#modal-add-task">新建</a>
+                    <a class="button action-reload">刷新</a>
+                </p>
+            </div>
+        </div>
+        <div class="tile is-parent">
+            <div class="tile is-child box">
+                <p class="title">日志</p>
+                <textarea class="textarea" id="log-output" rows="20" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-add-task">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">新建任务</p>
+                <button class="delete" aria-label="close" data-target="#modal-add-task"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="columns">
+                    <div class="column">
+                        <label style="line-height: 30px;">选择帐号（按 <a class="button is-small">Ctrl</a> 或 <a class="button is-small">Shift</a> 多选）：</label>
+                        <div class="select is-multiple is-fullwidth">
+                            <select multiple size="8" id="select-account">
+                                {% for row in accounts %}
+                                {% if row.user %}
+                                <option value="{{ row.id }}">{{ row.user.name }}({{ row.name }})</option>
+                                {% else %}
+                                <option value="{{ row.id }}">{{ row.name }}</option>
+                                {% end %}
+                                {% end %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <label style="line-height: 30px;">选择任务类型（按 <a class="button is-small">Ctrl</a> 或 <a class="button is-small">Shift</a> 多选）：</label>
+                        <div class="select is-multiple is-fullwidth">
+                            <select multiple size="8" id="select-task">
+                                {% for task in all_tasks %}
+                                <option value="{{ task }}">{{ task }}</option>
+                                {% end %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success action-close" id="button-create-task" data-target="#modal-add-task">新建</button>
+                <button class="button action-close" data-target="#modal-add-task">取消</button>
+            </footer>
+        </div>
+    </div>
+
+</div>
+{% end %}
+
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        const { ipcRenderer } = system.require('electron')
+        const logger = system.getSharedData('logger')
+        let $logOutputTextarea = $('#log-output')
+
+        ipcRenderer.on('worker-status-change', (event) => {
+            location.reload()
+        })
+        ipcRenderer.on('logger-update', (event) => {
+            $logOutputTextarea.val(logger.all())
+        })
+        $logOutputTextarea.val(logger.all())
+        $logOutputTextarea[0].scrollTop = $logOutputTextarea[0].scrollHeight
+
+        $('#button-restart-workers').click((event) => {
+            event.preventDefault()
+            if (window.confirm('重启工作进程会导致当前运行的任务失败。确定要重启吗？', '确认')) {
+                $.ajax({
+                    url: '{{ reverse_url("dashboard.workers.restart") }}',
+                    method: 'POST'
+                }).then((data, status, $xhr) => {
+                    location.reload()
+                }, ($xhr, status, error) => {
+                    window.alert('重启失败' + error, '错误')
+                })
+
+            }
+        })
+
+        $(document.body).on('click', '.action-reload', () => {
+            location.reload()
+        })
+
+        $('#button-create-task').click(() => {
+            let accounts = $('#select-account>option:selected').map(function() {
+                return this.value
+            }).get()
+
+            let tasks = $('#select-task>option:selected').map(function() {
+                return this.value
+            }).get()
+
+            $.ajax({
+                url: '{{ reverse_url("dashboard.tasks.add") }}',
+                method: 'POST',
+                data: {
+                    'tasks': JSON.stringify({
+                        tasks: tasks,
+                        accounts: accounts
+                    }),
+                }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('新建任务失败' + error, '错误')
+            })
+        })
+
+    })
+</script>
+{% end %}

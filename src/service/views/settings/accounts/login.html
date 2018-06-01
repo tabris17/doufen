@@ -1,0 +1,118 @@
+{% extends "../../themes/main.html" %} 
+
+{% block title %}登录{% end %}
+
+{% block head_extra %}
+<style>
+    #webview {
+        margin-top: 10px;
+        height: 620px;
+    }
+</style>
+{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a>工具</a>
+            </li>
+            <li>
+                <a href="{{ reverse_url('settings') }}">设置</a>
+            </li>
+            <li>
+                <a href="{{ reverse_url('settings.accounts') }}">帐号</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">登录</a>
+            </li>
+        </ul>
+    </nav>
+
+    <article class="message is-danger">
+        <div class="message-body">程序使用豆瓣官方网页登录，不会获取和保存你的密码。为了保障你的帐号安全，请从官方渠道下载本软件。</div>
+    </article>
+
+    <div class="field is-grouped">
+        <p class="control is-expanded">
+            <input class="input" id="input-address" type="text" readonly placeholder="地址栏">
+        </p>
+        <p class="control">
+            <a class="button is-primary" id="button-refresh">
+                <span class="icon">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+                <span>刷新</span>
+            </a>
+        </p>
+        <p class="control">
+            <a class="button" id="button-reset">
+                <span class="icon">
+                    <i class="fas fa-undo-alt"></i>
+                </span>
+                <span>返回登录页</span>
+            </a>
+        </p>
+    </div>
+
+    {% import time %}
+    <webview id="webview" src="https://www.douban.com/login" httpreferrer="https://www.douban.com/" partition="douban-{{ time.time() }}" nodeIntegration></webview>
+</div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        const cookie = system.require('cookie')
+        const doubanMineURL = 'https://www.douban.com/mine/'
+        let webContents, webRequest, mineURL
+
+        let $refreshButton = $('#button-refresh')
+        let $resetButton = $('#button-reset')
+
+        let $webview = $('#webview').one('load-commit', function() {
+            $('#input-address').val(this.getURL())
+            webContents = this.getWebContents()
+            webRequest = webContents.session.webRequest
+            webRequest.onSendHeaders({ urls: ['https://*.douban.com/*'] }, (details) => {
+                let cookies = details.requestHeaders.Cookie
+                let cookiePairs = cookie.parse(cookies)
+                if ('ck' in cookiePairs) {
+                    $.ajax({
+                        url: '{{ reverse_url("settings.accounts.add") }}',
+                        method: 'POST',
+                        data: {
+                            session: cookies,
+                            homepage: mineURL
+                        }
+                    }).then((data, status, $xhr) => {
+                        location = '{{ reverse_url("settings.accounts") }}'
+                    }, ($xhr, status, error) => {
+                        window.alert('添加帐号失败：' + error, '错误')
+                    })
+                    window.alert('登录成功！', '信息')
+                } else if ('dbcl2' in cookiePairs && details.url != doubanMineURL) {
+                    webContents.loadURL(doubanMineURL)
+                }
+            })
+            webRequest.onBeforeRedirect({ urls: [doubanMineURL] }, (details) => {
+                mineURL = details.redirectURL
+                webContents.stop()
+            })
+        }).on('did-start-loading', () => {
+            $refreshButton.addClass('is-loading')
+        }).on('did-stop-loading', () => {
+            $refreshButton.removeClass('is-loading')
+        })
+
+        $refreshButton.click(() => {
+            $webview[0].reload()
+        })
+
+        $resetButton.click(() => {
+            $webview[0].loadURL('https://www.douban.com/login')
+        })
+    })
+</script>
+{% end %}

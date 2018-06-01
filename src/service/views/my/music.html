@@ -1,0 +1,117 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}{{ '我听过的音乐' if status == 'done' else '我想听的音乐' if status == 'wish' else '我在听的音乐' }}{% end %}
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='music/' + status) %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">{{ '听过' if status == 'done' else '想听' if status == 'wish' else '在听' }} <strong>{{ total_rows }}</strong> 张</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="{{ reverse_url('my.music.historical') }}">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+            <article class="media box" style="min-height: 220px;">
+                {% set attrs = ast.literal_eval(row.music.attrs) %}
+                <figure class="media-left">
+                    <p class="image is-128x128">
+                        <img src="{{ row.music.image }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p>
+                            <strong><a href="{{ row.music.alt }}" class="external-link">{{ row.music.title }}</a></strong>
+                            {% if row.music.alt_title %}
+                            <br><small class="has-text-grey-light">({{ row.music.alt_title }})</small>
+                            {% end %}
+                        </p>
+                        <dl class="is-horizontal is-label-size-4">
+                            {% if 'singer' in attrs and attrs['singer'] %}
+                            <dt class="has-text-left">表演者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['singer']) }}</dd>
+                            {% end %}
+
+                            {% if 'version' in attrs and attrs['version'] %}
+                            <dt class="has-text-left">专辑类型</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['version']) }}</dd>
+                            {% end %}
+
+                            {% if 'media' in attrs and attrs['media'] %}
+                            <dt class="has-text-left">介质</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['media']) }}</dd>
+                            {% end %}
+
+                            {% if 'pubdate' in attrs and attrs['pubdate'] %}
+                            <dt class="has-text-left">发行时间</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['pubdate']) }}</dd>
+                            {% end %}
+
+                            {% if 'publisher' in attrs and attrs['publisher'] %}
+                            <dt class="has-text-left">出版者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['publisher']) }}</dd>
+                            {% end %}
+
+                            {% if 'discs' in attrs and attrs['discs'] %}
+                            <dt class="has-text-left">唱片数</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(attrs['discs']) }}</dd>
+                            {% end %}
+                        </dl>
+                        <dl class="is-horizontal is-label-size-4  is-marginless">
+                            <dt>我的评价</dt>
+                            <dd>
+                                {% if row.rating %}
+                                {% set my_rating = ast.literal_eval(row.rating) %}
+                                <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                                {% else %}
+                                <span class="rating-start star-00"></span>
+                                {% end %}
+                                <small class="has-text-grey-light">{{ row.create_time }}</small>
+                            </dd>
+                            {% if row.tags %}
+                            {% set tags = ast.literal_eval(row.tags) %}
+                            {% if len(tags) %}
+                            <dt>标签</dt>
+                            <dd>{{ ' / '.join(tags) }}</dd>
+                            {% end %}
+                            {% end %}
+                        </dl>
+                        <p class="text-break">{{ row.comment }}</p>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <p>
+                        {% if row.music.rating %}
+                        {% set rating = ast.literal_eval(row.music.rating) %}
+                        豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                        <a href="{{ row.music.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                        {% end %}
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <a href="{{ reverse_url('music', row.music.douban_id) }}" class="button">查看详情</a>
+                    </p>
+                </div>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

@@ -1,0 +1,167 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{{ subject.title }}{% end %}
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+    <article class="media" style="min-height: 220px; margin-bottom: 50px;">
+        <figure class="media-left">
+            <p class="image is-128x128">
+                <img src="{{ subject.image }}">
+            </p>
+        </figure>
+        <div class="media-content">
+            <div class="content">
+                <h1 class="title is-size-4">
+                    <strong><a href="{{ subject.alt }}" class="external-link">{{ subject.title }}</a></strong>
+                    <small>{{ subject.subtitle }}</small>
+                    {% if subject.alt_title %}
+                    <br><small class="has-text-grey-light">({{ subject.alt_title }})</small>
+                    {% end %}
+                </h1>
+                <dl class="is-horizontal is-label-size-4">
+                    {% if subject.author %}
+                    {% set author = ast.literal_eval(subject.author) %}
+                    {% if len(subject.author) %}
+                    <dt class="has-text-left">作者</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
+                    {% end %}
+                    {% end %}
+
+                    {% if subject.translator %}
+                    {% set translator = ast.literal_eval(subject.translator) %}
+                    {% if len(translator) %}
+                    <dt class="has-text-left">译者</dt>
+                    <dd class="has-text-grey-light">{{ ' / '.join(translator) }}</dd>
+                    {% end %}
+                    {% end %}
+
+                    {% if subject.publisher %}
+                    <dt class="has-text-left">出版社</dt>
+                    <dd class="has-text-grey-light">{{ subject.publisher }}</dd>
+                    {% end %}
+
+                    {% if subject.origin_title %}
+                    <dt class="has-text-left">原作名</dt>
+                    <dd class="has-text-grey-light">{{ subject.origin_title }}</dd>
+                    {% end %}
+
+                    {% if subject.pubdate %}
+                    <dt class="has-text-left">出版日期</dt>
+                    <dd class="has-text-grey-light">{{ subject.pubdate }}</dd>
+                    {% end %}
+
+                    {% if subject.isbn10 or subject.isbn13 %}
+                    <dt class="has-text-left">ISBN</dt>
+                    <dd class="has-text-grey-light">{{ subject.isbn10 }} / {{ subject.isbn13 }}</dd>
+                    {% end %}
+
+                    {% if subject.price %}
+                    <dt class="has-text-left">价格</dt>
+                    <dd class="has-text-grey-light">{{ subject.price }}</dd>
+                    {% end %}
+
+                    {% if subject.pages %}
+                    <dt class="has-text-left">页数</dt>
+                    <dd class="has-text-grey-light">{{ subject.pages }}</dd>
+                    {% end %}
+
+                    {% if subject.binding %}
+                    <dt class="has-text-left">装帧</dt>
+                    <dd class="has-text-grey-light">{{ subject.binding }}</dd>
+                    {% end %}
+                </dl>
+                {% if mine %}
+                <dl class="is-horizontal is-label-size-4  is-marginless">
+                    <dt>我的评价</dt>
+                    <dd>
+                        {% if mine.rating %}
+                        {% set my_rating = ast.literal_eval(mine.rating) %}
+                        <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                        {% else %}
+                        <span class="rating-start star-00"></span>
+                        {% end %}
+                        <small class="has-text-grey-light">{{ mine.create_time }}</small>
+                    </dd>
+                    {% if mine.tags %}
+                    {% set tags = ast.literal_eval(mine.tags) %}
+                    {% if len(tags) %}
+                    <dt>标签</dt>
+                    <dd>{{ ' / '.join(tags) }}</dd>
+                    {% end %}
+                    {% end %}
+                </dl>
+                <p class="text-break">{{ mine.comment }}</p>
+                {% end %}
+            </div>
+        </div>
+        <div class="media-right">
+            <p>
+                {% if subject.rating %}
+                {% set rating = ast.literal_eval(subject.rating) %}
+                豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                <a href="{{ subject.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                {% end %}
+            </p>
+        </div>
+    </article>
+
+    <div class="content">
+        {% if subject.summary %}
+        <h2 class="subtitle is-size-5">内容简介</h2>
+        {% for ln in subject.summary.split("\n") %}
+            {% if ln %}
+            <p>{{ ln }}</p>
+            {% end %}
+        {% end %}
+        {% end %}
+
+        {% if subject.author_intro %}
+        <h2 class="subtitle is-size-5">作者简介</h2>
+        {% for ln in subject.author_intro.split("\n") %}
+            {% if ln %}
+            <p>{{ ln }}</p>
+            {% end %}
+        {% end %}
+        {% end %}
+
+        {% if subject.catalog %}
+        <h2 class="subtitle is-size-5">目录</h2>
+        <p>
+        {% for ln in subject.catalog.split("\n") %}
+            {% if ln %}
+            {{ ln }}<br>
+            {% end %}
+        {% end %}
+        </p>
+        {% end %}
+
+        {% if subject.tags %}
+        {% set tags = ast.literal_eval(subject.tags) %}
+        <h2 class="subtitle is-size-5">豆瓣成员常用的标签</h2>
+        {% for tag in tags %}
+        <span class="tag is-size-6">{{ tag['name'] }}({{ tag['count'] }})</span>
+        {% end %}
+        {% end %}
+    </div>
+
+</div>
+{% end %}

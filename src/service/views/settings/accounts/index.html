@@ -1,0 +1,100 @@
+{% extends "../../themes/main.html" %} 
+
+{% block title %}设置{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a>工具</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">设置</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('settings/_menu.html', active_page='account') %}
+        </div>
+        <div class="column">
+            {% if len(rows) == 0 %}
+            <div class="notification is-primary">没有帐号，请先<a href="{{ reverse_url('settings.accounts.login') }}">登录</a>。</div>
+            {% else %}
+            {% for row in rows %}
+            <article class="media box{% if row.is_invalid%} has-background-grey-lighter{% end %}">
+                <figure class="media-left">
+                    <p class="image is-48x48">
+                        <img src="{{ row.user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                    </p>
+                    {% if not row.is_activated %}
+                    <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">激活</a></p>
+                    {% end %}
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <nav class="level">
+                            <div class="level-left">
+                                <div>
+                                    {% if row.user %}
+                                    <p><strong><a href="{{ row.user.alt }}" class="external-link">{{ row.user.name }}</a></strong><small>({{ row.name}})</small></p>
+                                    <p><small class="has-text-grey-light">{{ row.user.signature }}</small></p>
+                                    {% else %}
+                                    <strong>{{ row.name}}</strong>
+                                    {% end %}
+                                </div>
+                            </div>
+                            <div class="level-right">
+                                <dl class="is-horizontal">
+                                    <dt>登录时间</dt>
+                                    <dd>{{ row.created }}</dd>
+                                </dl>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <button class="delete" data-id="{{ row.id }}"></button>
+                </div>
+            </article>
+            {% end %}
+            <p><a class="button is-primary" href="{{ reverse_url('settings.accounts.login') }}">添加</a></p>
+            {% end %}
+        </div>
+    </div>
+
+</div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        $('.delete').click(function() {
+            let id = $(this).data('id')
+            $.ajax({
+                url: '{{ reverse_url("settings.accounts.remove") }}',
+                method: 'POST',
+                data: { id: id }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('删除帐号失败：' + error, '错误')
+            })
+        })
+        $('.action-activate').click(function() {
+            let id = $(this).data('id')
+            $.ajax({
+                url: '{{ reverse_url("settings.accounts.activate") }}',
+                method: 'POST',
+                data: { id: id }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('激活帐号失败：' + error, '错误')
+            })
+        })
+    })
+</script>
+{% end %}

@@ -1,0 +1,49 @@
+
+{% import ast %}
+
+{% if book %}
+<article class="media box">
+    <figure class="media-left is-marginless" style="min-height: 160px;">
+        <p class="image is-96x96">
+            <img src="{{ book.image }}">
+        </p>
+    </figure>
+    <div class="media-content" style="margin-left: 0.75rem;">
+        <div class="content">
+            <p>
+                <strong><a href="{{ book.alt }}" class="external-link">{{ book.title }}</a></strong>
+                {% if book.alt_title %}({{ book.alt_title }}){% end %}
+            </p>
+            <p class="text-break">{{ book.summary[0:100] }}...</p>
+            <dl class="is-horizontal is-label-size-4">
+                {% if book.author %}
+                {% set author = ast.literal_eval(book.author) %}
+                {% if len(book.author) %}
+                <dt class="has-text-left">作者</dt>
+                <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
+                {% end %}
+                {% end %}
+
+                {% if book.publisher %}
+                <dt class="has-text-left">出版社</dt>
+                <dd class="has-text-grey-light">{{ book.publisher }}</dd>
+                {% end %}
+            </dl>
+        </div>
+    </div>
+    <div class="media-right">
+        <p>
+            {% if book.rating %}
+            {% set rating = ast.literal_eval(book.rating) %}
+            豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+            <a href="{{ book.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+            {% end %}
+        </p>
+        <p style="margin-top: 10px;">
+            <a href="{{ reverse_url('book', book.douban_id) }}" class="text">查看详情</a>
+        </p>
+    </div>
+</article>
+{% else %}
+<p class="box">图书可能已被删除</p>
+{% end %}

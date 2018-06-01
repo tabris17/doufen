@@ -1,0 +1,61 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}我的广播{% end %}
+
+
+{% block main %}
+{% import ast %}
+
+{% from pyquery import PyQuery %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='broadcast') %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">发布 <strong>{{ total_rows }}</strong> 条</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+                {% module Template('my/_broadcast.html', fully=True, broadcast=row.broadcast) %}
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal" id="modal-preview">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <p class="image">
+        <img src="" alt="" class="preview">
+        </p>
+    </div>
+    <button class="modal-close is-large action-close" aria-label="close" data-target="#modal-preview"></button>
+</div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        let $modalPreview = $('#modal-preview')
+        $('.preview').click(function () {
+            $modalPreview.find('img.preview').attr('src', $(this).find('img').attr('src'))
+        })
+    })
+</script>
+{% end %}

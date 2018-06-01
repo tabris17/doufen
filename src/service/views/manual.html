@@ -1,0 +1,41 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}帮助{% end %}
+
+{% block head_extra %}
+<style>
+
+</style>
+{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li>
+                <a>帮助</a>
+            </li>
+            <li class="is-active">
+                <a aria-current="page">用户手册</a>
+            </li>
+        </ul>
+    </nav>
+
+    <article class="content" id="help-content"></article>
+</div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        const { Converter } = system.require('showdown')
+        const fs = system.require('fs')
+        const path = system.require('path')
+
+        fs.readFile(path.join(system.getAppPath(), 'manual.md'), 'utf8', (err, data) => {
+            let converter = new Converter()
+            $('#help-content').html(converter.makeHtml(data))
+        })
+    })
+</script>
+{% end %}

@@ -1,0 +1,35 @@
+{
+    "name": "doufen-app",
+    "productName": "豆坟",
+    "description": "A GUI shell for doufen platform",
+    "version": "0.1.0",
+    "main": "main.js",
+    "author": "四不象(tabris17)",
+    "commandName": "doufen",
+    "homepage": "https://github.com/tabris17/doufen#readme",
+    "urls": {
+        "contact": "https://www.douban.com/people/tabris17/",
+        "discuss": "https://github.com/tabris17/doufen/issues",
+        "issues": "https://github.com/tabris17/doufen/issues"
+    },
+    "dependencies": {
+        "argparse": "^1.0.10",
+        "cookie": "^0.3.1",
+        "electron-referer": "^0.3.0",
+        "jquery": "^3.3.1",
+        "mustache": "^2.3.0",
+        "showdown": "^1.8.6",
+        "ws": "^5.1.1"
+    },
+    "build": {
+        "appId": "doufen.app",
+        "productName": "doufen",
+        "win": {
+            "icon": "./app.ico",
+            "target": ["portable", "zip"]
+        },
+        "directories": {
+            "output": "../../dist"
+        }
+    }
+}

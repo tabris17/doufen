@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            background: linear-gradient(140deg, #072, #edf4ed);
+            overflow: hidden;
+            zoom: 1;
+        }
+
+        .splash {
+            font: 14px Helvetica, Arial, "Microsoft YaHei", sans-serif;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            color: white;
+        }
+
+        .splash .brand {
+            display: block;
+            font-size: 60px;
+            line-height: 120px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            top: 50%;
+            margin-top: -60px;
+        }
+
+        .splash .footer {
+            display: block;
+            font-size: 14px;
+            color: #072;
+            line-height: 28px;
+            width: 100%;
+            text-align: right;
+            position: absolute;
+            bottom: 0;
+            height: 28px;
+            margin: 0 auto 0 -10px;
+            padding: 0;
+            text-shadow: -1px -1px 0 white;
+        }
+
+        .splash .header {
+            display: block;
+            font-size: 14px;
+            line-height: 28px;
+            width: 100%;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            height: 28px;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="splash">
+        <p class="header">
+            <span id="status">正在启动服务...</span>
+        </p>
+        <a class="brand">豆坟</a>
+        <p class="footer">版本：
+            <span id="version"></span>
+        </p>
+    </section>
+    <script>
+        const { remote, ipcRenderer } = require('electron')
+        const debugMode = remote.getGlobal('debugMode')
+
+        document.querySelector('#version').innerText = remote.app.getVersion()
+
+        let status = document.querySelector('#status')
+        ipcRenderer.on('ready-to-connect', () => {
+            status.innerText = '正在连接服务...'
+        })
+        ipcRenderer.on('ready-to-show', () => {
+            if (debugMode) {
+                status.innerText = '按任意键继续'
+                document.body.addEventListener('keydown', () => {
+                    window.close()
+                })
+            } else {
+                window.close()
+            }
+        })
+    </script>
+</body>
+
+</html>

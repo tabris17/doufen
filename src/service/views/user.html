@@ -1,0 +1,68 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{{ subject.name }}{% end %}
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="{{ reverse_url('my.movie.historical') }}">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+
+    <article class="media" style="min-height: 220px;">
+        <figure class="media-left">
+            <p class="image is-128x128">
+                <img src="{{ subject.large_avatar if subject.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+            </p>
+        </figure>
+        <div class="media-content">
+            <div class="content">
+                <p>
+                    <strong><a href="{{ subject.alt }}" class="external-link">{{ subject.name }}</a></strong>
+                    <small>(@{{ subject.unique_name}})</small>
+                    <small class="has-text-grey-light">{{ subject.signature }}</small>
+                </p>
+                <dl class="is-horizontal is-label-size-4">
+                    <dt class="has-text-left">加入时间</dt>
+                    <dd class="has-text-grey-light">{{ subject.created }}</dd>
+                    {% if subject.loc_name %}
+                    <dt class="has-text-left">所在地</dt>
+                    <dd class="has-text-grey-light">{{ subject.loc_name }}({{ subject.loc_id }})</dd>
+                    {% end %}
+                </dl>
+                <p class="text-break">
+                    {% for ln in subject.desc.split("\n") %}
+                    {% if ln %}
+                    {{ ln }}<br>
+                    {% end %}
+                    {% end %}
+                </p>
+            </div>
+        </div>
+        <div class="media-right">
+            {% if is_follower and is_following %}
+            相互关注
+            {% elif is_follower %}
+            我的关注者
+            {% elif is_following %}
+            已关注
+            {% end %}
+        </div>
+    </article>
+
+</div>
+{% end %}

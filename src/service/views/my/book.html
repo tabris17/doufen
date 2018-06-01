@@ -1,0 +1,138 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}{{ '我读过的书' if status == 'done' else '我想读的书' if status == 'wish' else '我在读的书' }}{% end %}
+
+{% block main %}
+{% import ast %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='book/' + status) %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">{{ '读过' if status == 'done' else '想读' if status == 'wish' else '在读' }} <strong>{{ total_rows }}</strong> 本</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="{{ reverse_url('my.book.historical') }}">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+            <article class="media box" style="min-height: 220px;">
+                <figure class="media-left">
+                    <p class="image is-128x128">
+                        <img src="{{ row.book.image }}">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p>
+                            <strong><a href="{{ row.book.alt }}" class="external-link">{{ row.book.title }}</a></strong>
+                            <small>{{ row.book.subtitle }}</small>
+                            {% if row.book.alt_title %}
+                            <br><small class="has-text-grey-light">({{ row.book.alt_title }})</small>
+                            {% end %}
+                        </p>
+                        <dl class="is-horizontal is-label-size-4">
+                            {% if row.book.author %}
+                            {% set author = ast.literal_eval(row.book.author) %}
+                            {% if len(row.book.author) %}
+                            <dt class="has-text-left">作者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
+                            {% end %}
+                            {% end %}
+
+                            {% if row.book.translator %}
+                            {% set translator = ast.literal_eval(row.book.translator) %}
+                            {% if len(translator) %}
+                            <dt class="has-text-left">译者</dt>
+                            <dd class="has-text-grey-light">{{ ' / '.join(translator) }}</dd>
+                            {% end %}
+                            {% end %}
+
+                            {% if row.book.publisher %}
+                            <dt class="has-text-left">出版社</dt>
+                            <dd class="has-text-grey-light">{{ row.book.publisher }}</dd>
+                            {% end %}
+
+                            {% if row.book.origin_title %}
+                            <dt class="has-text-left">原作名</dt>
+                            <dd class="has-text-grey-light">{{ row.book.origin_title }}</dd>
+                            {% end %}
+
+                            {% if row.book.pubdate %}
+                            <dt class="has-text-left">出版日期</dt>
+                            <dd class="has-text-grey-light">{{ row.book.pubdate }}</dd>
+                            {% end %}
+
+                            {% if row.book.isbn10 or row.book.isbn13 %}
+                            <dt class="has-text-left">ISBN</dt>
+                            <dd class="has-text-grey-light">{{ row.book.isbn10 }} / {{ row.book.isbn13 }}</dd>
+                            {% end %}
+
+                            {% if row.book.price %}
+                            <dt class="has-text-left">价格</dt>
+                            <dd class="has-text-grey-light">{{ row.book.price }}</dd>
+                            {% end %}
+
+                            {% if row.book.pages %}
+                            <dt class="has-text-left">页数</dt>
+                            <dd class="has-text-grey-light">{{ row.book.pages }}</dd>
+                            {% end %}
+
+                            {% if row.book.binding %}
+                            <dt class="has-text-left">装帧</dt>
+                            <dd class="has-text-grey-light">{{ row.book.binding }}</dd>
+                            {% end %}
+                        </dl>
+                        <dl class="is-horizontal is-label-size-4  is-marginless">
+                            <dt>我的评价</dt>
+                            <dd>
+                                {% if row.rating %}
+                                {% set my_rating = ast.literal_eval(row.rating) %}
+                                <span class="rating-start star-{{ my_rating['value'] }}0"></span>
+                                {% else %}
+                                <span class="rating-start star-00"></span>
+                                {% end %}
+                                <small class="has-text-grey-light">{{ row.create_time }}</small>
+                            </dd>
+                            {% if row.tags %}
+                            {% set tags = ast.literal_eval(row.tags) %}
+                            {% if len(tags) %}
+                            <dt>标签</dt>
+                            <dd>{{ ' / '.join(tags) }}</dd>
+                            {% end %}
+                            {% end %}
+                        </dl>
+                        <p class="text-break">{{ row.comment }}</p>
+                    </div>
+                </div>
+                <div class="media-right">
+                    <p>
+                        {% if row.book.rating %}
+                        {% set rating = ast.literal_eval(row.book.rating) %}
+                        豆瓣评分 <strong class="is-size-4">{{ rating['average'] }}</strong> / 10<br>
+                        <a href="{{ row.book.alt }}/collections" class="external-link">{{ rating['numRaters'] }} 人评价</a>
+                        {% end %}
+                    </p>
+                    <p style="margin-top: 10px;">
+                        <a href="{{ reverse_url('book', row.book.douban_id) }}" class="button">查看详情</a>
+                    </p>
+                </div>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

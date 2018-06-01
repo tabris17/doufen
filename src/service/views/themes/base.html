@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}豆坟{% end %}</title>
+    <link rel="stylesheet" href="{{ static_url('bulma.min.css') }}">
+    <link rel="stylesheet" href="{{ static_url('theme.css') }}">
+    <script defer src="{{ static_url('fontawesome-all.min.js') }}"></script>
+    {% block head_extra %}{% end %}
+</head>
+
+<body class="page-layout">
+    <nav id="primary-nav" class="navbar is-dark">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <span class="icon">
+                    <i class="fas fa-poo"></i>
+                </span>
+                <span>豆坟</span>
+            </a>
+            <div class="navbar-burger burger" data-target="#primary-nav>.navbar-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="{{ reverse_url('my') }}">我的豆瓣</a>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">工具</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="{{ reverse_url('dashboard') }}">控制台</a>
+                        <a class="navbar-item" href="{{ reverse_url('settings') }}">设置</a>
+                    </div>
+                </div>
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">帮助</a>
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="{{ reverse_url('help.manual') }}">用户手册</a>
+                        <hr class="navbar-divider is-hidden-tablet-only is-hidden-mobile">
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-homepage">项目主页</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-discuss">软件讨论</a>
+                        <a class="navbar-item external-link is-hidden-tablet-only is-hidden-mobile" id="link-issues">问题反馈</a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item" id="menu-about">关于</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar-end">
+                {% block search %}
+                <div class="navbar-item">
+                    <div class="field">
+                        <p class="control has-icons-left">
+                            <input class="input" type="search" placeholder="搜索">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                {% end %}
+                {% block login %}
+                <div class="navbar-item">
+                    <a class="button is-info" href="{{ reverse_url('settings.accounts.login') }}">登录</a>
+                </div>
+                {% end %}
+                {% module Account() %}
+                <div class="navbar-item">
+                    <a class="button" id="button-shutdown">退出系统</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% block body %} {% end %}
+    <template id="tpl-modal-about">
+        {% import sys %}
+        {% import sqlite3 %}
+        <div class="modal" id="modal-about">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">关于</p>
+                    <button class="delete" aria-label="close" data-target="#modal-about"></button>
+                </header>
+                <section class="modal-card-body">
+                    <dl class="is-horizontal">
+                        <dt>软件名称</dt>
+                        <dd>${name}</dd>
+                        <dt>软件版本</dt>
+                        <dd>${version}</dd>
+                        <dt>路径</dt>
+                        <dd>${path}</dd>
+                        <dt>内核版本</dt>
+                        <dd>Electron-v${electronVersion}; Chrome-v${chromeVersion}; Node.js-v${nodeVersion}; V8-v${v8Version}</dd>
+                        <dt>Python 版本</dt>
+                        <dd>{{ sys.version }}</dd>
+                        <dt>SQLite 版本</dt>
+                        <dd>{{ sqlite3.sqlite_version }}</dd>
+                        <dt>作者</dt>
+                        <dd>
+                            <a href="${contact}" class="external-link">${author}</a>
+                        </dd>
+                    </dl>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-success action-close" data-target="#modal-about">确定</button>
+                    <a href="${homepage}" class="button is-info external-link">项目主页</a>
+                    <a href="${homepage}" class="button is-info external-link">软件论坛</a>
+                    <a href="${homepage}" class="button is-info external-link">问题反馈</a>
+                </footer>
+            </div>
+        </div>
+    </template>
+    <script>
+        system.on('loaded', () => {
+            const path = system.require('path')
+            const package = system.require(path.join(system.getAppPath(), 'package.json'))
+
+            $('#link-discuss').attr('href', package.urls.discuss)
+            $('#link-issues').attr('href', package.urls.issues)
+            $('#link-homepage').attr('href', package.homepage)
+
+            $('#button-shutdown').click(() => {
+                if (window.confirm('退出系统后，工作进程也将退出。确定要退出系统吗？')) {
+                    $.ajax({
+                        url: '{{ reverse_url("shutdown") }}',
+                        method: 'GET'
+                    }).then((data, status, $xhr) => {
+                        window.close()
+                    }, ($xhr, status, error) => {
+                        window.alert('退出系统失败：' + error, '错误')
+                    })
+                }
+            })
+
+            $('.navbar').on('mouseover', '.dropdown.is-hoverable.is-justify>.dropdown-trigger', function (event) {
+                let $dropdown = $(this).parent('.dropdown.is-hoverable.is-justify')
+                if (event.pageX < 200) {
+                    $dropdown.removeClass('is-right')
+                } else {
+                    $dropdown.addClass('is-right')
+                }
+            })
+
+            $('.navbar-burger').click(function () {
+                $(this.dataset.target).toggleClass('is-active')
+                $(this).toggleClass('is-active')
+            })
+
+            $(document.body).on('click', 'a.external-link', function(event) {
+                event.preventDefault()
+                system.openLink($(this).attr('href'))
+            }).on('click', '.delete, .action-close', function(event) {
+                event.preventDefault()
+                $(this.dataset.target).removeClass('is-active').addClass('is-hidden')
+            }).on('click', '.action-open', function(event) {
+                event.preventDefault()
+                $(this.dataset.target).removeClass('is-hidden').addClass('is-active')
+            })
+
+            $('#menu-about').click((event) => {
+                let modal = $('#modal-about')
+                if (modal.length == 0) {
+                    const Mustache = system.require('mustache')
+                    const { app } = system.require('electron').remote
+
+                    modal = $(Mustache.render($('#tpl-modal-about').html(), {
+                        version: app.getVersion(),
+                        name: app.getName(),
+                        path: app.getAppPath(),
+                        chromeVersion: process.versions.chrome,
+                        electronVersion: process.versions.electron,
+                        nodeVersion: process.versions.node,
+                        v8Version: process.versions.v8,
+                        author: package.author,
+                        contact: package.urls.contact,
+                        homepage: package.homepage,
+                        discuss: package.urls.discuss,
+                        issues: package.urls.issues
+                    })).appendTo('body')
+                }
+
+                event.preventDefault()
+                modal.toggleClass('is-active').removeClass('is-hidden')
+            })
+    
+            $('.load-from-cache').each(function () {
+                let $img = $(this)
+                $img.attr('src', '{{ reverse_url("attachment", "") }}' + encodeURIComponent($img.data('src')))
+            })
+        })
+    </script>
+    {% block body_extra %}{% end %}
+</body>
+
+</html>
+
+{% block login %}{% end %}

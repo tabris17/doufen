@@ -1,0 +1,18 @@
+{% extends "blocklist.html" %} 
+
+{% block title %}我的黑名单历史记录{% end %}
+
+{% block headline %}
+<nav class="level">
+    <div class="level-left">
+        <div class="level-item">
+            <p class="subtitle is-5">我曾经拉黑 <strong>{{ total_rows }}</strong> 人</p>
+        </div>
+    </div>
+    <div class="level-right">
+        <p class="level-item">
+            <a class="button" href="{{ reverse_url('my.blocklist') }}">返回我的黑名单</a>
+        </p>
+    </div>
+</nav>
+{% end %}
