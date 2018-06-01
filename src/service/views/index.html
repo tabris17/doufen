@@ -7,8 +7,22 @@
     <div class="hero-body">
         <div class="container">
             <h1 class="title">豆瓣备份机</h1>
-            <h2 class="subtitle">豆瓣是你的精神病角落。请问你需要备份一下你的病历吗？</h2>
+            <h2 class="subtitle">如果豆瓣是你的精神病角落，那你需要备份一下你的病历吗？</h2>
         </div>
     </div>
 </section>
+
+<div class="container" style="padding-top: 20px;">
+    <div class="content">
+        <h2 class="title">第一步</h2>
+        <p>先<a href="{{ reverse_url('settings.accounts.login') }}">登录</a>你的豆瓣帐号。</p>
+        <p><b>注意</b>：在软件备份过程中，你的帐号可能会被豆瓣误判为访问异常而被锁定。帐号被锁定后需要到豆瓣网站进行解锁。解锁过程需要用到手机发送验证码。如果你无法使用注册手机号发送验证码将会导致账户无法解锁。故请谨慎使用！</p>
+        <h2 class="title">第二步</h2>
+        <p>在<a href="{{ reverse_url('dashboard') }}">控制台</a>新建备份任务。</p>
+        <p>在“控制台”页面的“任务”一栏里，点击“新建”按钮。在对话框左侧选中你的帐号，右侧选择要执行的备份任务。</p>
+        <h2 class="title">第三步</h2>
+        <p>在<a href="{{ reverse_url('my') }}">我的豆瓣</a>查看备份结果。</p>
+    </div>
+</div>
+
 {% end %}

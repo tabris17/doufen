@@ -8,7 +8,7 @@
         "app": "electron ./src/app --debug",
         "service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",
         "build:service": "source ./.venv/Scripts/activate && source ./scripts/build.sh",
-        "build:app": "electron-builder --win --x64 --dir --project ./src/app"
+        "build:app": "electron-builder --win --x64 --project ./src/app"
     },
     "repository": {
         "type": "git",

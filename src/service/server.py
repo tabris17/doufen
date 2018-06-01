@@ -103,7 +103,7 @@ class Server:
             application.listen(port, address)
         except OSError:
             logging.error('system already running.')
-            exit()
+            sys.exit(0)
         self.application = application
 
         self._worker_output = Queue()

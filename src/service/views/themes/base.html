@@ -70,6 +70,9 @@
                 </div>
                 {% end %}
                 {% module Account() %}
+                <div class="navbar-item">
+                    <a class="button" id="button-shutdown">退出系统</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -122,6 +125,19 @@
             $('#link-discuss').attr('href', package.urls.discuss)
             $('#link-issues').attr('href', package.urls.issues)
             $('#link-homepage').attr('href', package.homepage)
+
+            $('#button-shutdown').click(() => {
+                if (window.confirm('退出系统后，工作进程也将退出。确定要退出系统吗？')) {
+                    $.ajax({
+                        url: '{{ reverse_url("shutdown") }}',
+                        method: 'GET'
+                    }).then((data, status, $xhr) => {
+                        window.close()
+                    }, ($xhr, status, error) => {
+                        window.alert('退出系统失败：' + error, '错误')
+                    })
+                }
+            })
 
             $('.navbar').on('mouseover', '.dropdown.is-hoverable.is-justify>.dropdown-trigger', function (event) {
                 let $dropdown = $(this).parent('.dropdown.is-hoverable.is-justify')

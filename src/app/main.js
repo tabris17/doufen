@@ -6,6 +6,7 @@ const url = require('url')
 const { ArgumentParser } = require('argparse')
 const { app, dialog, ipcMain, Notification } = require('electron')
 const { splashScreen, createMainWindow, createTray, getMainWindow } = require('./window')
+const childProcess = require('child_process')
 const electronReferer = require('electron-referer')
 const Messenger = require('./messenger')
 
@@ -107,6 +108,7 @@ function main(args) {
         console.debug = console.log
     } else {
         console.debug = (...args) => {}
+        childProcess.spawn('service')
     }
 
     let serviceUrl = url.format({
@@ -238,7 +240,7 @@ function main(args) {
         }
     })
 
-    app.on('all-window-closed', () => {
+    app.on('window-all-closed', () => {
         if (process.platform !== 'darwin') {
             app.quit()
         }
@@ -252,7 +254,12 @@ function main(args) {
     electronReferer('https://www.douban.com/')
 }
 
+let mainArgs = []
 
-if ([__filename, __dirname].indexOf(path.resolve(process.argv[1])) > -1) {
-    main(process.argv.slice(2))
+if (process.argv[1] && [__filename, __dirname].indexOf(path.resolve(process.argv[1])) > -1) {
+    mainArgs = process.argv.slice(2)
+} else if (process.argv) {
+    mainArgs = process.argv.slice(1)
 }
+
+main(mainArgs)

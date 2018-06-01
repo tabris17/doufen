@@ -75,5 +75,5 @@ if __name__ == '__main__':
         import multiprocessing
         multiprocessing.freeze_support() # for PyInstaller
         main(sys.argv[1:])
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         print('exit')
