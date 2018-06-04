@@ -130,6 +130,7 @@ class Server:
         broadcast_active_duration = setting.get('worker.broadcast-active-duration', int, BROADCAST_ACTIVE_DURATION)
         image_local_cache = setting.get('worker.image-local-cache', bool, IMAGE_LOCAL_CACHE)
         
+        self._worker_input = Queue()
         worker_args = {
             'debug': settings.get('debug'),
             'queue_in': self._worker_input,
@@ -214,6 +215,8 @@ class Server:
                         'message': str(ret.exception),
                     }))
                     self._launch_task()
+                elif isinstance(ret, Worker.ReturnHeartbeat):
+                    logging.info('"{0}" heartbeat:{1}'.format(ret.name, ret.sequence))
             except queues.Empty:
                 pass
             # 每隔0.1秒读取一下队列
@@ -244,7 +247,6 @@ class Server:
             for worker in self._workers.values():
                 if worker.is_suspended():
                     self._launch_task()
-                    break
 
 
     def start_workers(self):

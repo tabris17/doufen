@@ -3,9 +3,10 @@ import logging
 from enum import Enum
 from inspect import isgeneratorfunction
 from logging.handlers import QueueHandler
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, queues
 
 import db
+import tasks
 
 REQUESTS_PER_MINUTE = 60
 LOCAL_OBJECT_DURATION = 60 * 60 * 24 * 30
@@ -39,6 +40,15 @@ class Worker:
         def __init__(self, name, value):
             self.name = name
             self.value = value
+
+    class ReturnHeartbeat:
+        """
+        心跳
+        """
+
+        def __init__(self, name, sequence):
+            self.name = name
+            self.sequence = sequence
 
     class ReturnReady:
         """
@@ -115,6 +125,9 @@ class Worker:
     def _error(self, exception):
         self.queue_out.put(Worker.ReturnError(self._name, exception))
 
+    def _heartbeat(self, sequence):
+        self.queue_out.put(Worker.ReturnHeartbeat(self._name, sequence))
+
     def __call__(self, *args, **kwargs):
         queue_in = self.queue_in
         queue_out = self.queue_out
@@ -124,12 +137,17 @@ class Worker:
         db.init(self._settings['db_path'], False)
 
         self._ready()
+
+        heartbeat_sequence = 1
         while True:
             try:
-                task = queue_in.get()
-                self._work(str(task))
-                self._done(task(**self._settings))
-
+                task = queue_in.get(timeout=1)
+                if isinstance(task, tasks.Task):
+                    self._work(str(task))
+                    self._done(task(**self._settings))
+            except queues.Empty:
+                self._heartbeat(heartbeat_sequence)
+                heartbeat_sequence += 1
             except Exception as e:
                 self._error(e)
             except KeyboardInterrupt:
@@ -140,6 +158,7 @@ class Worker:
             self._status = Worker.State.RUNNING
             self._process = Process(target=self)
             self._process.start()
+            logging.info('{0}启动'.format(self.name))
         else:
             raise Worker.RuntimeError('Can not start worker. The worker is ' + (
                 'running' if self._status == Worker.State.RUNNING else 'terminated'))
@@ -148,6 +167,7 @@ class Worker:
         if self.is_running():
             self._status = Worker.State.TERMINATED
             self._process.terminate()
+            logging.info('{0}停止'.format(self.name))
         else:
             raise Worker.RuntimeError('Can not stop worker. The worker is ' + (
                 'pending' if self._status == Worker.State.PENDING else 'terminated'))
