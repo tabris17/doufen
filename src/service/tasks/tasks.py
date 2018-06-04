@@ -641,6 +641,7 @@ class FollowingFollowerTask(Task):
         block_list = self.fetch_block_list()
         block_users = [(username, self.fetch_user(username)) for username in block_list]
         self.save_block_list(account.user, block_users)
+        logging.info('备份我的友邻全部完成')
 
 
 class InterestsTask(Task):
@@ -773,6 +774,7 @@ class InterestsTask(Task):
             self.account.user,
             my_wish_mapping + my_doing_mapping + my_done_mapping
         )
+        logging.info(type(self)._name + '全部完成')
 
 
 class BookTask(InterestsTask):
@@ -1083,6 +1085,7 @@ class BroadcastTask(Task):
         if self._image_local_cache:
             while self.fetch_attachment():
                 pass
+        logging.info('备份我的广播全部完成')
 
 
 class BroadcastCommentTask(Task):
@@ -1132,6 +1135,7 @@ class BroadcastCommentTask(Task):
                 self.save_comment_list(comment_list)
             except:
                 pass
+        logging.info('备份广播评论全部完成')
 
 
 class NoteTask(Task):
