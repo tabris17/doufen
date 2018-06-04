@@ -1141,8 +1141,69 @@ class BroadcastCommentTask(Task):
 class NoteTask(Task):
     _name = '备份我的日记'
 
-    def run(self):
+    def fetch_note_list(self):
+        url = self.account.user.alt + 'notes'
+        notes = []
+        while True:
+            response = self.fetch_url_content(url)
+            dom = PyQuery(response.text)
+            note_items = dom('#content .article>.note-container')
+            for note_item in note_items:
+                notes.append(PyQuery(note_item).attr('data-url'))
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return notes
+
+    @dbo.atomic()
+    def save_note(self, detail):
         pass
+
+    def fetch_note(self, url):
+        response = self.fetch_url_content(url)
+        dom = PyQuery(response.text)
+        note_container = dom('#content .article>.note-container')
+        attachments = []
+        for img in note_container('.image-wrapper>img'):
+            attachments.append({
+                'type': 'image',
+                'url': PyQuery(img).attr('src'),
+            })
+        subjects = []
+        for subject_link in note_container('.subject-wrapper>a'):
+            subject_url = PyQuery(subject_link).attr('href')
+            subject_type, subject_id = re.findall(r'^https://([a-z]+)\.douban\.com/subject/([0-9]+)/$', subject_url).pop(0)
+            subjects.append({
+                'type': subject_type,
+                'douban_id': subject_id,
+            })
+            if subject_type == 'music':
+                self.fetch_music(subject_id)
+            elif subject_type == 'movie':
+                self.fetch_movie(subject_id)
+            elif subject_type == 'book':
+                self.fetch_book(subject_id)
+        detail = {
+            'is_original': note_container.attr('data-is-original') == '1',
+            'douban_id': note_container.attr('id')[5:],
+            'title': note_container('.note-header.note-header-container>h1').text(),
+            'created': note_container('.note-header.note-header-container .pub-date').text(),
+            'introduction': note_container('.introduction').text(),
+            'content': note_container('#link-report').html(),
+            'attachments': attachments,
+            'subjects': subjects,
+        }
+        
+        return detail
+
+    def run(self):
+        notes = self.fetch_note_list()
+        notes.reverse()
+        for url in notes:
+            self.fetch_note(url)
+        logging.info('备份我的日记全部完成')
 
 
 class PhotoAlbumTask(Task):
@@ -1173,6 +1234,7 @@ ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     MovieTask,
     MusicTask,
     BroadcastCommentTask,
+    NoteTask,
     #PhotoAlbumTask,
     #ReviewTask,
     #DoulistTask,
