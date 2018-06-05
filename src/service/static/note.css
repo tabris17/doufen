@@ -1,0 +1,517 @@
+
+    @charset "UTF-8";
+    .note .subject-wrapper .subject-rating .rating-star0, .note .subject-wrapper .subject-rating .rating-star1, .note .subject-wrapper .subject-rating .rating-star2 {
+      display: inline-block;
+      vertical-align: middle;
+      width: 14px;
+      height: 14px;
+      line-height: 50px;
+      font-size: 0;
+      overflow: hidden;
+      background-position: 0 0;
+      background-repeat: no-repeat; }
+        
+    .note blockquote {
+      padding: 0 0 0 2em;
+      margin-bottom: 20px;
+      background-position: 0 0;
+      background-repeat: no-repeat;
+      color: #7b7b7b;
+      font-size: 13px; }
+    
+    .note h2 {
+      font-size: 1.5em;
+      padding-top: 15px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #111; }
+    
+    .note .separator {
+      position: relative;
+      overflow: hidden;
+      margin-top: -20px; }
+      .note .separator hr {
+        padding: 25px 0;
+        margin: 0;
+        border: 0; }
+        .note .separator hr:before {
+          position: absolute;
+          content: "";
+          font-size: 0;
+          width: 100px;
+          top: 50%;
+          left: 50%;
+          margin: -2px 0 0 -50px;
+          border-top: 1px solid #dfdfdf;
+          border-bottom: 1px solid #dfdfdf; }
+    
+    .note .subject-wrapper .subject-rating .rating-score {
+      display: inline-block;
+      margin-left: 4px;
+      color: #e09015;
+      vertical-align: middle;
+      padding-top: 2px;
+      font-size: 12px; }
+    
+    .note .subject-wrapper .subject-rating .rating-reason {
+      display: inline-block;
+      margin-left: 4px;
+      color: #ccc;
+      vertical-align: middle;
+      padding-top: 2px;
+      font-size: 12px; }
+    
+    .note .subject-wrapper, .note .video-card, .note .poll-wrapper {
+      padding: 10px;
+      border: 1px solid #dfdfdf;
+      background-color: #fcfcfc;
+      white-space: normal; }
+    
+    .note .subject-wrapper .subject-title .loc-name {
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: text-bottom;
+      font-size: 12px;
+      font-weight: 200;
+      font-family: sans-serif;
+      background-color: #8ac393;
+      color: #fff;
+      padding: 2px 4px;
+      border-radius: 1px;
+      line-height: 1; }
+    
+    .note .subject-wrapper .subject-title, .note .video-card .video-card-title {
+      margin-bottom: 8px;
+      font-size: 15px;
+      line-height: 1.1;
+      color: #494949; }
+      .note .subject-wrapper .subject-title a:link, .note .video-card .video-card-title a:link, .note .subject-wrapper .subject-title a:visited, .note .video-card .video-card-title a:visited, .note .subject-wrapper .subject-title a:hover, .note .video-card .video-card-title a:hover, .note .subject-wrapper .subject-title a:active, .note .video-card .video-card-title a:active {
+        color: #494949;
+        background: transparent; }
+    
+    .note .subject-wrapper .subject-info, .note .video-card .video-card-info {
+      overflow: hidden;
+      text-align: left;
+      min-height: 50px;
+      padding: 4px 10px 0 0;
+      color: #999;
+      font-size: .86em;
+      line-height: 1.6; }
+    
+    .note .subject-wrapper .subject-cover {
+      float: left;
+      width: 68px;
+      margin-right: 18px;
+      max-height: 90px;
+      overflow: hidden;
+      font-size: 0; }
+      .note .subject-wrapper .subject-cover img {
+        max-width: 100%; }
+    
+    .note .video-card .video-card-cover a, .note .video-card .video-card-cover {
+      position: relative;
+      display: table-cell;
+      vertical-align: middle;
+      width: 80px;
+      height: 60px;
+      text-align: center; }
+      .note .video-card .video-card-cover a:before, .note .video-card .video-card-cover:before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+        background-color: rgba(0, 0, 0, 0.5);
+        background-repeat: no-repeat;
+        background-position: 50% 50%; }
+      .note .video-card .video-card-cover a:hover, .note .video-card .video-card-cover:hover {
+        background-color: transparent; }
+      .note .video-card .video-card-cover a:hover:before, .note .video-card .video-card-cover:hover:before {
+        background-color: transparent; }
+    
+    .note .video-card .video-card-cover {
+      float: left;
+      margin-right: 18px;
+      overflow: hidden;
+      background: #222;
+      font-size: 0; }
+      .note .video-card .video-card-cover img {
+        position: absolute;
+        left: -1000px;
+        top: -1000px;
+        right: -1000px;
+        bottom: -1000px;
+        margin: auto;
+        max-width: 100%;
+        min-width: 48px; }
+    
+    .note .video-card .video-card-blank {
+      display: inline-block;
+      width: 80px;
+      height: 60px;
+      background-color: #ddd;
+      background-repeat: no-repeat;
+      background-position: 50% 0;
+      background-size: auto 100%; }
+    
+    .note .video-card .video-card-error {
+      padding: 1.5em 0;
+      text-align: center;
+      font-size: 12px;
+      background-color: #f6f6f6; }
+      .note .video-card .video-card-error p {
+        display: inline-block;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: inherit;
+        color: #ccc !important; }
+        .note .video-card .video-card-error p:before {
+          content: "";
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          margin-right: 1em;
+          vertical-align: text-bottom;
+          background-repeat: no-repeat;
+          background-position: 50% 50%; }
+      .note .video-card .video-card-error a {
+        margin-left: 1em; }
+    
+    .note .subject-wrapper .subject-rating .rating-star0, .note .subject-wrapper .subject-rating .rating-star1, .note .subject-wrapper .subject-rating .rating-star2 {
+      display: inline-block;
+      vertical-align: middle;
+      width: 14px;
+      height: 14px;
+      line-height: 50px;
+      font-size: 0;
+      overflow: hidden;
+      background-position: 0 0;
+      background-repeat: no-repeat; }
+    
+    .note blockquote {
+      padding: 0 0 0 2em;
+      margin-bottom: 20px;
+      background-position: 0 0;
+      background-repeat: no-repeat;
+      color: #7b7b7b;
+      font-size: 13px; }
+    
+    .note h2 {
+      font-size: 1.5em;
+      padding-top: 15px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #111; }
+    
+    .note .separator {
+      position: relative;
+      overflow: hidden;
+      margin-top: -20px; }
+      .note .separator hr {
+        padding: 25px 0;
+        margin: 0;
+        border: 0; }
+        .note .separator hr:before {
+          position: absolute;
+          content: "";
+          font-size: 0;
+          width: 100px;
+          top: 50%;
+          left: 50%;
+          margin: -2px 0 0 -50px;
+          border-top: 1px solid #dfdfdf;
+          border-bottom: 1px solid #dfdfdf; }
+    
+    .note .subject-wrapper .subject-rating .rating-score {
+      display: inline-block;
+      margin-left: 4px;
+      color: #e09015;
+      vertical-align: middle;
+      padding-top: 2px;
+      font-size: 12px; }
+    
+    .note .subject-wrapper .subject-rating .rating-reason {
+      display: inline-block;
+      margin-left: 4px;
+      color: #ccc;
+      vertical-align: middle;
+      padding-top: 2px;
+      font-size: 12px; }
+    
+    .note .subject-wrapper, .note .video-card, .note .poll-wrapper {
+      padding: 10px;
+      border: 1px solid #dfdfdf;
+      background-color: #fcfcfc;
+      white-space: normal; }
+    
+    .note .subject-wrapper .subject-title .loc-name {
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: text-bottom;
+      font-size: 12px;
+      font-weight: 200;
+      font-family: sans-serif;
+      background-color: #8ac393;
+      color: #fff;
+      padding: 2px 4px;
+      border-radius: 1px;
+      line-height: 1; }
+    
+    .note .subject-wrapper .subject-title, .note .video-card .video-card-title {
+      margin-bottom: 8px;
+      font-size: 15px;
+      line-height: 1.1;
+      color: #494949; }
+      .note .subject-wrapper .subject-title a:link, .note .video-card .video-card-title a:link, .note .subject-wrapper .subject-title a:visited, .note .video-card .video-card-title a:visited, .note .subject-wrapper .subject-title a:hover, .note .video-card .video-card-title a:hover, .note .subject-wrapper .subject-title a:active, .note .video-card .video-card-title a:active {
+        color: #494949;
+        background: transparent; }
+    
+    .note .subject-wrapper .subject-info, .note .video-card .video-card-info {
+      overflow: hidden;
+      text-align: left;
+      min-height: 50px;
+      padding: 4px 10px 0 0;
+      color: #999;
+      font-size: .86em;
+      line-height: 1.6; }
+    
+    .note .subject-wrapper .subject-cover {
+      float: left;
+      width: 68px;
+      margin-right: 18px;
+      max-height: 90px;
+      overflow: hidden;
+      font-size: 0; }
+      .note .subject-wrapper .subject-cover img {
+        max-width: 100%; }
+    
+    .note .video-card .video-card-cover a, .note .video-card .video-card-cover {
+      position: relative;
+      display: table-cell;
+      vertical-align: middle;
+      width: 80px;
+      height: 60px;
+      text-align: center; }
+      .note .video-card .video-card-cover a:before, .note .video-card .video-card-cover:before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+        background-color: rgba(0, 0, 0, 0.5);
+        background-repeat: no-repeat;
+        background-position: 50% 50%; }
+      .note .video-card .video-card-cover a:hover, .note .video-card .video-card-cover:hover {
+        background-color: transparent; }
+      .note .video-card .video-card-cover a:hover:before, .note .video-card .video-card-cover:hover:before {
+        background-color: transparent; }
+    
+    .note .video-card .video-card-cover {
+      float: left;
+      margin-right: 18px;
+      overflow: hidden;
+      background: #222;
+      font-size: 0; }
+      .note .video-card .video-card-cover img {
+        position: absolute;
+        left: -1000px;
+        top: -1000px;
+        right: -1000px;
+        bottom: -1000px;
+        margin: auto;
+        max-width: 100%;
+        min-width: 48px; }
+    
+    .note .video-card .video-card-blank {
+      display: inline-block;
+      width: 80px;
+      height: 60px;
+      background-color: #ddd;
+      background-repeat: no-repeat;
+      background-position: 50% 0;
+      background-size: auto 100%; }
+    
+    .note .video-card .video-card-error {
+      padding: 1.5em 0;
+      text-align: center;
+      font-size: 12px;
+      background-color: #f6f6f6; }
+      .note .video-card .video-card-error p {
+        display: inline-block;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: inherit;
+        color: #ccc !important; }
+        .note .video-card .video-card-error p:before {
+          content: "";
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          margin-right: 1em;
+          vertical-align: text-bottom;
+          background-repeat: no-repeat;
+          background-position: 50% 50%; }
+      .note .video-card .video-card-error a {
+        margin-left: 1em; }
+    
+    .note blockquote + blockquote {
+      background: none; }
+    
+    .note {
+      font-size: 13px; }
+      .note p, .note blockquote, .note .DRE-unstyled {
+        margin: 0 0 20px 0;
+        line-height: 1.8;
+        font-size: 1em;
+        color: #111;
+        font-family: Arial, Helvetica, sans-serif;
+        word-wrap: break-word;
+        white-space: pre-wrap; }
+        .note p a, .note blockquote a, .note .DRE-unstyled a {
+          word-break: break-all; }
+      .note blockquote {
+        color: #7b7b7b; }
+      .note p:empty + p:empty {
+        overflow: hidden; }
+      .note ol, .note ul {
+        padding: 0;
+        margin-top: 0;
+        margin-bottom: 20px; }
+      .note ul li {
+        margin: 0 0 0 2em;
+        list-style-type: disc;
+        list-style-position: outside; }
+      .note ol li {
+        margin-left: 2em;
+        list-style-type: decimal;
+        list-style-position: outside; }
+    
+    .note .introduction {
+      margin: 0 0 30px 0;
+      padding: 15px 20px;
+      line-height: 1.8;
+      color: #999;
+      background: #f7f7f7; }
+      .note .introduction p {
+        margin: 0;
+        color: #999; }
+    
+    .note .subject-wrapper, .note .video-card, .note .poll-wrapper {
+      margin: 0 30px 30px;
+      overflow: hidden;
+      line-height: 0; }
+      .note .subject-wrapper a, .note .video-card a, .note .poll-wrapper a {
+        display: block; }
+        .note .subject-wrapper a:link, .note .video-card a:link, .note .poll-wrapper a:link, .note .subject-wrapper a:visited, .note .video-card a:visited, .note .poll-wrapper a:visited {
+          color: #259; }
+        .note .subject-wrapper a:hover, .note .video-card a:hover, .note .poll-wrapper a:hover, .note .subject-wrapper a:active, .note .video-card a:active, .note .poll-wrapper a:active {
+          background-color: transparent; }
+    
+    
+    
+    
+    
+    
+    
+    
+    .note {
+      width: 100%;
+      overflow: hidden;
+      margin-top: 30px; }
+      .note .subject-wrapper .subject-title .title-play {
+        height: 16px;
+        float: left;
+        width: 16px;
+        margin-right: 6px; }
+      .note .subject-wrapper .subject-rating {
+        margin-bottom: 8px;
+        line-height: 1; }
+      .note .subject-wrapper .subject-summary {
+        color: #999; }
+      .note .video-card > a:link, .note .video-card > a:visited, .note .video-card > a:hover, .note .video-card > a:active {
+        display: block;
+        background-color: transparent; }
+      .note .video-card > a:hover .video-card-cover, .note .video-card > a:active .video-card-cover {
+        background-color: transparent; }
+      .note .video-card > a:hover .video-card-cover:before, .note .video-card > a:active .video-card-cover:before {
+        background-color: transparent; }
+      .note .video-card .video-card-source {
+        margin-top: 10px;
+        color: #999; }
+      .note .poll-wrapper {
+        padding: 20px; }
+        .note .poll-wrapper .poll-title {
+          font-size: 1.5em;
+          line-height: 1.4;
+          font-weight: 600; }
+      .note .image-container {
+        margin-bottom: 20px; }
+      .note .image-float-left {
+        text-align: left; }
+        .note .image-float-left .image-caption, .note .image-float-left .image-wrapper {
+          display: inline-block;
+          padding-left: 0;
+          padding-right: 0; }
+      .note .image-wrapper {
+        text-align: center;
+        font-size: 0;
+        line-height: 0; }
+        .note .image-wrapper img {
+          max-width: 100%; }
+      .note .image-caption {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 13px;
+        color: #999; }
+      .note .video-wrapper {
+        margin-bottom: 20px;
+        text-align: center; }
+      .note .video-player {
+        font-size: 0; }
+        .note .video-player embed, .note .video-player object, .note .video-player video {
+          width: 590px;
+          max-width: 100%;
+          background-color: #000; }
+        .note .video-player embed, .note .video-player object {
+          height: 460px; }
+        .note .video-player video {
+          height: auto; }
+        .note .video-player .video-title {
+          margin-top: 10px;
+          font-size: 13px;
+          color: #999; }
+        .note .video-player-iframe .title {
+            border: 1px solid #dfdfdf;
+            background-color: #fcfcfc; margin: auto; width: 400px; height: 300px;line-height: 300px;}
+        .note .video-player-iframe .video-title {
+          margin-top: 10px;
+          font-size: 13px;
+          color: #999; }
+      .note .latex {
+        white-space: pre-wrap;
+        font-family: monospace; }
+      .note .code-block {
+        white-space: pre-wrap;
+        font-family: monospace; }
+      .note img {
+        max-width: 100%; }
+    
+    .note-container h1 {
+      padding: 0 0 20px 0;
+      color: #111;
+      line-height: 1.4; }
+    
+    .note {
+      font-size: 14px; }
+    
+    .note-header-container .pub-date {
+      color: #999;
+      font-size: 13px; }
+    
+hr {
+    background: #fff;
+}

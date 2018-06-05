@@ -5,6 +5,7 @@ import logging
 import tornado
 from tornado.websocket import WebSocketHandler
 from tornado.web import RequestHandler
+from pyquery import PyQuery
 
 import db
 
@@ -190,4 +191,29 @@ class Attachment(BaseRequestHandler):
             pass
 
         self.redirect(url)
+
+
+class Note(BaseRequestHandler):
+    """
+    日记
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.Note.get(db.Note.douban_id == douban_id)
+            history = db.NoteHistorical.select().where(db.NoteHistorical.id == subject.id)
+        except db.User.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        comments = db.Comment.select().join(db.User).where(
+            db.Comment.target_type == 'note',
+            db.Comment.target_douban_id == subject.douban_id
+        )
+
+        dom = PyQuery(subject.content)
+        dom_iframe = dom('iframe')
+        dom_iframe.before('<p class="title"><a href="{0}" class="external-link">站外视频</a></p>'.format(dom_iframe.attr('src')))
+        dom_iframe.remove()
+        dom('a').add_class('external-link')
+
+        self.render('note.html', note=subject, comments=comments, content=dom)
 

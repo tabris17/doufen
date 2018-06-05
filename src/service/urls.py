@@ -36,6 +36,8 @@ patterns = [
     (r'/my/music/historical', handlers.my.MusicHistorical, None, 'my.music.historical'),
     (r'/my/movie/([^/]+)', handlers.my.Movie, None, 'my.movie'),
     (r'/my/movie/historical', handlers.my.MovieHistorical, None, 'my.movie.historical'),
+    (r'/my/note', handlers.my.Note, None, 'my.note'),
+    (r'/note/([^/]+)', handlers.Note, None, 'note'),
     (r'/book/([^/]+)', handlers.Book, None, 'book'),
     (r'/movie/([^/]+)', handlers.Movie, None, 'movie'),
     (r'/music/([^/]+)', handlers.Music, None, 'music'),
