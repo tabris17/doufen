@@ -13,7 +13,7 @@ def init(db_path, create_tables=True):
     """
     global DATEBASE_PATH
     DATEBASE_PATH = db_path
-    dbo.init(db_path)
+    dbo.init(db_path, timeout=60)
 
     if create_tables:
         with dbo:
