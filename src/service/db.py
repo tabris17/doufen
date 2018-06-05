@@ -45,6 +45,8 @@ def init(db_path, create_tables=True):
                 Attachment,
                 Timeline,
                 Comment,
+                Note,
+                NoteHistorical,
             ])
 
 
@@ -579,9 +581,10 @@ class Note(BaseModel):
         'created',
         'introduction',
         'content',
-        'attachments',
         'views_count',
         'comments_count',
+        'like_count',
+        'rec_count',
     ]
 
     douban_id = CharField(unique=True, help_text='日记ID')
@@ -592,8 +595,12 @@ class Note(BaseModel):
     introduction = TextField(null=True, help_text='导读')
     content = TextField(null=True, help_text='正文')
     attachments = TextField(null=True, help_text='附件')
+    subjects = TextField(null=True, help_text='书影音对象')
     views_count = IntegerField(null=True, help_text='浏览人数')
     comments_count = IntegerField(null=True, help_text='评论人数')
+    like_count = IntegerField(null=True, help_text='喜欢数')
+    rec_count = IntegerField(null=True, help_text='推荐数')
+    is_original = BooleanField(null=True, help_text='是否原创')
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 

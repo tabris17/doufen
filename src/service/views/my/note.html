@@ -1,0 +1,64 @@
+{% extends "../themes/main.html" %} 
+
+{% block title %}我的日记{% end %}
+
+{% block main %}
+{% from pyquery import PyQuery %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='note') %}
+        </div>
+        <div class="column">
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">写日记 <strong>{{ total_rows }}</strong> 篇</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for row in rows %}
+            <article class="box content">
+                <p class="title is-size-5">
+                    <a href="{{ reverse_url('note', row.douban_id) }}">{{ row.title }}</a>
+                    <small class="is-size-6">
+                        <a href="{{ row.url }}" title="访问日记的豆瓣网页" class="external-link">
+                            <span class="icon">
+                                <i class="fas fa-external-link-alt"></i>
+                            </span>
+                        </a>
+                    </small>
+                </p>
+                <p>
+                    <small>{{ row.created }}</small>
+                </p>
+                <p class="text-break">
+                    {{ PyQuery(row.content).text()[:200] }}……
+                </p>
+                <p>
+                    <span>{{ row.views_count }}人浏览</span>
+                    <span style="margin-left: 10px;">{{ row.comments_count }}回应</span>
+                    {% if row.like_count %}
+                    <span style="margin-left: 10px;">喜欢({{ row.like_count }})</span>
+                    {% end %}
+                    {% if row.rec_count %}
+                    <span style="margin-left: 10px;">推荐({{ row.rec_count }})</span>
+                    {% end %}
+                </p>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

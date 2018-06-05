@@ -15,6 +15,7 @@ db.init('var/data/graveyard.db')
 task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 
 task = tasks.BroadcastCommentTask(db.Account.get_by_id(1))
+task = tasks.NoteTask(db.Account.get_by_id(1))
 
 result = task(
     requests_per_minute=30, 
