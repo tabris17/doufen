@@ -430,6 +430,130 @@ class Task:
 
         return interests_list
 
+    def fetch_note_comments(self, url, dom, douban_id):
+        comments = []
+        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
+        while True:
+            comment_items = dom('#comments .comment-item')
+            for comment_item in comment_items:
+                item_div = PyQuery(comment_item)
+                quote_user_link = item_div('.content>.reply-quote>.pubdate>a')
+                if quote_user_link:
+                    quote_user_name = quote_user_link.text()
+                    quote_user_id = strip_username(quote_user_link)
+                    quote_text = item_div('.content>.reply-quote>.all').text()
+                    blockquote = '{0}({1}):{2}'.format(quote_user_name, quote_user_id, quote_text)
+                else:
+                    blockquote = None
+                comments.append({
+                    'douban_id': item_div.attr('data-cid'),
+                    'content': item_div.outer_html(),
+                    'target_type': 'note',
+                    'target_douban_id': douban_id,
+                    'user': self.fetch_user(strip_username(item_div('.pic>a'))),
+                    'text': item_div('.content>p').text(),
+                    'created': item_div('.content>.author>span').text(),
+                    'quote': blockquote,
+                })
+            next_page = dom('#comments>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+            response = self.fetch_url_content(url)
+            dom = PyQuery(response.text)
+        return comments
+
+    @dbo.atomic()
+    def save_note(self, detail):
+        douban_id = detail['douban_id']
+        detail['user'] = self.fetch_user(detail['user'])
+        detail['version'] = 1
+        try:
+            note = db.Note.safe_create(**detail)
+            logging.debug('create note: ' + note.title)
+        except db.IntegrityError:
+            note = db.Note.get(db.Note.douban_id == douban_id)            
+            if not note.equals(detail):
+                db.NoteHistorical.clone(note)
+                detail['version'] = db.Note.version + 1
+                db.Note.safe_update(**detail).where(db.Note.id == note.id).execute()
+        return note
+
+    @dbo.atomic()
+    def save_note_comments(self, comments):
+        for detail in comments:
+            try:
+                db.Comment.safe_create(**detail)
+            except db.IntegrityError:
+                pass
+
+    def fetch_note(self, douban_id):
+        """
+        尝试从本地获取日记，如果没有则从网上抓取
+        """
+        try:
+            note = db.Note.get(db.Note.douban_id == douban_id)
+            if self.is_oject_expired(note):
+                raise db.Note.DoesNotExist()
+        except db.Note.DoesNotExist:
+            url = 'https://www.douban.com/note/{0}/'.format(douban_id)
+            note, comments = self.fetch_note_by_url(url)
+
+        return note
+
+    def fetch_note_by_url(self, url):
+        response = self.fetch_url_content(url)
+        dom = PyQuery(response.text)
+        note_container = dom('#content .article>.note-container')
+        attachments = []
+        for img in note_container('.image-wrapper>img'):
+            attachments.append({
+                'type': 'image',
+                'url': PyQuery(img).attr('src'),
+            })
+        subjects = []
+        for subject_link in note_container('.subject-wrapper>a'):
+            subject_url = PyQuery(subject_link).attr('href')
+            subject_type, subject_id = re.findall(r'^https://([a-z]+)\.douban\.com/subject/([0-9]+)/$', subject_url).pop(0)
+            subjects.append({
+                'type': subject_type,
+                'douban_id': subject_id,
+            })
+            if subject_type == 'music':
+                self.fetch_music(subject_id)
+            elif subject_type == 'movie':
+                self.fetch_movie(subject_id)
+            elif subject_type == 'book':
+                self.fetch_book(subject_id)
+
+        note_douban_id = note_container.attr('id')[5:]
+        comments = self.fetch_note_comments(url, dom, note_douban_id)
+
+        views_count = note_container('.note-footer-stat-pv').text()[0:-3]
+        like_count = note_container('.sns-bar-fav .fav-num').text()
+        rec_count = note_container('.sns-bar-fav .rec-num').text()
+        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
+        user_id = strip_username(note_container('.note-author'))
+        detail = {
+            'url': url,
+            'is_original': note_container.attr('data-is-original') == '1',
+            'douban_id': note_douban_id,
+            'title': note_container('.note-header.note-header-container>h1').text(),
+            'created': note_container('.note-header.note-header-container .pub-date').text(),
+            'introduction': note_container('.introduction').text(),
+            'content': note_container('#link-report').html(),
+            'attachments': attachments,
+            'subjects': subjects,
+            'views_count': views_count if views_count else None,
+            'like_count': like_count if like_count else None,
+            'rec_count': rec_count if rec_count else None,
+            'comments_count': len(comments),
+            'user': user_id,
+        }
+
+        return self.save_note(detail), self.save_note_comments(comments)
+
 
 class FollowingFollowerTask(Task):
     _name = '备份我的友邻'
@@ -1008,12 +1132,35 @@ class BroadcastTask(Task):
                 if attachments:
                     self.save_attachments(attachments)
                     detail['attachments'] = attachments
+
+                if object_kind == '1015':
+                    # 发布日记
+                    self.fetch_note(object_id)
+                elif object_kind == '1026':
+                    # 推荐相册
+                    pass
             elif target_type == 'movie' and object_kind == '1002':
                 self.fetch_movie(object_id)
             elif target_type == 'book' and object_kind == '1001':
                 self.fetch_book(object_id)
             elif target_type == 'music' and object_kind == '1003':
                 self.fetch_music(object_id)
+            elif target_type == 'rec':
+                if object_kind == '1015':
+                    # 推荐日记
+                    self.fetch_note(object_id)
+                elif object_kind == '1001':
+                    # 推荐书
+                    self.fetch_book(object_id)
+                elif object_kind == '1002':
+                    # 推荐影视
+                    self.fetch_movie(object_id)
+                elif object_kind == '1003':
+                    # 推荐音乐
+                    self.fetch_music(object_id)
+                elif object_kind == '1026':
+                    # 推荐相册
+                    pass
 
             return detail, reshared_detail
 
@@ -1157,120 +1304,11 @@ class NoteTask(Task):
                 break
         return notes
 
-    def fetch_note_comments(self, url, dom, douban_id):
-        comments = []
-        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
-        while True:
-            comment_items = dom('#comments .comment-item')
-            for comment_item in comment_items:
-                item_div = PyQuery(comment_item)
-                quote_user_link = item_div('.content>.reply-quote>.pubdate>a')
-                if quote_user_link:
-                    quote_user_name = quote_user_link.text()
-                    quote_user_id = strip_username(quote_user_link)
-                    quote_text = item_div('.content>.reply-quote>.all').text()
-                    blockquote = '{0}({1}):{2}'.format(quote_user_name, quote_user_id, quote_text)
-                else:
-                    blockquote = None
-                comments.append({
-                    'douban_id': item_div.attr('data-cid'),
-                    'content': item_div.outer_html(),
-                    'target_type': 'note',
-                    'target_douban_id': douban_id,
-                    'user': self.fetch_user(strip_username(item_div('.pic>a'))),
-                    'text': item_div('.content>p').text(),
-                    'created': item_div('.content>.author>span').text(),
-                    'quote': blockquote,
-                })
-            next_page = dom('#comments>.paginator>.next>a')
-            if next_page:
-                url = next_page.attr('href')
-            else:
-                break
-            response = self.fetch_url_content(url)
-            dom = PyQuery(response.text)
-        return comments
-
-    @dbo.atomic()
-    def save_note(self, detail):
-        douban_id = detail['douban_id']
-        detail['user'] = self.fetch_user(detail['user'])
-        detail['version'] = 1
-        try:
-            note = db.Note.safe_create(**detail)
-            logging.debug('create note: ' + note.title)
-        except db.IntegrityError:
-            note = db.Note.get(db.Note.douban_id == douban_id)            
-            if not note.equals(detail):
-                db.NoteHistorical.clone(note)
-                detail['version'] = db.Note.version + 1
-                db.Note.safe_update(**detail).where(db.Note.id == note.id).execute()
-        return note
-
-    @dbo.atomic()
-    def save_note_comments(self, comments):
-        for detail in comments:
-            try:
-                db.Comment.safe_create(**detail)
-            except db.IntegrityError:
-                pass
-
-    def fetch_note(self, url):
-        response = self.fetch_url_content(url)
-        dom = PyQuery(response.text)
-        note_container = dom('#content .article>.note-container')
-        attachments = []
-        for img in note_container('.image-wrapper>img'):
-            attachments.append({
-                'type': 'image',
-                'url': PyQuery(img).attr('src'),
-            })
-        subjects = []
-        for subject_link in note_container('.subject-wrapper>a'):
-            subject_url = PyQuery(subject_link).attr('href')
-            subject_type, subject_id = re.findall(r'^https://([a-z]+)\.douban\.com/subject/([0-9]+)/$', subject_url).pop(0)
-            subjects.append({
-                'type': subject_type,
-                'douban_id': subject_id,
-            })
-            if subject_type == 'music':
-                self.fetch_music(subject_id)
-            elif subject_type == 'movie':
-                self.fetch_movie(subject_id)
-            elif subject_type == 'book':
-                self.fetch_book(subject_id)
-
-        note_douban_id = note_container.attr('id')[5:]
-        comments = self.fetch_note_comments(url, dom, note_douban_id)
-
-        views_count = note_container('.note-footer-stat-pv').text()[0:-3]
-        like_count = note_container('.sns-bar-fav .fav-num').text()
-        rec_count = note_container('.sns-bar-fav .rec-num').text()
-        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
-        user_id = strip_username(note_container('.note-author'))
-        detail = {
-            'url': url,
-            'is_original': note_container.attr('data-is-original') == '1',
-            'douban_id': note_douban_id,
-            'title': note_container('.note-header.note-header-container>h1').text(),
-            'created': note_container('.note-header.note-header-container .pub-date').text(),
-            'introduction': note_container('.introduction').text(),
-            'content': note_container('#link-report').html(),
-            'attachments': attachments,
-            'subjects': subjects,
-            'views_count': views_count if views_count else None,
-            'like_count': like_count if like_count else None,
-            'rec_count': rec_count if rec_count else None,
-            'comments_count': len(comments),
-            'user': user_id,
-        }
-        return self.save_note(detail), self.save_note_comments(comments)
-
     def run(self):
         notes = self.fetch_note_list()
         notes.reverse()
         for url in notes:
-            self.fetch_note(url)
+            self.fetch_note_by_url(url)
         logging.info('备份我的日记全部完成')
 
 

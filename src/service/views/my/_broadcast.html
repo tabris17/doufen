@@ -30,7 +30,37 @@
 {% end %}
 <span>
 {% if broadcast.target_type == 'sns' %}
-说：
+    {% if broadcast.object_kind == '1005' %}
+    关注：
+    {% elif broadcast.object_kind == '1019' %}
+    小组：
+    {% elif broadcast.object_kind == '1015' %}
+    日记：
+    {% elif broadcast.object_kind == '1014' %}
+    讨论：
+    {% elif broadcast.object_kind == '1013' %}
+    小组话题：
+    {% elif broadcast.object_kind == '1012' %}
+    评论：
+    {% elif broadcast.object_kind == '1011' %}
+    活动：
+    {% elif broadcast.object_kind == '1020' %}
+    豆列：
+    {% elif broadcast.object_kind == '1025' %}
+    照片：
+    {% elif broadcast.object_kind == '1026' %}
+    相册：
+    {% elif broadcast.object_kind == '1043' %}
+    影人：
+    {% elif broadcast.object_kind == '1044' %}
+    艺术家：
+    {% elif broadcast.object_kind == '3049' %}
+    阅读笔记：
+    {% elif broadcast.object_kind == '3114' %}
+    游戏：
+    {% else %}
+    说：
+    {% end %}
 {% elif broadcast.target_type == 'movie' %}
 看电影：
 {% elif broadcast.target_type == 'music' %}
@@ -105,6 +135,17 @@
                 <p class="text-break">{{ rec_abstract.text() }}</p>
             </div>
         </div>
+        <div class="media-right">
+            {% if broadcast.object_kind == '1015' %}
+            <a href="{{ reverse_url('note', broadcast.object_id) }}" class="button">查看日记</a>
+            {% elif broadcast.object_kind == '1001' %}
+            <a href="{{ reverse_url('book', broadcast.object_id) }}" class="button">查看条目</a>
+            {% elif broadcast.object_kind == '1002' %}
+            <a href="{{ reverse_url('movie', broadcast.object_id) }}" class="button">查看条目</a>
+            {% elif broadcast.object_kind == '1003' %}
+            <a href="{{ reverse_url('music', broadcast.object_id) }}" class="button">查看条目</a>
+            {% end %}
+        </div>
     </article>
     {% elif rec_video %}
     <article class="box content">
@@ -126,6 +167,8 @@
     {% module Book(broadcast.object_id) %}
 {% elif broadcast.target_type == 'music' and broadcast.object_kind == '1002' %}
     {% module Music(broadcast.object_id) %}
+{% elif broadcast.target_type == 'sns' and broadcast.object_kind == '1015' %}
+    {% module Note(broadcast.object_id) %}
 {% else %}
     <blockquote class="text-break">{{ PyQuery(broadcast.content).text() }}</blockquote>
 {% end %}

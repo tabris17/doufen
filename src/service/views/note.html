@@ -39,7 +39,9 @@
         </div>
         <p>
             <span>{{ note.views_count }}人浏览</span>
+            {% if note.comments_count %}
             <span style="margin-left: 10px;">{{ note.comments_count }}回应</span>
+            {% end %}
             {% if note.like_count %}
             <span style="margin-left: 10px;">喜欢({{ note.like_count }})</span>
             {% end %}

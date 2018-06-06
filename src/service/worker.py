@@ -13,6 +13,7 @@ LOCAL_OBJECT_DURATION = 60 * 60 * 24 * 30
 BROADCAST_ACTIVE_DURATION = 60 * 60 * 24 * 30
 BROADCAST_INCREMENTAL_BACKUP = False
 IMAGE_LOCAL_CACHE = True
+HEARTBEAT_INTERVAL = 10
 
 
 class Worker:
@@ -141,7 +142,7 @@ class Worker:
         heartbeat_sequence = 1
         while True:
             try:
-                task = queue_in.get(timeout=1)
+                task = queue_in.get(timeout=HEARTBEAT_INTERVAL)
                 if isinstance(task, tasks.Task):
                     self._work(str(task))
                     self._done(task(**self._settings))

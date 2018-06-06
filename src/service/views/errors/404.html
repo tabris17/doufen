@@ -1,0 +1,21 @@
+{% extends "../themes/base.html" %}
+
+{% block search %}{% end %}
+
+{% block body %}
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container">
+            <p style="float:right;"><a href="javascript:history.back()" class="button">返回</a></p>
+            <h1 class="title">404</h1>
+            <h2 class="subtitle">Page Not Found</h2>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+        <figure class="image">
+            <img src="{{ static_url('404.jpg') }}">
+        </figure>
+    </div>
+{% end %}

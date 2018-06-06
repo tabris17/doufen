@@ -41,11 +41,13 @@
                     <small>{{ row.created }}</small>
                 </p>
                 <p class="text-break">
-                    {{ PyQuery(row.content).text()[:200] }}……
+                    {{ PyQuery(row.content).text()[:200] }}...
                 </p>
                 <p>
                     <span>{{ row.views_count }}人浏览</span>
+                    {% if row.comments_count %}
                     <span style="margin-left: 10px;">{{ row.comments_count }}回应</span>
+                    {% end %}
                     {% if row.like_count %}
                     <span style="margin-left: 10px;">喜欢({{ row.like_count }})</span>
                     {% end %}

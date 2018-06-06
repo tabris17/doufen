@@ -53,3 +53,16 @@ class Music(tornado.web.UIModule):
         except db.Music.DoesNotExist:
             music = None
         return self.render_string('modules/music.html', music=music)
+
+
+class Note(tornado.web.UIModule):
+    """
+    日记卡片
+    """
+
+    def render(self, douban_id):
+        try:
+            note = db.Note.get(db.Note.douban_id == douban_id)
+        except db.Note.DoesNotExist:
+            note = None
+        return self.render_string('modules/note.html', note=note)

@@ -16,6 +16,7 @@ import uimodules
 from worker import Worker, REQUESTS_PER_MINUTE, LOCAL_OBJECT_DURATION, BROADCAST_ACTIVE_DURATION, BROADCAST_INCREMENTAL_BACKUP, IMAGE_LOCAL_CACHE
 from setting import settings
 from tasks import Task
+from handlers import NotFound
 
 
 class Client:
@@ -93,6 +94,7 @@ class Server:
             'static_url_prefix': '/static/',
             'server': self,
             'ui_modules': uimodules,
+            'default_handler_class': NotFound,
         }
 
         urls.patterns.append(    

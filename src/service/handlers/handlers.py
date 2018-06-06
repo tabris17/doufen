@@ -10,6 +10,14 @@ from pyquery import PyQuery
 import db
 
 
+class NotFound(RequestHandler):
+    """
+    默认404页
+    """
+    def get(self):
+        self.render('errors/404.html')
+
+
 class BaseRequestHandler(RequestHandler):
     """
     默认继承
@@ -28,6 +36,12 @@ class BaseRequestHandler(RequestHandler):
             return db.Account.getDefault().user
         except db.Account.DoesNotExist:
             pass
+
+    def write_error(self, status_code, **kwargs):
+        if status_code == 404:
+            self.render('errors/404.html')
+        else:
+            self.write('Error')
 
 
 class Notifier(WebSocketHandler):
