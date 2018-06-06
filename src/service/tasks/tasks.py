@@ -1194,7 +1194,7 @@ class NoteTask(Task):
     @dbo.atomic()
     def save_note(self, detail):
         douban_id = detail['douban_id']
-        detail['user'] = self.account.user
+        detail['user'] = self.fetch_user(detail['user'])
         detail['version'] = 1
         try:
             note = db.Note.safe_create(**detail)
@@ -1246,6 +1246,8 @@ class NoteTask(Task):
         views_count = note_container('.note-footer-stat-pv').text()[0:-3]
         like_count = note_container('.sns-bar-fav .fav-num').text()
         rec_count = note_container('.sns-bar-fav .rec-num').text()
+        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
+        user_id = strip_username(note_container('.note-author'))
         detail = {
             'url': url,
             'is_original': note_container.attr('data-is-original') == '1',
@@ -1260,6 +1262,7 @@ class NoteTask(Task):
             'like_count': like_count if like_count else None,
             'rec_count': rec_count if rec_count else None,
             'comments_count': len(comments),
+            'user': user_id,
         }
         return self.save_note(detail), self.save_note_comments(comments)
 
