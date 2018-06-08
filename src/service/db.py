@@ -47,6 +47,10 @@ def init(db_path, create_tables=True):
                 Comment,
                 Note,
                 NoteHistorical,
+                PhotoAlbum,
+                PhotoAlbumHistorical,
+                PhotoPicture,
+                PhotoPictureHistorical,
             ])
 
 
@@ -625,7 +629,7 @@ class Comment(BaseModel):
             (('target_type', 'target_douban_id', 'douban_id'), True),
         )
     target_type = CharField(help_text='类型')
-    target_douban_id = IntegerField(help_text='评论对象的豆瓣ID')
+    target_douban_id = CharField(help_text='评论对象的豆瓣ID')
     douban_id = CharField(help_text='豆瓣ID')
     user = ForeignKeyField(User, help_text='用户')
     text = TextField(null=True, help_text='评论文本')
@@ -633,3 +637,86 @@ class Comment(BaseModel):
     content = TextField(null=True, help_text='原始HTML')
     created = CharField(null=True, help_text='创建时间')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoAlbum(BaseModel):
+    """
+    相册
+    """
+    class Meta:
+        table_name = 'photo_album'
+
+    _attrs_to_compare_ = [
+        'title',
+        'desc',
+        'cover',
+        'photos_count',
+        'last_updated',
+        'views_count',
+        'like_count',
+        'rec_count',
+    ]
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    user = ForeignKeyField(User, help_text='用户')
+    title = CharField(null=True, help_text='豆瓣ID')
+    desc = TextField(help_text='描述', null=True)
+    cover = CharField(null=True, help_text='封面图片')
+    photos_count = IntegerField(null=True, help_text='照片数')
+    last_updated = CharField(null=True, help_text='更新时间')
+    url = CharField(null=True, help_text='URL')
+    views_count = IntegerField(null=True, help_text='浏览人数')
+    like_count = IntegerField(null=True, help_text='喜欢人数')
+    rec_count = IntegerField(null=True, help_text='推荐人数')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoAlbumHistorical(Note):
+    """
+    相册历史数据
+    """
+    class Meta:
+        table_name = 'photo_album_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
+
+
+class PhotoPicture(BaseModel):
+    """
+    照片
+    """
+    class Meta:
+        table_name = 'photo_picture'
+
+    _attrs_to_compare_ = [
+        'desc',
+        'picture',
+        'views_count',
+        'like_count',
+        'rec_count',
+        'comments_count',
+    ]
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    desc = TextField(help_text='描述', null=True)
+    url = CharField(null=True, help_text='URL')
+    picture = CharField(null=True, help_text='照片')
+    views_count = IntegerField(null=True, help_text='浏览人数')
+    like_count = IntegerField(null=True, help_text='喜欢人数')
+    rec_count = IntegerField(null=True, help_text='推荐人数')
+    comments_count = IntegerField(null=True, help_text='评论人数')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoPictureHistorical(Note):
+    """
+    照片历史数据
+    """
+    class Meta:
+        table_name = 'photo_picture_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    picture = ForeignKeyField(PhotoPicture, field=PhotoPicture.id)
