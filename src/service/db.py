@@ -680,7 +680,7 @@ class PhotoAlbumHistorical(Note):
         table_name = 'photo_album_historical'
     
     douban_id = CharField(help_text='豆瓣ID')
-    album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
+    photo_album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
 
 
 class PhotoPicture(BaseModel):
@@ -699,6 +699,7 @@ class PhotoPicture(BaseModel):
         'comments_count',
     ]
 
+    photo_album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
     douban_id = CharField(unique=True, help_text='豆瓣ID')
     desc = TextField(help_text='描述', null=True)
     url = CharField(null=True, help_text='URL')
@@ -719,4 +720,4 @@ class PhotoPictureHistorical(Note):
         table_name = 'photo_picture_historical'
     
     douban_id = CharField(help_text='豆瓣ID')
-    picture = ForeignKeyField(PhotoPicture, field=PhotoPicture.id)
+    photo_picture = ForeignKeyField(PhotoPicture, field=PhotoPicture.id)

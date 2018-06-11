@@ -1,0 +1,72 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{{ photo.photo_album.title }}{% end %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ static_url('photo.css') }}">
+{% end %}
+
+{% block main %}
+{% from pyquery import PyQuery %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+
+    <article class="content">
+        <h1>
+            <a href="{{ photo.url }}" class="external-link">{{ photo.photo_album.title }}</a>
+        </h1>
+        <figure class="image">
+            <img class="load-from-cache" data-src="{{ photo.picture }}">
+        </figure>
+        <p class="text-break">{{ photo.desc }}</p>
+        <p>
+            <span>{{ photo.views_count }}人浏览</span>
+            {% if photo.comments_count %}
+            <span style="margin-left: 10px;">{{ photo.comments_count }}回应</span>
+            {% end %}
+            {% if photo.like_count %}
+            <span style="margin-left: 10px;">喜欢({{ photo.like_count }})</span>
+            {% end %}
+            {% if photo.rec_count %}
+            <span style="margin-left: 10px;">推荐({{ photo.rec_count }})</span>
+            {% end %}
+        </p>
+    </article>
+
+    {% for comment in comments %}
+    <article class="media">
+        <figure class="media-left">
+            <p class="image is-32x32">
+                <img src="{{ comment.user.avatar }}">
+            </p>
+        </figure>
+        <div class="media-content">
+            <p>
+                <strong><a href="{{ comment.user.alt }}" class="external-link">{{ comment.user.name }}</a></strong>
+                <small>(@{{ comment.user.unique_name}})</small>
+                <small class="has-text-grey-light">{{ comment.user.signature }}</small>
+                <span>{{ comment.created}}</span>
+            </p>
+            <p class="text-break">{{ comment.text }}</p>
+        </div>
+    </article>
+    {% end %}
+
+</div>
+{% end %}

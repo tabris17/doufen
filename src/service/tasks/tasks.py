@@ -591,6 +591,7 @@ class Task:
         for picture_detail in picture_details:
             picture_detail['version'] = 1
             picture_detail['updated_at'] = now
+            picture_detail['photo_album'] = album
             try:
                 picture = db.PhotoPicture.safe_create(**picture_detail)
             except db.IntegrityError:
@@ -610,7 +611,7 @@ class Task:
                 raise db.PhotoAlbum.DoesNotExist()
         except db.PhotoAlbum.DoesNotExist:
             url = 'https://www.douban.com/photos/album/{0}/'.format(douban_id)
-            album = self.fetch_photo_album_by_url(url)
+            album = self.fetch_photo_album_by_url(url, douban_id=douban_id, last_updated=last_updated)
 
         return album
 
@@ -620,7 +621,7 @@ class Task:
 
         response = self.fetch_url_content(url)
         dom = PyQuery(response.text)
-        btn_fav = dom('.fav-add.btn-fav')
+        btn_fav = dom('.btn-fav')
         douban_id = kwargs['douban_id'] if 'douban_id' in kwargs else btn_fav.attr('data-object_id')
         last_updated = kwargs['last_updated'] if 'last_updated' in kwargs else None
         cover = kwargs['cover'] if 'cover' in kwargs else None
@@ -635,7 +636,7 @@ class Task:
             })
 
         try:
-            views_count = int(dom('.album-edit>span:last-child').text().strip()[:-3])
+            views_count = re.search(r'(\d+)人浏览', dom('.album-edit>span:last-child').text())[1]
         except ValueError:
             views_count = None
 
@@ -1446,9 +1447,38 @@ class NoteTask(Task):
 class PhotoAlbumTask(Task):
     _name = '备份我的相册'
 
+    def fetch_photo_album_list(self):
+        url = self.account.user.alt + 'photos'
+        albums = []
+        while True:
+            response = self.fetch_url_content(url)
+            dom = PyQuery(response.text)
+            album_items = dom('#content .article>.wr>.albumlst')
+            for album_item in album_items:
+                album_div = PyQuery(album_item)
+                misc_text = album_div('.albumlst_r>.pl').text()
+                try:
+                    last_updated = re.search(r'(\d+\-\d+\-\d+)(?:创建|更新)', misc_text)[1]
+                except (IndexError, TypeError):
+                    last_updated = None
+
+                albums.append((
+                    album_div('.album_photo').attr('href'),
+                    album_div('.album').attr('src'),
+                    last_updated,
+                ))
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return albums
+
     def run(self):
-        self.fetch_photo_album('62363913')
-        self.fetch_photo_album('156380434')
+        user = self.account.user
+        albums = self.fetch_photo_album_list()
+        for url, cover, last_updated in albums:
+            self.fetch_photo_album_by_url(url, user=user, cover=cover, last_updated=last_updated)
         if self._image_local_cache:
             while self.fetch_attachment():
                 pass

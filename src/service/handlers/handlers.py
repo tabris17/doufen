@@ -231,3 +231,38 @@ class Note(BaseRequestHandler):
 
         self.render('note.html', note=subject, comments=comments, content=dom)
 
+
+class PhotoPicture(BaseRequestHandler):
+    """
+    照片
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.PhotoPicture.get(db.PhotoPicture.douban_id == douban_id)
+            history = db.PhotoPictureHistorical.select().where(db.PhotoPictureHistorical.id == subject.id)
+        except db.User.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        comments = db.Comment.select().join(db.User).where(
+            db.Comment.target_type == 'photo',
+            db.Comment.target_douban_id == subject.douban_id
+        )
+
+        self.render('photo.html', photo=subject, comments=comments)
+
+
+class PhotoAlbum(BaseRequestHandler):
+    """
+    相册
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == douban_id)
+            history = db.PhotoAlbumHistorical.select().where(db.PhotoAlbumHistorical.id == subject.id)
+        except db.User.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        photos = db.PhotoPicture.select().where(db.PhotoPicture.photo_album == subject)
+
+        self.render('album.html', album=subject, photos=photos)
+

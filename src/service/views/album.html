@@ -1,0 +1,62 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}{{ album.title }}{% end %}
+
+{% block main %}
+{% from pyquery import PyQuery %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+        <div class="level-right">
+            <p class="level-item">
+                <!--<a class="button" href="">查看历史记录</a>-->
+            </p>
+        </div>
+    </nav>
+
+    <article class="content">
+        <h1>
+            <a href="{{ album.url }}" class="external-link">{{ album.title }}</a>
+        </h1>
+        <p>
+            <small>{{ album.last_updated }}</small>
+        </p>
+        <p>
+            <span>{{ album.photos_count }}张照片</span>
+            <span style="margin-left: 10px;">{{ album.views_count }}人浏览</span>
+            {% if album.like_count %}
+            <span style="margin-left: 10px;">喜欢({{ album.like_count }})</span>
+            {% end %}
+            {% if album.rec_count %}
+            <span style="margin-left: 10px;">推荐({{ album.rec_count }})</span>
+            {% end %}
+        </p>
+        <p>{{ album.desc }}</p>
+    </article>
+    {% set i = 1 %}
+    <div class="columns">
+    {% for row in photos %}
+        <div class="column is-2">
+            <figure class="image is-128x128" style="overflow: hidden;">
+                <a href="{{ reverse_url('photo', row.douban_id) }}"><img src="{{ row.picture }}"></a>
+            </figure>
+            <p class="text-break" style="height: 2.5rem; overflow: hidden;">{{ row.desc }}</p>
+        </div>
+        {% if i % 6 == 0 %}
+    </div>
+    <div class="columns">
+        {% end %}
+        {% set i += 1 %}
+    {% end %}
+    </div>
+</div>
+{% end %}

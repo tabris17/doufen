@@ -159,3 +159,10 @@ class Note(BaseRequestHandler):
     def get(self):
         query = db.Note.select().where(db.Note.user == self.get_current_user()).order_by(db.Note.id.desc())
         self.list(query, 'my/note.html')
+
+
+class Photo(BaseRequestHandler):
+    def get(self):
+        query = db.PhotoAlbum.select().where(db.PhotoAlbum.user == self.get_current_user())
+        self.list(query, 'my/photo.html')
+
