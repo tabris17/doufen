@@ -2,11 +2,49 @@
 {% import ast %}
 
 
-{% if fully %}
-<article class="media box">
+{% set sns_object_kinds = {
+    '1000': '关注成员',
+    '1005': '关注成员',
+    '1019': '加入小组',
+    '1015': '写了日记',
+    '1025': '上传照片',
+    '2001': '参加线上活动',
+} %}
+
+{% set rec_object_kinds = {
+    '1001': '图书',
+    '1002': '电影',
+    '1003': '音乐',
+    '1019': '小组',
+    '1015': '日记',
+    '1014': '讨论',
+    '1013': '话题',
+    '1012': '评论',
+    '1011': '活动',
+    '1020': '豆列',
+    '1021': '九点文章',
+    '1025': '照片',
+    '1026': '相册',
+    '1022': '网页',
+    '2001': '线上活动',
+    '2004': '来自小站的视频',
+    '3043': '单曲',
+    '3114': '游戏',
+    '1043': '影人',
+    '1044': '艺术家',
+    '3049': '笔记',
+    '3065': '条目',
+    '3072': '兆赫',
+    '3090': '东西',
+    '5021': '来自豆瓣阅读的图片',
+    '5022': '来自豆瓣阅读的作品',
+} %}
+
+{% if not wrapped %}
+<article class="media{% if boxed %} box{% end %}">
     <figure class="media-left">
         <p class="image is-48x48">
-            <img src="{{ broadcast.user.avatar if broadcast.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+            <img src="{{ broadcast.user.avatar if broadcast.user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
         </p>
     </figure>
     <div class="media-content">
@@ -30,63 +68,37 @@
 {% end %}
 <span>
 {% if broadcast.target_type == 'sns' %}
-    {% if broadcast.object_kind == '1005' %}
-    关注：
-    {% elif broadcast.object_kind == '1019' %}
-    小组：
-    {% elif broadcast.object_kind == '1015' %}
-    日记：
-    {% elif broadcast.object_kind == '1014' %}
-    讨论：
-    {% elif broadcast.object_kind == '1013' %}
-    小组话题：
-    {% elif broadcast.object_kind == '1012' %}
-    评论：
-    {% elif broadcast.object_kind == '1011' %}
-    活动：
-    {% elif broadcast.object_kind == '1020' %}
-    豆列：
-    {% elif broadcast.object_kind == '1025' %}
-    照片：
-    {% elif broadcast.object_kind == '1026' %}
-    相册：
-    {% elif broadcast.object_kind == '1043' %}
-    影人：
-    {% elif broadcast.object_kind == '1044' %}
-    艺术家：
-    {% elif broadcast.object_kind == '3049' %}
-    阅读笔记：
-    {% elif broadcast.object_kind == '3114' %}
-    游戏：
+    {% if broadcast.object_kind in sns_object_kinds %}
+    {{ sns_object_kinds[broadcast.object_kind] }}：
     {% else %}
     说：
     {% end %}
-{% elif broadcast.target_type == 'movie' %}
-看电影：
-{% elif broadcast.target_type == 'music' %}
-听音乐：
-{% elif broadcast.target_type == 'book' %}
-读书：
 {% elif broadcast.target_type == 'rec' %}
-分享：
+    分享{% if broadcast.object_kind in rec_object_kinds %}{{ rec_object_kinds[broadcast.object_kind] }}{% end %}：
+{% elif broadcast.target_type == 'movie' %}
+    看电影：
+{% elif broadcast.target_type == 'music' %}
+    听音乐：
+{% elif broadcast.target_type == 'book' %}
+    读书：
 {% elif broadcast.target_type == 'fav' %}
-喜欢：
+    喜欢：
 {% elif broadcast.target_type == 'site' %}
-小站：
+    小站：
 {% elif broadcast.target_type == 'doulist' %}
-添加豆列：
+    更新豆列：
 {% elif broadcast.target_type == 'game' %}
-玩游戏：
+    玩游戏：
 {% elif broadcast.target_type == 'loc' %}
-参加活动：
+    参加活动：
 {% elif broadcast.target_type == 'ark' %}
-写评论：
+    写评论：
 {% elif broadcast.target_type == 'arya' %}
-赞赏：
+    赞赏：
 {% elif broadcast.target_type == '' %}
-转播：
+    转播：
 {% else %}
-其他：
+    其他：
 {% end %}
 </span>
 </p>
@@ -94,63 +106,65 @@
 <p class="text-break">{{ PyQuery(broadcast.blockquote).text() }}</p>
 {% end %}
 
+{% set content_dom = PyQuery(broadcast.content) %}
+
 {% if broadcast.is_reshared %}
     {% if broadcast.reshared %}
-        {% module Template('my/_broadcast.html', fully=False, broadcast=broadcast.reshared) %}
+        {% module Template('my/_broadcast.html', boxed=True, wrapped=True, broadcast=broadcast.reshared) %}
     {% else %}
     <article class="content box">
         <p>该广播已被<del>作者</del>管理员删除</p>
     </article>
     {% end %}
-{% elif broadcast.target_type == 'sns' and broadcast.object_kind == '1018' %}
-    {% if broadcast.attachments %}
-        {% set attachments = ast.literal_eval(broadcast.attachments) %}
-        {% for attachment in attachments %}
-            {% if attachment['type'] == 'image' %}
-                <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
-                    <a href="#" class="preview action-open" data-target="#modal-preview"><img class="load-from-cache" data-src="{{ attachment['url'] }}"></a>
-                </figure>
+{% elif broadcast.target_type == 'sns' %}
+    {% if broadcast.object_kind == '1018' %}
+        {% if broadcast.attachments %}
+            {% set attachments = ast.literal_eval(broadcast.attachments) %}
+            {% for attachment in attachments %}
+                {% if attachment['type'] == 'image' %}
+                    {% if boxed %}
+                    <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
+                        <a href="#" class="preview action-open" data-target="#modal-preview"><img class="load-from-cache" data-src="{{ attachment['url'] }}"></a>
+                    </figure>
+                    {% else %}
+                    <figure class="image">
+                        <img class="load-from-cache" data-src="{{ attachment['url'] }}">
+                    </figure>
+                    {% end %}
+                {% end %}
             {% end %}
         {% end %}
+    {% elif broadcast.object_kind == '1000' or broadcast.object_kind == '1005' %}
+        {% module User(broadcast.object_id) %}
+    {% elif broadcast.object_kind == '1015' %}
+        {% module Note(broadcast.object_id) %}
+    {% elif broadcast.object_kind == '1025' %}
+        {% set sns_photos = content_dom('.status-item>.mod>.bd.sns>.block-photo img') %}
+        {% for sns_photo in sns_photos %}
+            {% set sns_photo = PyQuery(sns_photo) %}
+            {% if boxed %}
+            <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
+                <a href="#" class="preview action-open" data-target="#modal-preview"><img src="{{ sns_photo.attr('src') }}"></a>
+            </figure>
+            {% else %}
+            <figure class="image">
+                <img src="{{ sns_photo.attr('src') }}">
+            </figure>
+            {% end %}
+        {% end %}
+        <p><a href="https://www.douban.com/photos/photo/{{ broadcast.object_id }}" class="external-link">查看照片</a></p>
+    {% else %}
+        {% module Recommend(content_dom('.status-item>.mod>.bd.sns>.block'), broadcast) %}
     {% end %}
 {% elif broadcast.target_type == 'rec' %}
-    {% set rec = PyQuery(broadcast.content).find('.status-item>.mod>.bd.rec>.block') %}
-    {% set rec_video = PyQuery(broadcast.content).find('.status-item>.mod>.bd.rec>.block-video') %}
+    {% set rec = content_dom('.status-item>.mod>.bd.rec>.block') %}
+    {% set rec_video = content_dom('.status-item>.mod>.bd.rec>.block-video') %}
     {% if rec %}
-    <article class="box media">
-        {% set rec_img = PyQuery(PyQuery(PyQuery(rec).find('.pic img').eq(0))) %}
-        {% if rec_img %}
-        <figure class="media-left is-marginless">
-            <p class="image is-64x64" style="overflow: hidden;">
-                <img src="{{ rec_img.attr('src') }}">
-            </p>
-        </figure>
-        {% end %}
-        <div class="media-content" style="margin-left: 0.75rem;">
-            <div class="content">
-                {% set rec_title = PyQuery(PyQuery(rec).find('.content>.title>a')) %}
-                <p class="is-size-5"><a href="{{ rec_title.attr('href') }}" class="external-link">{{ rec_title.text() }}</a></p>
-                
-                {% set rec_abstract = PyQuery(PyQuery(rec).find('.content>p').eq(0)) %}
-                <p class="text-break">{{ rec_abstract.text() }}</p>
-            </div>
-        </div>
-        <div class="media-right">
-            {% if broadcast.object_kind == '1015' %}
-            <a href="{{ reverse_url('note', broadcast.object_id) }}" class="button">查看日记</a>
-            {% elif broadcast.object_kind == '1001' %}
-            <a href="{{ reverse_url('book', broadcast.object_id) }}" class="button">查看条目</a>
-            {% elif broadcast.object_kind == '1002' %}
-            <a href="{{ reverse_url('movie', broadcast.object_id) }}" class="button">查看条目</a>
-            {% elif broadcast.object_kind == '1003' %}
-            <a href="{{ reverse_url('music', broadcast.object_id) }}" class="button">查看条目</a>
-            {% end %}
-        </div>
-    </article>
+        {% module Recommend(rec, broadcast) %}
     {% elif rec_video %}
     <article class="box content">
-        {% set rec_img = PyQuery(PyQuery(PyQuery(rec_video).find('.video-player img').eq(0))) %}
-        {% set rec_title = PyQuery(PyQuery(PyQuery(rec_video).find('.title>a').eq(0))) %}
+        {% set rec_img = rec_video('.video-player img').eq(0) %}
+        {% set rec_title = rec_video('.title>a').eq(0) %}
         <figure style="text-align: left;">
             <p class="image" style="overflow: hidden; max-width: 480px;">
                 <img src="{{ rec_img.attr('src') }}">
@@ -158,19 +172,34 @@
             <p class="is-size-5"><a href="{{ rec_title.attr('href') }}">{{ rec_title.text() }}</a></p>
         </figure>
     </article>
+    {% elif broadcast.object_kind == '1025' %}
+        {% set rec_photos = content_dom('.status-item>.mod>.bd.rec>.block-photo img') %}
+        {% for rec_photo in rec_photos %}
+            {% set rec_photo = PyQuery(rec_photo) %}
+            {% if boxed %}
+            <figure class="image is-128x128" style="overflow: hidden; display: inline-block;">
+                <a href="#" class="preview action-open" data-target="#modal-preview"><img src="{{ rec_photo.attr('src') }}"></a>
+            </figure>
+            {% else %}
+            <figure class="image">
+                <img src="{{ rec_photo.attr('src') }}">
+            </figure>
+            {% end %}
+        {% end %}
+        <p><a href="https://www.douban.com/photos/photo/{{ broadcast.object_id }}" class="external-link">查看照片</a></p>
     {% else %}
-    <blockquote class="text-break">{{ PyQuery(broadcast.content).text() }}</blockquote>
+    <blockquote class="text-break">{{ content_dom.text() }}</blockquote>
     {% end %}
 {% elif broadcast.target_type == 'movie' and broadcast.object_kind == '1002' %}
     {% module Movie(broadcast.object_id) %}
 {% elif broadcast.target_type == 'book' and broadcast.object_kind == '1001' %}
     {% module Book(broadcast.object_id) %}
-{% elif broadcast.target_type == 'music' and broadcast.object_kind == '1002' %}
+{% elif broadcast.target_type == 'music' and broadcast.object_kind == '1003' %}
     {% module Music(broadcast.object_id) %}
 {% elif broadcast.target_type == 'sns' and broadcast.object_kind == '1015' %}
     {% module Note(broadcast.object_id) %}
 {% else %}
-    <blockquote class="text-break">{{ PyQuery(broadcast.content).text() }}</blockquote>
+    {% module Recommend(content_dom('.status-item>.mod>.bd>.block'), broadcast) %}
 {% end %}
 
 {% if not broadcast.is_noreply %}
@@ -179,7 +208,7 @@
         <div class="level-item">{{ broadcast.comments_count }}回应</div>
         <div class="level-item">赞({{ broadcast.like_count }})</div>
         <div class="level-item">转播({{ broadcast.reshared_count }})</div>
-        {% if not fully %}
+        {% if wrapped %}
         <div class="level-item"><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}">查看详情</a></div>
         {% end %}
     </div>
@@ -190,14 +219,16 @@
 {% end %}
 
 
-{% if fully %}
+{% if not wrapped %}
         </div>
     </div>
+    {% if boxed %}
     <div class="media-right">
         <ul class="menu has-text-centered">
             <li><a href="{{ reverse_url('broadcast', broadcast.douban_id) }}" class="button">查看详情</a></li>
         </ul>
     </div>
+    {% end %}
 </article>
 {% else %}
 </article>

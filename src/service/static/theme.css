@@ -64,6 +64,9 @@ dl.is-horizontal.is-label-size-4>dd {
     overflow-wrap: break-word;
     word-break: break-all;
     white-space: normal;
+    word-wrap: break-word;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
 }
 
 .rating-start {

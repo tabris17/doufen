@@ -215,7 +215,7 @@ class Note(BaseRequestHandler):
         try:
             subject = db.Note.get(db.Note.douban_id == douban_id)
             history = db.NoteHistorical.select().where(db.NoteHistorical.id == subject.id)
-        except db.User.DoesNotExist:
+        except db.Note.DoesNotExist:
             raise tornado.web.HTTPError(404)
 
         comments = db.Comment.select().join(db.User).where(
@@ -240,7 +240,7 @@ class PhotoPicture(BaseRequestHandler):
         try:
             subject = db.PhotoPicture.get(db.PhotoPicture.douban_id == douban_id)
             history = db.PhotoPictureHistorical.select().where(db.PhotoPictureHistorical.id == subject.id)
-        except db.User.DoesNotExist:
+        except db.PhotoPicture.DoesNotExist:
             raise tornado.web.HTTPError(404)
 
         comments = db.Comment.select().join(db.User).where(
@@ -259,7 +259,7 @@ class PhotoAlbum(BaseRequestHandler):
         try:
             subject = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == douban_id)
             history = db.PhotoAlbumHistorical.select().where(db.PhotoAlbumHistorical.id == subject.id)
-        except db.User.DoesNotExist:
+        except db.PhotoAlbum.DoesNotExist:
             raise tornado.web.HTTPError(404)
 
         photos = db.PhotoPicture.select().where(db.PhotoPicture.photo_album == subject)

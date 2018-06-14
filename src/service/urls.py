@@ -39,6 +39,7 @@ patterns = [
     (r'/my/broadcast', handlers.my.Broadcast, None, 'my.broadcast'),
     (r'/my/note', handlers.my.Note, None, 'my.note'),
     (r'/my/photo', handlers.my.Photo, None, 'my.photo'),
+    (r'/my/favorite/([^/]*)', handlers.my.Favorite, None, 'my.favorite'),
     (r'/note/([^/]+)', handlers.Note, None, 'note'),
     (r'/book/([^/]+)', handlers.Book, None, 'book'),
     (r'/movie/([^/]+)', handlers.Movie, None, 'movie'),

@@ -27,7 +27,7 @@
             <article class="media box{% if row.is_invalid%} has-background-grey-lighter{% end %}">
                 <figure class="media-left">
                     <p class="image is-48x48">
-                        <img src="{{ row.user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                        <img src="{{ row.user.avatar if row.user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
                     </p>
                     {% if not row.is_activated %}
                     <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">激活</a></p>

@@ -51,6 +51,8 @@ def init(db_path, create_tables=True):
                 PhotoAlbumHistorical,
                 PhotoPicture,
                 PhotoPictureHistorical,
+                Favorite,
+                FavoriteHistorical,
             ])
 
 
@@ -138,6 +140,15 @@ class User(BaseModel):
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
+    @classmethod
+    def get(cls, *args, **kwargs):
+        try:
+            return super().get(*args, **kwargs)
+        except User.DoesNotExist:
+            anonymous = User()
+            anonymous.id = 0
+            return anonymous
+
 
 class UserHistorical(User):
     """
@@ -182,7 +193,7 @@ class Account(BaseModel):
     @classmethod
     def getDefault(cls):
         return cls.select().where(
-            cls.is_invalid == False,
+            #cls.is_invalid == False,
             cls.user is not None
         ).order_by(
             cls.is_activated.desc()
@@ -721,3 +732,33 @@ class PhotoPictureHistorical(Note):
     
     douban_id = CharField(help_text='豆瓣ID')
     photo_picture = ForeignKeyField(PhotoPicture, field=PhotoPicture.id)
+
+
+class Favorite(BaseModel):
+    """
+    我的喜欢
+    """
+    class Meta:
+        indexes = (
+            (('user', 'target_type'), False),
+        )
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    user = ForeignKeyField(User, help_text='用户')
+    target_type = CharField(help_text='类型')
+    target_douban_id = CharField(help_text='喜欢对象的豆瓣ID')
+    created = CharField(help_text='添加时间的文字描述')
+    tags = TextField(help_text='标签', null=True)
+    url = CharField(help_text='对象URL', null=True)
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class FavoriteHistorical(Favorite):
+    """
+    我的喜欢历史记录
+    """
+    class Meta:
+        table_name = 'favorite_historical'
+
+    douban_id = CharField(help_text='豆瓣ID')
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())

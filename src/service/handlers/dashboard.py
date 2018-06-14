@@ -10,6 +10,9 @@ class Index(BaseRequestHandler):
         workers = self.server.workers
         pedding_tasks = self.server.tasks
         accounts = Account.select().where(Account.is_invalid == False)
+
+        if not accounts.count():
+            self.redirect(self.reverse_url('settings.accounts.login'))
         
         self.render('dashboard.html', workers=workers,
                     pedding_tasks=pedding_tasks, accounts=accounts, all_tasks=ALL_TASKS.keys())

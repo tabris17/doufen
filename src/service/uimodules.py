@@ -66,3 +66,25 @@ class Note(tornado.web.UIModule):
         except db.Note.DoesNotExist:
             note = None
         return self.render_string('modules/note.html', note=note)
+
+
+class User(tornado.web.UIModule):
+    """
+    用户卡片
+    """
+
+    def render(self, douban_id):
+        try:
+            user = db.User.get(db.User.douban_id == douban_id)
+        except db.User.DoesNotExist:
+            user = None
+        return self.render_string('modules/user.html', user=user)
+
+
+class Recommend(tornado.web.UIModule):
+    """
+    用户卡片
+    """
+
+    def render(self, recommend, broadcast):
+        return self.render_string('modules/recommend.html', recommend=recommend, broadcast=broadcast)

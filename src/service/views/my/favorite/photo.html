@@ -1,4 +1,4 @@
-{% extends "../themes/main.html" %} 
+{% extends "../../themes/main.html" %} 
 
 {% block title %}我的相册{% end %}
 
@@ -6,14 +6,20 @@
 <div class="container">
     <div class="columns is-mobile">
         <div class="column is-narrow">
-            {% module Template('my/_menu.html', active_page='photo') %}
+            {% module Template('my/_menu.html', active_page='favorite') %}
         </div>
         <div class="column">
+            <div class="tabs is-centered">
+                <ul>
+                    <li><a href="{{ reverse_url('my.favorite', 'note') }}">日记</a></li>
+                    <li class="is-active"><a>相册</a></li>
+                </ul>
+            </div>
             {% block headline %}
             <nav class="level">
                 <div class="level-left">
                     <div class="level-item">
-                        <p class="subtitle is-5">相册 <strong>{{ total_rows }}</strong> 本</p>
+                        <p class="subtitle is-5">喜欢的相册 <strong>{{ total_rows }}</strong> 本</p>
                     </div>
                 </div>
                 <div class="level-right">
@@ -24,7 +30,8 @@
             </nav>
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
-            {% for row in rows %}
+            {% for favorite in rows %}
+                {% set row = favorite.photo_album %}
             <article class="media box">
                 <figure class="media-left">
                     <p class="image is-128x128">
@@ -49,9 +56,11 @@
                                 </a>
                             </small>
                         </p>
+                        {% if row.last_updated %}
                         <p>
                             <small>{{ row.last_updated }}</small>
                         </p>
+                        {% end %}
                         <p class="text-break">
                             {{ row.desc }}
                         </p>

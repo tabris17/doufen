@@ -124,7 +124,10 @@ class Worker:
         self.queue_out.put(Worker.ReturnDone(self._name, result))
         
     def _error(self, exception):
-        self.queue_out.put(Worker.ReturnError(self._name, exception))
+        #import traceback
+        #exception_text = traceback.format_exc()
+        exception_text = str(exception)
+        self.queue_out.put(Worker.ReturnError(self._name, exception_text))
 
     def _heartbeat(self, sequence):
         self.queue_out.put(Worker.ReturnHeartbeat(self._name, sequence))
