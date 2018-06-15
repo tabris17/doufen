@@ -43,6 +43,6 @@
 
 在 Unix-like 的系统下，Virtualenv 的激活命令为：
 
-    > .venv\bin\activate
+    > .venv/bin/activate
     
 直接运行 npm i 会提示“./.venv/Scripts/activate: No such file or directory”错误。请修改 package.json 中相应的命令。
