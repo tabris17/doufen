@@ -35,12 +35,6 @@ def _strip_username(link):
     return re.match(r'http(?:s?)://www\.douban\.com/people/(.+)/', link.attr('href'))[1]
 
 
-def _get_anonymous():
-    user = db.User()
-    user.id = 0
-    return user
-
-
 class Task:
     """
     工作任务
@@ -330,7 +324,7 @@ class Task:
         url = 'https://api.douban.com/v2/user/{0}?apikey={1}'.format(name, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
-            return _get_anonymous()
+            return db.User.get_anonymous()
 
         detail = json.loads(response.text)
         return self.save_user(detail)
@@ -495,7 +489,7 @@ class Task:
     @dbo.atomic()
     def save_note(self, detail):
         douban_id = detail['douban_id']
-        detail['user'] = self.fetch_user(detail['user']) if detail['user'] else _get_anonymous()
+        detail['user'] = self.fetch_user(detail['user']) if detail['user'] else db.User.get_anonymous()
         detail['version'] = 1
         try:
             note = db.Note.safe_create(**detail)
@@ -681,7 +675,6 @@ class Task:
         douban_id = kwargs['douban_id'] if 'douban_id' in kwargs else btn_fav.attr('data-object_id')
         last_updated = kwargs['last_updated'] if 'last_updated' in kwargs else None
 
-        #parsed_url = urlparse(response.url)
         if re.match(
             r'^https://site\.douban\.com/widget/public_album/(\d+)/$', 
             response.url
@@ -702,12 +695,16 @@ class Task:
             except (ValueError, IndexError, TypeError):
                 rec_count = None
             views_count = None
-            user = _get_anonymous()
+            user = db.User.get_anonymous()
+
+            album_info_div = dom('#content .main .album-info')
+            album_info_div('.sns-bar-top').remove()
+            album_info_div('.wr').remove()
 
             detail = {
                 'douban_id': douban_id,
                 'title': btn_fav.attr('data-name'),
-                'desc': dom('#content .main .album-info').text(),
+                'desc': album_info_div.text(),
                 'user': user,
                 'last_updated': last_updated,
                 'url': url,

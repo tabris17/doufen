@@ -145,9 +145,14 @@ class User(BaseModel):
         try:
             return super().get(*args, **kwargs)
         except User.DoesNotExist:
-            anonymous = User()
-            anonymous.id = 0
-            return anonymous
+            return cls.get_anonymous()
+
+    @classmethod
+    def get_anonymous(cls):
+        anonymous = cls()
+        anonymous.id = 0
+        anonymous.name = '[佚名]'
+        return anonymous
 
 
 class UserHistorical(User):
