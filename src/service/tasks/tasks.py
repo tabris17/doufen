@@ -1760,8 +1760,37 @@ class LikeTask(Task):
 class ReviewTask(Task):
     _name = '备份我的评论'
 
+    def fetch_review_list(self, url):
+        item_list = []
+        while True:
+            response = self.fetch_url_content(url)
+            if not response:
+                break
+            dom = PyQuery(response.text)
+            items = dom('#content .article>.review-list .review-item')
+            for item in items:
+                item_div = PyQuery(item)
+                douban_id = item_div.attr('id')
+                title_link = item_div('.main-bd>h2>a')
+                subject_url = item_div('.subject-img').attr('href')
+
+                detail = {
+                    'douban_id': douban_id,
+                    'title': title_link.text(),
+                    'url': title_link.attr('href'),
+                    'subject': subject_url,
+                }
+                item_list.append(detail)
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return item_list
+
     def run(self):
-        pass
+        item_list = self.fetch_review_list(self.account.user.alt + 'reviews')
+        print(item_list)
 
 
 class DoulistTask(Task):
