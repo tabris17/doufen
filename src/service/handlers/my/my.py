@@ -16,9 +16,14 @@ def require_login(func):
     """
     def wrapper(self, *args, **kwargs):
         try:
-            db.Account.getDefault()
+            db.Account.get_default()
         except db.Account.DoesNotExist:
+            # 未登录
             self.redirect(self.reverse_url('settings.accounts.login'))
+            return
+        except db.User.DoesNotExist:
+            # 已登录，未抓取
+            self.redirect(self.reverse_url('dashboard'))
             return
         return func(self, *args, **kwargs)
 
@@ -30,9 +35,14 @@ class BaseRequestHandler(handlers.BaseRequestHandler):
     基础类
     """
     def prepare(self):
-        user = self.get_current_user()
-        if not user:
+        try:
+            db.Account.get_default()
+        except db.Account.DoesNotExist:
+            # 未登录
             self.redirect(self.reverse_url('settings.accounts.login'))
+        except db.User.DoesNotExist:
+            # 已登录，未抓取
+            self.redirect(self.reverse_url('dashboard'))
 
     def list(self, query, template, **kwargs):
         try:

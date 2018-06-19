@@ -297,7 +297,7 @@ class Task:
         """
         try:
             user = db.User.get(db.User.unique_name == name)
-            if self.is_oject_expired(user):
+            if self.is_oject_expired(user) or user.is_anonymous():
                 raise db.User.DoesNotExist()
         except db.User.DoesNotExist:
             user = self.fetch_user_by_api(name)

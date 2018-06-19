@@ -9,8 +9,8 @@ class Account(tornado.web.UIModule):
 
     def render(self):
         try:
-            account = db.Account.getDefault()
-        except db.Account.DoesNotExist:
+            account = db.Account.get_default()
+        except (db.Account.DoesNotExist, db.User.DoesNotExist):
             account = None
         return self.render_string('modules/account.html', account=account)
 

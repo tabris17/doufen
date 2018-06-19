@@ -11,6 +11,9 @@ logging.basicConfig(
 )
 db.init('var/data/graveyard.db')
 
+print(db.Account.get_default())
+
+'''
 class TestTask(tasks.LikeTask):
     def run(self):
         item_list = self.fetch_like_list(self.account.user.alt + 'likes/photo_album/')
@@ -25,14 +28,12 @@ class TestTask(tasks.LikeTask):
 
 
 task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
-
-#task = tasks.BroadcastCommentTask(db.Account.get_by_id(1))
-#task = tasks.PhotoAlbumTask(db.Account.get_by_id(1))
-#task = tasks.NoteTask(db.Account.get_by_id(1))
-#task = tasks.LikeTask(db.Account.get_by_id(1))
-#task = TestTask(db.Account.get_by_id(1))
+task = tasks.BroadcastCommentTask(db.Account.get_by_id(1))
+task = tasks.PhotoAlbumTask(db.Account.get_by_id(1))
+task = tasks.NoteTask(db.Account.get_by_id(1))
+task = tasks.LikeTask(db.Account.get_by_id(1))
+task = TestTask(db.Account.get_by_id(1))
 task = tasks.ReviewTask(db.Account.get_by_id(1))
-
 
 result = task(
     requests_per_minute=30, 
@@ -42,3 +43,4 @@ result = task(
     image_local_cache=True
 )
 print(result)
+'''

@@ -145,7 +145,10 @@ class User(BaseModel):
         try:
             return super().get(*args, **kwargs)
         except User.DoesNotExist:
-            return cls.get_anonymous()
+            if 'allow_anonymous' in kwargs and kwargs['allow_anonymous']:
+                return cls.get_anonymous()
+            else:
+                raise
 
     @classmethod
     def get_anonymous(cls):
@@ -153,6 +156,9 @@ class User(BaseModel):
         anonymous.id = 0
         anonymous.name = '[佚名]'
         return anonymous
+
+    def is_anonymous(self):
+        return self.id == 0
 
 
 class UserHistorical(User):
@@ -196,13 +202,17 @@ class Account(BaseModel):
     is_invalid = BooleanField(default=False, help_text='是否失效')
 
     @classmethod
-    def getDefault(cls):
-        return cls.select().where(
-            #cls.is_invalid == False,
-            cls.user is not None
-        ).order_by(
-            cls.is_activated.desc()
-        ).get()
+    def get_default(cls):
+        try:
+            return cls.select().where(
+                cls.user != None
+            ).order_by(
+                cls.is_activated.desc()
+            ).get()
+        except cls.DoesNotExist:
+            if cls.select().exists():
+                raise User.DoesNotExist
+            raise
 
 
 class BlockUser(BaseModel):

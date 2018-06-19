@@ -33,8 +33,8 @@ class BaseRequestHandler(RequestHandler):
         获取当前用户，没有则返回None
         """
         try:
-            return db.Account.getDefault().user
-        except db.Account.DoesNotExist:
+            return db.Account.get_default().user
+        except (db.Account.DoesNotExist, db.User.DoesNotExist):
             pass
 
     def write_error(self, status_code, **kwargs):
