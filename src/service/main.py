@@ -9,7 +9,7 @@ import db
 import version
 from server import Server
 from worker import Worker
-from setting import settings, DEFAULT_SERVICE_PORT, DEFAULT_DATEBASE, DEFAULT_CACHE_PATH, DEFAULT_SERVICE_HOST
+from setting import settings, DEFAULT_SERVICE_PORT, DEFAULT_DATEBASE, DEFAULT_CACHE_PATH, DEFAULT_SERVICE_HOST, DEFAULT_LOG_PATH
 
 
 def parse_args(args):
@@ -30,18 +30,23 @@ def parse_args(args):
                         metavar='database', dest='database', help='specify the database file')
     parser.add_argument('-c', '--cache', default=DEFAULT_CACHE_PATH,
                         metavar='cache', dest='cache', help='specify the cache path')
+    parser.add_argument('-l', '--log', default=DEFAULT_LOG_PATH,
+                        metavar='log', dest='log', help='specify the log files path')
     return parser.parse_args(args)
 
 
 def startup():
     db_path = os.path.dirname(settings.get('database'))
-    cache_path = settings.get('cache')
-
     if not os.path.exists(db_path):
         os.makedirs(db_path)
 
+    cache_path = settings.get('cache')
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
+
+    log_path = settings.get('log')
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
 
 
 def main(args):
@@ -52,6 +57,7 @@ def main(args):
 
     settings.update({
         'cache': parsed_args.cache,
+        'log': parsed_args.log,
         'database': parsed_args.database,
         'port': parsed_args.port,
         'debug': parsed_args.debug,

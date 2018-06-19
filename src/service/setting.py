@@ -7,11 +7,13 @@ DEFAULT_SERVICE_PORT = 8398
 DEFAULT_SERVICE_HOST = '127.0.0.1'
 DEFAULT_DATEBASE = 'var/data/graveyard.db'
 DEFAULT_CACHE_PATH = 'var/cache'
+DEFAULT_LOG_PATH = 'var/log'
 DEFAULT_DEBUG_MODE = False
 
 settings = {
     'debug': DEFAULT_DEBUG_MODE,
     'cache': DEFAULT_CACHE_PATH,
+    'log': DEFAULT_LOG_PATH,
     'database': DEFAULT_DATEBASE,
     'port': DEFAULT_SERVICE_PORT,
 }
