@@ -63,13 +63,21 @@ def main(args):
         'debug': parsed_args.debug,
     })
 
+    startup()
+
     logging.basicConfig(
         level=logging.DEBUG if settings.get('debug') else logging.INFO,
         format='[%(asctime)s] (%(pathname)s:%(lineno)s) [%(levelname)s] %(name)s: %(message)s',
-        datefmt='%m-%d %H:%M'
+        datefmt='%m-%d %H:%M',
+        handlers=[
+            logging.StreamHandler(),
+            logging.handlers.TimedRotatingFileHandler(
+                os.path.join(settings.get('log'), 'service.log'),
+                when='D'
+            )
+        ]
     )
-
-    startup()
+    
     db.init(parsed_args.database)
 
     server = Server(parsed_args.port, DEFAULT_SERVICE_HOST, parsed_args.cache)
