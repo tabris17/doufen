@@ -6,6 +6,9 @@ from tasks import ALL_TASKS
 
 
 class Index(BaseRequestHandler):
+    """
+    控制台
+    """
     def get(self):
         workers = self.server.workers
         pedding_tasks = self.server.tasks
@@ -19,6 +22,9 @@ class Index(BaseRequestHandler):
 
 
 class RestartWorkers(BaseRequestHandler):
+    """
+    重启工作进程
+    """
     def post(self):
         self.server.stop_workers()
         self.server.start_workers()
@@ -26,6 +32,9 @@ class RestartWorkers(BaseRequestHandler):
 
 
 class AddTask(BaseRequestHandler):
+    """
+    添加任务
+    """
     def post(self):
         tasks = json.loads(self.get_argument('tasks'))
         task_names = tasks['tasks']

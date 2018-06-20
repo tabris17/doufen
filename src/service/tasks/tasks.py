@@ -410,7 +410,7 @@ class Task:
         """
         account = self._account
         user = self.fetch_user(account.name)
-        if account.user is None:
+        if account.user is None or account.user.is_anonymous():
             account.user = user
             account.save()
         return account
@@ -1798,6 +1798,13 @@ class DoulistTask(Task):
 
     def run(self):
         pass
+
+
+class SyncAccountTask(Task):
+    _name = '同步我的帐号'
+
+    def run(self):
+        self.sync_account()
 
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [

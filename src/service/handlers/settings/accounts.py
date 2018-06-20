@@ -2,6 +2,7 @@
 import re
 from ..handlers import BaseRequestHandler
 from db import Account
+from tasks import SyncAccountTask
 
 class Login(BaseRequestHandler):
     """
@@ -29,9 +30,6 @@ class Add(BaseRequestHandler):
     def post(self):
         session = self.get_argument('session')
         homepage = self.get_argument('homepage')
-        import logging
-        logging.debug('session: '+session)
-        logging.debug('homepage: '+homepage)
         
         try:
             name = re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', homepage).pop(0)
@@ -40,9 +38,13 @@ class Add(BaseRequestHandler):
             account.is_invalid = False
             account.save()
         except Account.DoesNotExist:
-            Account.create(session=session, name=name)
+            account = Account.create(session=session, name=name)
         except IndexError:
-            pass
+            self.write('FAIL')
+            return
+
+        self.server.add_task(SyncAccountTask(account))
+        self.server.push_task()
 
         self.write('OK')
 
