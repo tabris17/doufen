@@ -27,10 +27,10 @@
             <article class="media box{% if row.is_invalid%} has-background-grey-lighter{% end %}">
                 <figure class="media-left">
                     <p class="image is-48x48">
-                        <img src="{{ row.user.avatar if row.user else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                        <img src="{{ row.user.avatar if row.user and row.user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
                     </p>
                     {% if not row.is_activated %}
-                    <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">激活</a></p>
+                    <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">切换</a></p>
                     {% end %}
                 </figure>
                 <div class="media-content">
@@ -92,7 +92,7 @@
             }).then((data, status, $xhr) => {
                 location.reload()
             }, ($xhr, status, error) => {
-                window.alert('激活帐号失败：' + error, '错误')
+                window.alert('切换帐号失败：' + error, '错误')
             })
         })
     })

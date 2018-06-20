@@ -60,13 +60,16 @@ function ensureSingleton() {
     const isDuplicateInstance = app.makeSingleInstance((commandLine, workingDirectory) => {
         let win = getMainWindow()
         if (win) {
-            if (win.isMinimized()) win.restore()
+            if (!win.isVisible()) win.show()
+            else if (win.isMinimized()) win.restore()
             win.focus()
         }
     })
     if (isDuplicateInstance) {
         app.quit()
     }
+
+    return isDuplicateInstance
 }
 
 
@@ -99,7 +102,9 @@ global.sharedData = {
  * @param {Array} args 
  */
 function main(args) {
-    ensureSingleton()
+    if (ensureSingleton()) {
+        return
+    }
 
     let parsedArgs = parseArgs(args)
     

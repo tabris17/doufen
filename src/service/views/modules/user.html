@@ -1,0 +1,40 @@
+{% if user %}
+<article class="media box">
+    <figure class="media-left">
+        <p class="image is-48x48">
+            <img src="{{ user.avatar if user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+        </p>
+    </figure>
+    <div class="media-content">
+        <div class="content">
+            <p>
+                <strong><a href="{{ user.alt }}" class="external-link">{{ user.name }}</a></strong>
+                <small>(@{{ user.unique_name}})</small>
+                <small class="has-text-grey-light">{{ user.signature }}</small>
+            </p>
+            <dl class="is-horizontal is-label-size-4">
+                {% if user.created %}
+                <dt class="has-text-left">加入时间</dt>
+                <dd class="has-text-grey-light">{{ user.created }}</dd>
+                {% end %}
+                {% if user.loc_name %}
+                <dt class="has-text-left">所在地</dt>
+                <dd class="has-text-grey-light">{{ user.loc_name }}({{ user.loc_id }})</dd>
+                {% end %}
+            </dl>
+            <p class="text-break">
+                {% if user.desc %}
+                    {% for ln in user.desc.split("\n") %}
+                        {% if ln %}
+                        {{ ln }}<br>
+                        {% end %}
+                    {% end %}
+                {% end %}
+            </p>
+        </div>
+    </div>
+</article>
+
+{% else %}
+<p class="box">用户可能已注销</p>
+{% end %}

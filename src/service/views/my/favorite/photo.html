@@ -1,0 +1,89 @@
+{% extends "../../themes/main.html" %} 
+
+{% block title %}我的相册{% end %}
+
+{% block main %}
+<div class="container">
+    <div class="columns is-mobile">
+        <div class="column is-narrow">
+            {% module Template('my/_menu.html', active_page='favorite') %}
+        </div>
+        <div class="column">
+            <div class="tabs is-centered">
+                <ul>
+                    <li><a href="{{ reverse_url('my.favorite', 'note') }}">日记</a></li>
+                    <li class="is-active"><a>相册</a></li>
+                </ul>
+            </div>
+            {% block headline %}
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="subtitle is-5">喜欢的相册 <strong>{{ total_rows }}</strong> 本</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <!--<a class="button" href="">查看历史记录</a>-->
+                    </p>
+                </div>
+            </nav>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+            {% for favorite in rows %}
+                {% set row = favorite.photo_album %}
+            <article class="media box">
+                <figure class="media-left">
+                    <p class="image is-128x128">
+                        <a href="{{ reverse_url('photo.album', row.douban_id) }}">
+                            {% if row.cover %}
+                            <img src="{{ row.cover }}">
+                            {% else %}
+                            <img src="{{ static_url('photo_album.png') }}">
+                            {% end %}
+                        </a>
+                    </p>
+                </figure>
+                <div class="media-content">
+                    <div class="content">
+                        <p class="title is-size-5">
+                            <a href="{{ reverse_url('photo.album', row.douban_id) }}">{{ row.title }}</a>
+                            <small class="is-size-6">
+                                <a href="{{ row.url }}" title="访问日记的豆瓣网页" class="external-link">
+                                    <span class="icon">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </span>
+                                </a>
+                            </small>
+                        </p>
+                        {% if row.last_updated %}
+                        <p>
+                            <small>{{ row.last_updated }}</small>
+                        </p>
+                        {% end %}
+                        <p class="text-break">
+                            {{ row.desc }}
+                        </p>
+                        <p>
+                            <span>{{ row.photos_count }}张照片</span>
+                            {% if row.views_count %}
+                            <span style="margin-left: 10px;">{{ row.views_count }}人浏览</span>
+                            {% end %}
+                            {% if row.like_count %}
+                            <span style="margin-left: 10px;">喜欢({{ row.like_count }})</span>
+                            {% end %}
+                            {% if row.rec_count %}
+                            <span style="margin-left: 10px;">推荐({{ row.rec_count }})</span>
+                            {% end %}
+                        </p>
+                    </div>
+                </div>
+            </article>
+            {% end %}
+            {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
+        </div>
+
+    </div>
+
+</div>
+{% end %}

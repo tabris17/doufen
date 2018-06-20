@@ -28,7 +28,7 @@
             <article class="media box{% if row.follower.is_banned or row.follower.is_suicide%} has-background-white-ter{% end %}">
                 <figure class="media-left">
                     <p class="image is-48x48">
-                        <img src="{{ row.follower.avatar if row.follower else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                        <img src="{{ row.follower.avatar if row.follower.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
                     </p>
                 </figure>
                 <div class="media-content">
@@ -39,18 +39,22 @@
                             <small class="has-text-grey-light">{{ row.follower.signature }}</small>
                         </p>
                         <dl class="is-horizontal is-label-size-4">
+                            {% if row.follower.created %}
                             <dt class="has-text-left">加入时间</dt>
                             <dd class="has-text-grey-light">{{ row.follower.created }}</dd>
+                            {% end %}
                             {% if row.follower.loc_name %}
                             <dt class="has-text-left">所在地</dt>
                             <dd class="has-text-grey-light">{{ row.follower.loc_name }}({{ row.follower.loc_id }})</dd>
                             {% end %}
                         </dl>
                         <p class="text-break">
-                            {% for ln in row.follower.desc.split("\n") %}
-                            {% if ln %}
-                            {{ ln }}<br>
-                            {% end %}
+                            {% if row.follower.desc %}
+                                {% for ln in row.follower.desc.split("\n") %}
+                                    {% if ln %}
+                                    {{ ln }}<br>
+                                    {% end %}
+                                {% end %}
                             {% end %}
                         </p>
                     </div>

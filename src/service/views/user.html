@@ -26,7 +26,7 @@
     <article class="media" style="min-height: 220px;">
         <figure class="media-left">
             <p class="image is-128x128">
-                <img src="{{ subject.large_avatar if subject.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+                <img src="{{ subject.large_avatar if subject.large_avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
             </p>
         </figure>
         <div class="media-content">
@@ -37,18 +37,22 @@
                     <small class="has-text-grey-light">{{ subject.signature }}</small>
                 </p>
                 <dl class="is-horizontal is-label-size-4">
+                    {% if subject.created %}
                     <dt class="has-text-left">加入时间</dt>
                     <dd class="has-text-grey-light">{{ subject.created }}</dd>
+                    {% end %}
                     {% if subject.loc_name %}
                     <dt class="has-text-left">所在地</dt>
                     <dd class="has-text-grey-light">{{ subject.loc_name }}({{ subject.loc_id }})</dd>
                     {% end %}
                 </dl>
                 <p class="text-break">
-                    {% for ln in subject.desc.split("\n") %}
-                    {% if ln %}
-                    {{ ln }}<br>
-                    {% end %}
+                    {% if subject.desc %}
+                        {% for ln in subject.desc.split("\n") %}
+                            {% if ln %}
+                            {{ ln }}<br>
+                            {% end %}
+                        {% end %}
                     {% end %}
                 </p>
             </div>

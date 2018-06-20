@@ -9,8 +9,8 @@ class Account(tornado.web.UIModule):
 
     def render(self):
         try:
-            account = db.Account.getDefault()
-        except db.Account.DoesNotExist:
+            account = db.Account.get_default()
+        except (db.Account.DoesNotExist, db.User.DoesNotExist):
             account = None
         return self.render_string('modules/account.html', account=account)
 
@@ -53,3 +53,38 @@ class Music(tornado.web.UIModule):
         except db.Music.DoesNotExist:
             music = None
         return self.render_string('modules/music.html', music=music)
+
+
+class Note(tornado.web.UIModule):
+    """
+    日记卡片
+    """
+
+    def render(self, douban_id):
+        try:
+            note = db.Note.get(db.Note.douban_id == douban_id)
+        except db.Note.DoesNotExist:
+            note = None
+        return self.render_string('modules/note.html', note=note)
+
+
+class User(tornado.web.UIModule):
+    """
+    用户卡片
+    """
+
+    def render(self, douban_id):
+        try:
+            user = db.User.get(db.User.douban_id == douban_id)
+        except db.User.DoesNotExist:
+            user = None
+        return self.render_string('modules/user.html', user=user)
+
+
+class Recommend(tornado.web.UIModule):
+    """
+    用户卡片
+    """
+
+    def render(self, recommend, broadcast):
+        return self.render_string('modules/recommend.html', recommend=recommend, broadcast=broadcast)

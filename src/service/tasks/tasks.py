@@ -8,7 +8,7 @@ import hashlib
 from abc import abstractmethod
 from collections import OrderedDict
 from time import sleep, time
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from http import cookies
 
 from pyquery import PyQuery
@@ -28,6 +28,11 @@ FAKE_API_KEY = '04f1ddfc67bddc4a0ed599f5373994de'
 
 # type: {music|book|movie}; status: {mark|doing|done}
 URL_INTERESTS_API = 'https://m.douban.com/rexxar/api/v2/user/{uid}/interests?type={type}&status={status}&start={{start}}&count=50&ck={ck}&for_mobile=1'
+
+
+
+def _strip_username(link):
+    return re.match(r'http(?:s?)://www\.douban\.com/people/(.+)/', link.attr('href'))[1]
 
 
 class Task:
@@ -96,7 +101,7 @@ class Task:
     
     def is_oject_expired(self, obj):
         now = datetime.datetime.now()
-        return (now - obj.updated_at).seconds > self._local_object_duration
+        return (now - obj.updated_at).total_seconds() > self._local_object_duration
 
     def get_setting(self, name, default=None):
         return self._settings.get(name, default)
@@ -292,7 +297,7 @@ class Task:
         """
         try:
             user = db.User.get(db.User.unique_name == name)
-            if self.is_oject_expired(user):
+            if self.is_oject_expired(user) or user.is_anonymous():
                 raise db.User.DoesNotExist()
         except db.User.DoesNotExist:
             user = self.fetch_user_by_api(name)
@@ -319,7 +324,7 @@ class Task:
         url = 'https://api.douban.com/v2/user/{0}?apikey={1}'.format(name, FAKE_API_KEY)
         response = self.fetch_url_content(url)
         if not response:
-            return None
+            return db.User.get_anonymous()
 
         detail = json.loads(response.text)
         return self.save_user(detail)
@@ -405,7 +410,7 @@ class Task:
         """
         account = self._account
         user = self.fetch_user(account.name)
-        if account.user is None:
+        if account.user is None or account.user.is_anonymous():
             account.user = user
             account.save()
         return account
@@ -419,16 +424,402 @@ class Task:
             ck=self._account_cookie['ck'].value
         )
         response = self.fetch_url_content(url.format(start=0))
+        if not response:
+            return interests_list
         result = json.loads(response.text)
         total = result['total']
         interests_list.extend(result['interests'])
 
         for start in range(50, total, 50):
             response = self.fetch_url_content(url.format(start=start))
+            if not response:
+                return interests_list
             result = json.loads(response.text)
             interests_list.extend(result['interests'])
 
         return interests_list
+
+    def fetch_note_comments(self, url, dom, douban_id):
+        comments = []
+        while True:
+            comment_items = dom('#comments .comment-item')
+            for comment_item in comment_items:
+                item_div = PyQuery(comment_item)
+                quote_user_link = item_div('.content>.reply-quote>.pubdate>a')
+                if quote_user_link:
+                    quote_user_name = quote_user_link.text()
+                    quote_user_id = _strip_username(quote_user_link)
+                    quote_text = item_div('.content>.reply-quote>.all').text()
+                    blockquote = '{0}({1}):{2}'.format(quote_user_name, quote_user_id, quote_text)
+                else:
+                    blockquote = None
+                comments.append({
+                    'douban_id': item_div.attr('data-cid'),
+                    'content': item_div.outer_html(),
+                    'target_type': 'note',
+                    'target_douban_id': douban_id,
+                    'user': self.fetch_user(_strip_username(item_div('.pic>a'))),
+                    'text': item_div('.content>p').text(),
+                    'created': item_div('.content>.author>span').text(),
+                    'quote': blockquote,
+                })
+            next_page = dom('#comments>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+            response = self.fetch_url_content(url)
+            if not response:
+                return comments
+            dom = PyQuery(response.text)
+        return comments
+
+
+    @dbo.atomic()
+    def save_attachments(self, attachments):
+        attachment_objects = []
+        for attachment in attachments:
+            try:
+                attachment_object = db.Attachment.safe_create(**attachment)
+            except db.IntegrityError:
+                attachment_object = db.Attachment.get(db.Attachment.url == attachment['url'])
+            attachment_objects.append(attachment_object)
+        return attachment_objects
+
+    @dbo.atomic()
+    def save_note(self, detail):
+        douban_id = detail['douban_id']
+        detail['user'] = self.fetch_user(detail['user']) if detail['user'] else db.User.get_anonymous()
+        detail['version'] = 1
+        try:
+            note = db.Note.safe_create(**detail)
+            logging.debug('create note: ' + note.title)
+        except db.IntegrityError:
+            note = db.Note.get(db.Note.douban_id == douban_id)            
+            if not note.equals(detail):
+                db.NoteHistorical.clone(note)
+                detail['version'] = db.Note.version + 1
+                db.Note.safe_update(**detail).where(db.Note.id == note.id).execute()
+        return note
+
+    @dbo.atomic()
+    def save_note_comments(self, comments):
+        for detail in comments:
+            try:
+                db.Comment.safe_create(**detail)
+            except db.IntegrityError:
+                pass
+
+    def fetch_note(self, douban_id):
+        """
+        尝试从本地获取日记，如果没有则从网上抓取
+        """
+        try:
+            note = db.Note.get(db.Note.douban_id == douban_id)
+            if self.is_oject_expired(note):
+                raise db.Note.DoesNotExist()
+        except db.Note.DoesNotExist:
+            url = 'https://www.douban.com/note/{0}/'.format(douban_id)
+            note, comments, attachments = self.fetch_note_by_url(url)
+
+        return note
+
+    def fetch_note_by_url(self, url):
+        response = self.fetch_url_content(url)
+        if not response:
+            return None, [], []
+        dom = PyQuery(response.text)
+        attachments = []
+        subjects = []
+        note_douban_id = re.match(r'https://www\.douban\.com/note/(\d+)/', url)[1]
+
+        parsed_url = urlparse(response.url)
+        if parsed_url.netloc == 'site.douban.com':
+            # 小站日记
+            note_container = dom('#content .note-item')
+            like_count_text = note_container('.sns-bar-fav .fav-num>a').text()
+            rec_count_text = note_container('.sns-bar-rec .rec-num').text()
+            #user_id = dom('body').attr('id')
+            comments = []
+            for img in note_container('#link-report img'):
+                attachments.append({
+                    'type': 'image',
+                    'url': PyQuery(img).attr('src'),
+                })
+            detail = {
+                'url': response.url,
+                'is_original': True,
+                'douban_id': note_douban_id,
+                'title': note_container('.note-hd>h1').text(),
+                'created': note_container('.datetime').text(),
+                'introduction': note_container('.summary').text(),
+                'content': note_container('#link-report').html(),
+                'attachments': attachments,
+                'subjects': subjects,
+                'views_count': None,
+                'like_count': like_count_text[:-1] if like_count_text else None,
+                'rec_count': rec_count_text[:-1] if rec_count_text else None,
+                'comments_count': len(comments),
+                'user': None,
+            }
+        else:
+            note_container = dom('#content .article>.note-container')
+            for img in note_container('.image-wrapper>img'):
+                attachments.append({
+                    'type': 'image',
+                    'url': PyQuery(img).attr('src'),
+                })
+            for subject_link in note_container('.subject-wrapper>a'):
+                subject_url = PyQuery(subject_link).attr('href')
+                re_match = re.match(r'https://([a-z]+)\.douban\.com/subject/([0-9]+)/', subject_url)
+                subject_type = re_match[1]
+                subject_id = re_match[2]
+                subjects.append({
+                    'type': subject_type,
+                    'douban_id': subject_id,
+                })
+                if subject_type == 'music':
+                    self.fetch_music(subject_id)
+                elif subject_type == 'movie':
+                    self.fetch_movie(subject_id)
+                elif subject_type == 'book':
+                    self.fetch_book(subject_id)
+
+            #note_douban_id = note_container.attr('id')[5:]
+            comments = self.fetch_note_comments(url, dom, note_douban_id)
+
+            views_count = note_container('.note-footer-stat-pv').text()[0:-3]
+            like_count = note_container('.sns-bar-fav .fav-num').text()
+            rec_count = note_container('.rec-sec .rec-num').text()
+            user_id = _strip_username(note_container('.note-author'))
+            detail = {
+                'url': url,
+                'is_original': note_container.attr('data-is-original') == '1',
+                'douban_id': note_douban_id,
+                'title': note_container('.note-header.note-header-container>h1').text(),
+                'created': note_container('.note-header.note-header-container .pub-date').text(),
+                'introduction': note_container('.introduction').text(),
+                'content': note_container('#link-report').html(),
+                'attachments': attachments,
+                'subjects': subjects,
+                'views_count': views_count if views_count else None,
+                'like_count': like_count if like_count else None,
+                'rec_count': rec_count if rec_count else None,
+                'comments_count': len(comments),
+                'user': user_id,
+            }
+
+        return self.save_note(detail), self.save_note_comments(comments), self.save_attachments(attachments)
+
+    @dbo.atomic()
+    def save_photo_album(self, album_detail, picture_details):
+        now = datetime.datetime.now()
+        album_detail['version'] = 1
+        album_detail['updated_at'] = now
+
+        try:
+            album = db.PhotoAlbum.safe_create(**album_detail)
+            logging.debug('create photot album: ' + album.title)
+        except db.IntegrityError:
+            album = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == album_detail['douban_id'])
+            if not album.equals(album_detail):
+                db.PhotoAlbumHistorical.clone(album)
+                album_detail['version'] = db.PhotoAlbum.version + 1
+                db.PhotoAlbum.safe_update(**album_detail).where(db.PhotoAlbum.id == album.id).execute()
+
+        pictures = []
+        for picture_detail in picture_details:
+            picture_detail['version'] = 1
+            picture_detail['updated_at'] = now
+            picture_detail['photo_album'] = album
+            try:
+                picture = db.PhotoPicture.safe_create(**picture_detail)
+            except db.IntegrityError:
+                picture = db.PhotoPicture.get(db.PhotoPicture.douban_id == picture_detail['douban_id'])
+                picture_detail['version'] = db.PhotoPicture.version + 1
+                db.PhotoPicture.safe_update(**picture_detail).where(db.PhotoPicture.id == picture.id).execute()
+
+        return album, pictures
+
+    def fetch_photo_album(self, douban_id, url=None, last_updated=None, **kwargs):
+        """
+        尝试从本地获取相册，如果没有则从网上抓取
+        """
+        try:
+            album = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == douban_id)
+            if last_updated and album.last_updated and last_updated != album.last_updated or self.is_oject_expired(album):
+                raise db.PhotoAlbum.DoesNotExist()
+        except db.PhotoAlbum.DoesNotExist:
+            if url is None:
+                url = 'https://www.douban.com/photos/album/{0}/'.format(douban_id)
+            album = self.fetch_photo_album_by_url(url, douban_id=douban_id, last_updated=last_updated, **kwargs)
+
+        return album
+
+    def fetch_photo_album_by_url(self, url, **kwargs):
+        pictures = []
+        attachments = []
+
+        response = self.fetch_url_content(url)
+        if not response:
+            return None, None, None
+
+        dom = PyQuery(response.text)
+        cover = kwargs['cover'] if 'cover' in kwargs else None
+        if cover:
+            attachments.append({
+                'type': 'image',
+                'url': cover,
+            })
+        btn_fav = dom('.btn-fav')
+        douban_id = kwargs['douban_id'] if 'douban_id' in kwargs else btn_fav.attr('data-object_id')
+        last_updated = kwargs['last_updated'] if 'last_updated' in kwargs else None
+
+        if re.match(
+            r'^https://site\.douban\.com/widget/public_album/(\d+)/$', 
+            response.url
+        ) or re.match(
+            r'^https://site\.douban\.com/(\d+)/widget/public_album/(\d+)/$', 
+            response.url
+        ) or re.match(
+            r'^https://site\.douban\.com/(\d+)/widget/photos/(\d+)/$', 
+            response.url
+        ):
+            # 小站相册
+            try:
+                like_count = re.search(r'(\d+)人', dom('.fav-num>a').text())[1]
+            except (ValueError, IndexError, TypeError):
+                like_count = None
+            try:
+                rec_count = re.search(r'(\d+)人', dom('.rec-num').text())[1]
+            except (ValueError, IndexError, TypeError):
+                rec_count = None
+            views_count = None
+            user = db.User.get_anonymous()
+
+            album_info_div = dom('#content .main .album-info')
+            album_info_div('.sns-bar-top').remove()
+            album_info_div('.wr').remove()
+
+            detail = {
+                'douban_id': douban_id,
+                'title': btn_fav.attr('data-name'),
+                'desc': album_info_div.text(),
+                'user': user,
+                'last_updated': last_updated,
+                'url': url,
+                'views_count': views_count,
+                'like_count': like_count if like_count else None,
+                'rec_count': rec_count if rec_count else None,
+                'cover': cover,
+            }
+            while True:
+                for photo_item in dom('#content .list-s>li>.photo-item'):
+                    photo_item_div = PyQuery(photo_item)
+                    photo_link = photo_item_div('.album_photo')
+                    img_src = photo_item_div('.album_photo>img').attr('src').replace('/photo/thumb/public/', '/photo/l/public/', 1)
+                    comments_views_count_text = photo_item_div('.desc>a').text()
+                    try:
+                        comments_count = re.search(r'(\d+)回应', comments_views_count_text)[1]
+                    except (IndexError, TypeError):
+                        comments_count = None
+                    views_count = None
+                    photo_url = photo_link.attr('href')
+                    photo_douban_id = photo_link.attr('id')[1:]
+                    pictures.append({
+                        'douban_id': photo_douban_id,
+                        'desc': photo_link.attr('title'),
+                        'url': photo_url,
+                        'picture': img_src,
+                        'views_count': views_count,
+                        'comments_count': comments_count,
+                    })
+                    attachments.append({
+                        'type': 'image',
+                        'url': img_src,
+                    })
+                next_page = dom('#content .bd>.paginator>.next>a')
+                if next_page:
+                    url = next_page.attr('href')
+                    if url[0] == '/':
+                        url = 'https://site.douban.com' + url
+                else:
+                    break
+                response = self.fetch_url_content(url)
+                if not response:
+                    break
+                dom = PyQuery(response.text)
+        elif re.match(
+            r'^https://www\.douban\.com/photos/album/(\d+)/$', 
+            response.url
+        ):
+            user = kwargs['user'] if 'user' in kwargs else self.fetch_user(_strip_username(dom('#db-usr-profile>.pic>a')))
+            like_count =  dom('.fav-num').text()
+            rec_count = dom('.rec-num').text()
+
+            try:
+                views_count = re.search(r'(\d+)人浏览', dom('.album-edit>span:last-child').text())[1]
+            except (ValueError, IndexError, TypeError):
+                views_count = None
+
+            detail = {
+                'douban_id': douban_id,
+                'title': btn_fav.attr('data-name'),
+                'desc': dom('#content .article>.description').text(),
+                'user': user,
+                'last_updated': last_updated,
+                'url': url,
+                'views_count': views_count,
+                'like_count': like_count if like_count else None,
+                'rec_count': rec_count if rec_count else None,
+                'cover': cover,
+            }
+
+            while True:
+                for photo_item in dom('.photolst>.photo_wrap'):
+                    photo_item_div = PyQuery(photo_item)
+                    photo_link = photo_item_div('.photolst_photo')
+                    img_src = photo_item_div('.photolst_photo>img').attr('src').replace('/photo/m/public/', '/photo/l/public/', 1)
+                    comments_views_count_text = photo_item_div('div[style="color:#999"]').text()
+                    try:
+                        comments_count = re.search(r'(\d+)回应', comments_views_count_text)[1]
+                    except (IndexError, TypeError):
+                        comments_count = None
+                    try:
+                        views_count = re.search(r'(\d+)浏览', comments_views_count_text)[1]
+                    except (IndexError, TypeError):
+                        views_count = None
+                    photo_url = photo_link.attr('href')
+                    photo_douban_id = re.match(r'http(?:s?)://www\.douban\.com/photos/photo/(.+)/', photo_url)[1]
+                    pictures.append({
+                        'douban_id': photo_douban_id,
+                        'desc': photo_link.attr('title'),
+                        'url': photo_url,
+                        'picture': img_src,
+                        'views_count': views_count,
+                        'comments_count': comments_count,
+                    })
+                    attachments.append({
+                        'type': 'image',
+                        'url': img_src,
+                    })
+                next_page = dom('#content .article>.paginator>.next>a')
+                if next_page:
+                    url = next_page.attr('href')
+                else:
+                    break
+                response = self.fetch_url_content(url)
+                if not response:
+                    break
+                dom = PyQuery(response.text)
+        else:
+            # 未知相册类型
+            return None, None, None
+
+        detail['photos_count'] = len(pictures)
+        album_objects, picture_objects = self.save_photo_album(detail, pictures)
+        attachment_objects = self.save_attachments(attachments)
+        return album_objects, picture_objects, attachment_objects
 
 
 class FollowingFollowerTask(Task):
@@ -455,9 +846,10 @@ class FollowingFollowerTask(Task):
 
     def fetch_block_list(self):
         response = self.fetch_url_content('https://www.douban.com/contacts/blacklist')
+        if not response:
+            return []
         dom = PyQuery(response.text)
-        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', PyQuery(el).attr('href')).pop(0)
-        return [strip_username(item) for item in dom('dl.obu>dd>a')]
+        return [_strip_username(PyQuery(item)) for item in dom('dl.obu>dd>a')]
 
     @dbo.atomic()
     def save_user_extras(self, user_extras):
@@ -477,6 +869,9 @@ class FollowingFollowerTask(Task):
     def save_following(self, account_user, following_users):
         now = datetime.datetime.now()
         for following_username, following_user in following_users:
+            if not following_user.id:
+                continue
+
             real_following_username = following_user.unique_name if following_user else following_username
             try:
                 kwargs = {
@@ -487,16 +882,19 @@ class FollowingFollowerTask(Task):
                 }   
                 db.Following(**kwargs).save()
             except db.IntegrityError:
-                fw = db.Following.get(
-                    db.Following.user == account_user,
-                    db.Following.following_username == real_following_username
-                )
-                if not fw.following_user and following_user is not None :
-                    fw.following_user = following_user
-                if following_user and fw.following_username != following_user.unique_name:
-                    fw.following_username = following_user.unique_name
-                fw.updated_at = now
-                fw.save()
+                try:
+                    fw = db.Following.get(
+                        db.Following.user == account_user,
+                        db.Following.following_username == real_following_username
+                    )
+                    if not fw.following_user and following_user is not None :
+                        fw.following_user = following_user
+                    if following_user and fw.following_username != following_user.unique_name:
+                        fw.following_username = following_user.unique_name
+                    fw.updated_at = now
+                    fw.save()
+                except (db.User.DoesNotExist, db.Following.DoesNotExist, db.IntegrityError):
+                    pass
 
         db.FollowingHistorical.insert_from(
             db.Following.select(
@@ -705,6 +1103,8 @@ class InterestsTask(Task):
 
     def _frodotk_referer_patch(self):
         response = self.fetch_url_content('https://m.douban.com/mine/')
+        if not response:
+            raise Exception('服务器无法访问，请稍后重试') 
         set_cookie = response.headers['Set-Cookie']
         set_cookie = set_cookie.replace(',', ';')
         cookie = cookies.SimpleCookie()
@@ -856,6 +1256,7 @@ class BroadcastTask(Task):
         def parse_status(status_div):
             """
             关于object_kind说明：
+            1000: 成员
             1001: 图书
             1002: 电影
             1003: 音乐
@@ -1008,17 +1409,48 @@ class BroadcastTask(Task):
                 if attachments:
                     self.save_attachments(attachments)
                     detail['attachments'] = attachments
+
+                if object_kind == '1015':
+                    # 发布日记
+                    self.fetch_note(object_id)
+                elif object_kind == '1026':
+                    # 发布相册
+                    pass
+                elif object_kind == '1025':
+                    # 上传照片
+                    pass
             elif target_type == 'movie' and object_kind == '1002':
                 self.fetch_movie(object_id)
             elif target_type == 'book' and object_kind == '1001':
                 self.fetch_book(object_id)
             elif target_type == 'music' and object_kind == '1003':
                 self.fetch_music(object_id)
+            elif target_type == 'rec':
+                if object_kind == '1015':
+                    # 推荐日记
+                    self.fetch_note(object_id)
+                elif object_kind == '1001':
+                    # 推荐书
+                    self.fetch_book(object_id)
+                elif object_kind == '1002':
+                    # 推荐影视
+                    self.fetch_movie(object_id)
+                elif object_kind == '1003':
+                    # 推荐音乐
+                    self.fetch_music(object_id)
+                elif object_kind == '1026':
+                    # 推荐相册
+                    pass
+                elif object_kind == '1025':
+                    # 推荐照片
+                    pass
 
             return detail, reshared_detail
 
         while True:
             response = self.fetch_url_content(url.format(page))
+            if not response:
+                break
             dom = PyQuery(response.text)
             statuses_in_page = dom('.stream-items>.new-status.status-wrapper')
             if len(statuses_in_page) == 0:
@@ -1065,17 +1497,6 @@ class BroadcastTask(Task):
             timeline_objects.append(timeline_item)
         return timeline_objects
 
-    @dbo.atomic()
-    def save_attachments(self, attachments):
-        attachment_objects = []
-        for attachment in attachments:
-            try:
-                attachment_object = db.Attachment.safe_create(**attachment)
-            except db.IntegrityError:
-                attachment_object = db.Attachment.get(db.Attachment.url == attachment['url'])
-            attachment_objects.append(attachment_object)
-        return attachment_objects
-
     def run(self):
         now = datetime.datetime.now()
         timeline = []
@@ -1096,6 +1517,8 @@ class BroadcastCommentTask(Task):
         comments = []
         while True:
             response = self.fetch_url_content(url)
+            if not response:
+                break
             dom = PyQuery(response.text)
             comment_items = dom('#comments>.comment-item')
             for comment_item in comment_items:
@@ -1146,6 +1569,8 @@ class NoteTask(Task):
         notes = []
         while True:
             response = self.fetch_url_content(url)
+            if not response:
+                break
             dom = PyQuery(response.text)
             note_items = dom('#content .article>.note-container')
             for note_item in note_items:
@@ -1157,132 +1582,215 @@ class NoteTask(Task):
                 break
         return notes
 
-    def fetch_note_comments(self, url, dom, douban_id):
-        comments = []
-        strip_username = lambda el: re.findall(r'^http(?:s?)://www\.douban\.com/people/(.+)/$', el.attr('href')).pop(0)
-        while True:
-            comment_items = dom('#comments .comment-item')
-            for comment_item in comment_items:
-                item_div = PyQuery(comment_item)
-                quote_user_link = item_div('.content>.reply-quote>.pubdate>a')
-                if quote_user_link:
-                    quote_user_name = quote_user_link.text()
-                    quote_user_id = strip_username(quote_user_link)
-                    quote_text = item_div('.content>.reply-quote>.all').text()
-                    blockquote = '{0}({1}):{2}'.format(quote_user_name, quote_user_id, quote_text)
-                else:
-                    blockquote = None
-                comments.append({
-                    'douban_id': item_div.attr('data-cid'),
-                    'content': item_div.outer_html(),
-                    'target_type': 'note',
-                    'target_douban_id': douban_id,
-                    'user': self.fetch_user(strip_username(item_div('.pic>a'))),
-                    'text': item_div('.content>p').text(),
-                    'created': item_div('.content>.author>span').text(),
-                    'quote': blockquote,
-                })
-            next_page = dom('#comments>.paginator>.next>a')
-            if next_page:
-                url = next_page.attr('href')
-            else:
-                break
-            response = self.fetch_url_content(url)
-            dom = PyQuery(response.text)
-        return comments
-
-    @dbo.atomic()
-    def save_note(self, detail):
-        douban_id = detail['douban_id']
-        detail['user'] = self.account.user
-        detail['version'] = 1
-        try:
-            note = db.Note.safe_create(**detail)
-            logging.debug('create note: ' + note.title)
-        except db.IntegrityError:
-            note = db.Note.get(db.Note.douban_id == douban_id)            
-            if not note.equals(detail):
-                db.NoteHistorical.clone(note)
-                detail['version'] = db.Note.version + 1
-                db.Note.safe_update(**detail).where(db.Note.id == note.id).execute()
-        return note
-
-    @dbo.atomic()
-    def save_note_comments(self, comments):
-        for detail in comments:
-            try:
-                db.Comment.safe_create(**detail)
-            except db.IntegrityError:
-                pass
-
-    def fetch_note(self, url):
-        response = self.fetch_url_content(url)
-        dom = PyQuery(response.text)
-        note_container = dom('#content .article>.note-container')
-        attachments = []
-        for img in note_container('.image-wrapper>img'):
-            attachments.append({
-                'type': 'image',
-                'url': PyQuery(img).attr('src'),
-            })
-        subjects = []
-        for subject_link in note_container('.subject-wrapper>a'):
-            subject_url = PyQuery(subject_link).attr('href')
-            subject_type, subject_id = re.findall(r'^https://([a-z]+)\.douban\.com/subject/([0-9]+)/$', subject_url).pop(0)
-            subjects.append({
-                'type': subject_type,
-                'douban_id': subject_id,
-            })
-            if subject_type == 'music':
-                self.fetch_music(subject_id)
-            elif subject_type == 'movie':
-                self.fetch_movie(subject_id)
-            elif subject_type == 'book':
-                self.fetch_book(subject_id)
-
-        note_douban_id = note_container.attr('id')[5:]
-        comments = self.fetch_note_comments(url, dom, note_douban_id)
-
-        views_count = note_container('.note-footer-stat-pv').text()[0:-3]
-        like_count = note_container('.sns-bar-fav .fav-num').text()
-        rec_count = note_container('.sns-bar-fav .rec-num').text()
-        detail = {
-            'url': url,
-            'is_original': note_container.attr('data-is-original') == '1',
-            'douban_id': note_douban_id,
-            'title': note_container('.note-header.note-header-container>h1').text(),
-            'created': note_container('.note-header.note-header-container .pub-date').text(),
-            'introduction': note_container('.introduction').text(),
-            'content': note_container('#link-report').html(),
-            'attachments': attachments,
-            'subjects': subjects,
-            'views_count': views_count if views_count else None,
-            'like_count': like_count if like_count else None,
-            'rec_count': rec_count if rec_count else None,
-            'comments_count': len(comments),
-        }
-        return self.save_note(detail), self.save_note_comments(comments)
-
     def run(self):
         notes = self.fetch_note_list()
         notes.reverse()
         for url in notes:
-            self.fetch_note(url)
+            self.fetch_note_by_url(url)
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
         logging.info('备份我的日记全部完成')
 
 
 class PhotoAlbumTask(Task):
     _name = '备份我的相册'
 
+    def fetch_photo_album_list(self):
+        url = self.account.user.alt + 'photos'
+        albums = []
+        while True:
+            response = self.fetch_url_content(url)
+            if not response:
+                break
+            dom = PyQuery(response.text)
+            album_items = dom('#content .article>.wr>.albumlst')
+            for album_item in album_items:
+                album_div = PyQuery(album_item)
+                misc_text = album_div('.albumlst_r>.pl').text()
+                try:
+                    last_updated = re.search(r'(\d+\-\d+\-\d+)(?:创建|更新)', misc_text)[1]
+                except (IndexError, TypeError):
+                    last_updated = None
+
+                albums.append((
+                    album_div('.album_photo').attr('href'),
+                    album_div('.album').attr('src'),
+                    last_updated,
+                ))
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return albums
+
     def run(self):
-        pass
+        user = self.account.user
+        albums = self.fetch_photo_album_list()
+        for url, cover, last_updated in albums:
+            photo_album_douban_id = re.match(r'https://www\.douban\.com/photos/album/(\d+)/', url)[1]
+            self.fetch_photo_album(photo_album_douban_id, url=url, user=user, cover=cover, last_updated=last_updated)
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
+
+
+class LikeTask(Task):
+    _name = '备份我的喜欢'
+
+    def fetch_like_list(self, url):
+        item_list = []
+        while True:
+            response = self.fetch_url_content(url)
+            if not response:
+                break
+            dom = PyQuery(response.text)
+            items = dom('#content .article>.fav-list>li')
+            for item in items:
+                div = PyQuery(item)
+                author_tags = div('.author-tags>.tag-add')
+                douban_id = author_tags.attr('data-id')
+
+                if not douban_id:
+                    # 喜欢的对象不存在了
+                    continue
+
+                tags = author_tags.attr('data-tags')
+
+                lnk_delete = div('.gact.lnk-delete')
+                target_type = lnk_delete.attr('data-tkind')
+                target_douban_id = lnk_delete.attr('data-tid')
+                target_url = lnk_delete.attr('href')
+                
+                created = div('.status-item .time').text()
+
+                item_list.append({
+                    'douban_id': douban_id,
+                    'target_type': target_type,
+                    'target_douban_id': target_douban_id,
+                    'created': created,
+                    'tags': tags,
+                    'url': target_url,
+                    '_extra': div('.status-item .block .content'),
+                })
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return item_list
+
+    @dbo.atomic()
+    def save_like_list(self, item_list):
+        user = self.account.user
+        now = datetime.datetime.now()
+        like_list = []
+        try:
+            target_type = item_list[0]['target_type']
+        except IndexError:
+            return like_list
+
+        for detail in item_list:
+            detail['user'] = user
+            detail['updated_at'] = now
+            try:
+                like = db.Favorite.safe_create(**detail)
+            except db.IntegrityError:
+                like = db.Favorite.get(db.Favorite.douban_id == detail['douban_id'])
+                like.updated_at = now
+                like.save()
+            like_list.append(like)
+
+        db.FavoriteHistorical.insert_from(
+            db.Favorite.select(
+                db.Favorite.user,
+                db.Favorite.douban_id,
+                db.Favorite.target_type,
+                db.Favorite.target_douban_id,
+                db.Favorite.created,
+                db.Favorite.tags,
+                db.Favorite.updated_at,
+                db.fn.DATETIME('now')
+            ).where(
+                db.Favorite.user == user,
+                db.Favorite.target_type == target_type,
+                db.Favorite.updated_at < now
+            ),
+            [
+                db.FavoriteHistorical.user,
+                db.FavoriteHistorical.douban_id,
+                db.FavoriteHistorical.target_type,
+                db.FavoriteHistorical.target_douban_id,
+                db.FavoriteHistorical.created,
+                db.FavoriteHistorical.tags,
+                db.FavoriteHistorical.updated_at,
+                db.FavoriteHistorical.deleted_at,
+            ]
+        ).execute()
+
+        db.Favorite.delete().where(
+            db.Favorite.user == user,
+            db.Favorite.target_type == target_type,
+            db.Favorite.updated_at < now
+        ).execute()
+
+        return like_list
+
+    def run(self):
+        item_list = self.fetch_like_list(self.account.user.alt + 'likes/note/')
+        notes = [self.fetch_note(detail['target_douban_id']) for detail in item_list]
+        self.save_like_list(item_list)
+
+        item_list = self.fetch_like_list(self.account.user.alt + 'likes/photo_album/')
+        photo_albums = [
+            self.fetch_photo_album(
+                detail['target_douban_id'], 
+                url=detail['url'], 
+                cover=detail['_extra']('.album-photos img').eq(0).attr('src')
+            ) for detail in item_list
+        ]
+        self.save_like_list(item_list)
+
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
 
 
 class ReviewTask(Task):
     _name = '备份我的评论'
 
+    def fetch_review_list(self, url):
+        item_list = []
+        while True:
+            response = self.fetch_url_content(url)
+            if not response:
+                break
+            dom = PyQuery(response.text)
+            items = dom('#content .article>.review-list .review-item')
+            for item in items:
+                item_div = PyQuery(item)
+                douban_id = item_div.attr('id')
+                title_link = item_div('.main-bd>h2>a')
+                subject_url = item_div('.subject-img').attr('href')
+
+                detail = {
+                    'douban_id': douban_id,
+                    'title': title_link.text(),
+                    'url': title_link.attr('href'),
+                    'subject': subject_url,
+                }
+                item_list.append(detail)
+            next_page = dom('#content .article>.paginator>.next>a')
+            if next_page:
+                url = next_page.attr('href')
+            else:
+                break
+        return item_list
+
     def run(self):
-        pass
+        item_list = self.fetch_review_list(self.account.user.alt + 'reviews')
+        print(item_list)
 
 
 class DoulistTask(Task):
@@ -1290,6 +1798,13 @@ class DoulistTask(Task):
 
     def run(self):
         pass
+
+
+class SyncAccountTask(Task):
+    _name = '同步我的帐号'
+
+    def run(self):
+        self.sync_account()
 
 
 ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
@@ -1300,7 +1815,8 @@ ALL_TASKS = OrderedDict([(cls._name, cls) for cls in [
     MusicTask,
     BroadcastCommentTask,
     NoteTask,
-    #PhotoAlbumTask,
+    PhotoAlbumTask,
+    LikeTask,
     #ReviewTask,
     #DoulistTask,
 ]])

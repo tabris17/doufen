@@ -1,0 +1,35 @@
+
+{% from pyquery import PyQuery %}
+
+{% if note %}
+<article class="content box">
+    <p class="is-size-5">
+        <a href="{{ reverse_url('note', note.douban_id) }}">{{ note.title }}</a>
+        <small class="is-size-6">
+            <a href="{{ note.url }}" title="访问日记的豆瓣网页" class="external-link">
+                <span class="icon">
+                    <i class="fas fa-external-link-alt"></i>
+                </span>
+            </a>
+        </small>
+    </p>
+    <p class="text-break">{{ PyQuery(note.content).text()[:200] }}...</p>
+    <p>
+        {% if note.views_count %}
+        <span style="margin-right: 10px;">{{ note.views_count }}人浏览</span>
+        {% end %}
+
+        {% if note.comments_count %}
+        <span style="margin-right: 10px;">{{ note.comments_count }}回应</span>
+        {% end %}
+        {% if note.like_count %}
+        <span style="margin-right: 10px;">喜欢({{ note.like_count }})</span>
+        {% end %}
+        {% if note.rec_count %}
+        <span style="margin-right: 10px;">推荐({{ note.rec_count }})</span>
+        {% end %}
+    </p>
+</article>
+{% else %}
+<p class="box">日记可能已被删除</p>
+{% end %}

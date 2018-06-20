@@ -1,0 +1,36 @@
+{% from pyquery import PyQuery %}
+
+{% if recommend %}
+<article class="box media">
+    {% set rec_img = recommend('.pic img').eq(0) %}
+    {% if rec_img %}
+    <figure class="media-left is-marginless">
+        <p class="image is-64x64" style="overflow: hidden;">
+            <img src="{{ rec_img.attr('src') }}">
+        </p>
+    </figure>
+    {% end %}
+    <div class="media-content" style="margin-left: 0.75rem;">
+        <div class="content">
+            {% set rec_title = recommend('.content>.title>a') %}
+            <p class="is-size-5"><a href="{{ rec_title.attr('href') }}" class="external-link">{{ rec_title.text() }}</a></p>
+            
+            {% set rec_abstract = recommend('.content>p').eq(0) %}
+            <p class="text-break">{{ rec_abstract.text() }}</p>
+        </div>
+    </div>
+    <div class="media-right">
+        {% if broadcast.object_kind == '1015' %}
+        <a href="{{ reverse_url('note', broadcast.object_id) }}" class="button">查看日记</a>
+        {% elif broadcast.object_kind == '1001' %}
+        <a href="{{ reverse_url('book', broadcast.object_id) }}" class="button">查看条目</a>
+        {% elif broadcast.object_kind == '1002' %}
+        <a href="{{ reverse_url('movie', broadcast.object_id) }}" class="button">查看条目</a>
+        {% elif broadcast.object_kind == '1003' %}
+        <a href="{{ reverse_url('music', broadcast.object_id) }}" class="button">查看条目</a>
+        {% end %}
+    </div>
+</article>
+{% else %}
+<blockquote class="text-break">{{ PyQuery(broadcast.content).text() }}</blockquote>
+{% end %}

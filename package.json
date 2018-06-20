@@ -1,9 +1,9 @@
 {
     "name": "doufen-platform",
-    "version": "0.1.0",
+    "version": "0.3.0",
     "description": "",
     "scripts": {
-        "start": "echo please use \"npm run app\" and \"npm run service\"",
+        "start": "echo please use '\"'npm run app'\"' and '\"'npm run service'\"'",
         "postinstall": "virtualenv .venv && source ./.venv/Scripts/activate && pip install -r ./requirements.txt && mkdir var && mkdir var/data && mkdir var/log",
         "app": "electron ./src/app --debug",
         "service": "source ./.venv/Scripts/activate && python ./src/service/main.py --debug",

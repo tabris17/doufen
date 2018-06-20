@@ -29,7 +29,7 @@
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
-                {% module Template('my/_broadcast.html', fully=True, broadcast=row.broadcast) %}
+                {% module Template('my/_broadcast.html', boxed=True, wrapped=False, broadcast=row.broadcast) %}
             {% end %}
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
         </div>

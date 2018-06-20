@@ -4,6 +4,8 @@ import math
 import handlers
 import db
 
+import tornado
+
 
 _PAGE_SIZE_ = 50
 
@@ -14,9 +16,14 @@ def require_login(func):
     """
     def wrapper(self, *args, **kwargs):
         try:
-            db.Account.getDefault()
+            db.Account.get_default()
         except db.Account.DoesNotExist:
+            # 未登录
             self.redirect(self.reverse_url('settings.accounts.login'))
+            return
+        except db.User.DoesNotExist:
+            # 已登录，未抓取
+            self.redirect(self.reverse_url('dashboard'))
             return
         return func(self, *args, **kwargs)
 
@@ -28,9 +35,14 @@ class BaseRequestHandler(handlers.BaseRequestHandler):
     基础类
     """
     def prepare(self):
-        user = self.get_current_user()
-        if not user:
+        try:
+            db.Account.get_default()
+        except db.Account.DoesNotExist:
+            # 未登录
             self.redirect(self.reverse_url('settings.accounts.login'))
+        except db.User.DoesNotExist:
+            # 已登录，未抓取
+            self.redirect(self.reverse_url('dashboard'))
 
     def list(self, query, template, **kwargs):
         try:
@@ -157,5 +169,64 @@ class Broadcast(BaseRequestHandler):
 
 class Note(BaseRequestHandler):
     def get(self):
-        query = db.Note.select().where(db.Note.user == self.get_current_user()).order_by(db.Note.id.desc())
+        query = db.Note.select().where(db.Note.user == self.get_current_user()).order_by(db.Note.created.desc())
         self.list(query, 'my/note.html')
+
+
+class Photo(BaseRequestHandler):
+    def get(self):
+        query = db.PhotoAlbum.select().where(db.PhotoAlbum.user == self.get_current_user())
+        self.list(query, 'my/photo.html')
+
+
+class Favorite(BaseRequestHandler):
+    def get(self, category):
+        if not category:
+            category = 'note'
+
+        categories = {
+            'note': '1015',
+            #'picture': '1025',
+            'photo': '1026',
+        }
+
+        if category not in categories:
+            raise tornado.web.HTTPError(404)
+        target_type = categories[category]
+
+        def get_user(subject):
+            if subject.user_id == 0:
+                return
+            try:
+                return subject.user
+            except db.User.DoesNotExist:
+                pass
+
+        if category == 'note':
+            query = db.Favorite.select(
+                db.Favorite,
+                db.Note,
+                db.User
+            ).where(
+                (db.Favorite.user == self.get_current_user()) & (db.Favorite.target_type == target_type)
+            ).join(
+                db.Note,
+                db.JOIN.INNER,
+                on=(db.Favorite.target_douban_id == db.Note.douban_id).alias('note')
+            ).join(db.User, db.JOIN.LEFT_OUTER, on=db.Note.user)
+        elif category == 'photo':
+            query = db.Favorite.select(
+                db.Favorite,
+                db.PhotoAlbum
+            ).where(
+                (db.Favorite.user == self.get_current_user()) & (db.Favorite.target_type == target_type)
+            ).join(
+                db.PhotoAlbum, 
+                db.JOIN.INNER, 
+                on=(db.Favorite.target_douban_id == db.PhotoAlbum.douban_id).alias('photo_album')
+            ).join(db.User, db.JOIN.LEFT_OUTER, on=db.PhotoAlbum.user)
+        elif category == 'picture':
+            query.join(db.PhotoAlbum, db.JOIN.INNER)
+
+        self.list(query, 'my/favorite/{0}.html'.format(category), get_user=get_user)
+

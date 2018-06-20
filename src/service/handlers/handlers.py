@@ -10,6 +10,14 @@ from pyquery import PyQuery
 import db
 
 
+class NotFound(RequestHandler):
+    """
+    默认404页
+    """
+    def get(self):
+        self.render('errors/404.html')
+
+
 class BaseRequestHandler(RequestHandler):
     """
     默认继承
@@ -25,9 +33,15 @@ class BaseRequestHandler(RequestHandler):
         获取当前用户，没有则返回None
         """
         try:
-            return db.Account.getDefault().user
-        except db.Account.DoesNotExist:
+            return db.Account.get_default().user
+        except (db.Account.DoesNotExist, db.User.DoesNotExist):
             pass
+
+    def write_error(self, status_code, **kwargs):
+        if status_code == 404:
+            self.render('errors/404.html')
+        else:
+            self.write('Error')
 
 
 class Notifier(WebSocketHandler):
@@ -201,7 +215,7 @@ class Note(BaseRequestHandler):
         try:
             subject = db.Note.get(db.Note.douban_id == douban_id)
             history = db.NoteHistorical.select().where(db.NoteHistorical.id == subject.id)
-        except db.User.DoesNotExist:
+        except db.Note.DoesNotExist:
             raise tornado.web.HTTPError(404)
 
         comments = db.Comment.select().join(db.User).where(
@@ -216,4 +230,39 @@ class Note(BaseRequestHandler):
         dom('a').add_class('external-link')
 
         self.render('note.html', note=subject, comments=comments, content=dom)
+
+
+class PhotoPicture(BaseRequestHandler):
+    """
+    照片
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.PhotoPicture.get(db.PhotoPicture.douban_id == douban_id)
+            history = db.PhotoPictureHistorical.select().where(db.PhotoPictureHistorical.id == subject.id)
+        except db.PhotoPicture.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        comments = db.Comment.select().join(db.User).where(
+            db.Comment.target_type == 'photo',
+            db.Comment.target_douban_id == subject.douban_id
+        )
+
+        self.render('photo.html', photo=subject, comments=comments)
+
+
+class PhotoAlbum(BaseRequestHandler):
+    """
+    相册
+    """
+    def get(self, douban_id):
+        try:
+            subject = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == douban_id)
+            history = db.PhotoAlbumHistorical.select().where(db.PhotoAlbumHistorical.id == subject.id)
+        except db.PhotoAlbum.DoesNotExist:
+            raise tornado.web.HTTPError(404)
+
+        photos = db.PhotoPicture.select().where(db.PhotoPicture.photo_album == subject)
+
+        self.render('album.html', album=subject, photos=photos)
 

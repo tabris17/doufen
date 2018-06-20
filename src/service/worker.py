@@ -13,6 +13,7 @@ LOCAL_OBJECT_DURATION = 60 * 60 * 24 * 30
 BROADCAST_ACTIVE_DURATION = 60 * 60 * 24 * 30
 BROADCAST_INCREMENTAL_BACKUP = False
 IMAGE_LOCAL_CACHE = True
+HEARTBEAT_INTERVAL = 10
 
 
 class Worker:
@@ -123,7 +124,10 @@ class Worker:
         self.queue_out.put(Worker.ReturnDone(self._name, result))
         
     def _error(self, exception):
-        self.queue_out.put(Worker.ReturnError(self._name, exception))
+        #import traceback
+        #exception_text = traceback.format_exc()
+        exception_text = str(exception)
+        self.queue_out.put(Worker.ReturnError(self._name, exception_text))
 
     def _heartbeat(self, sequence):
         self.queue_out.put(Worker.ReturnHeartbeat(self._name, sequence))
@@ -141,7 +145,7 @@ class Worker:
         heartbeat_sequence = 1
         while True:
             try:
-                task = queue_in.get(timeout=1)
+                task = queue_in.get(timeout=HEARTBEAT_INTERVAL)
                 if isinstance(task, tasks.Task):
                     self._work(str(task))
                     self._done(task(**self._settings))

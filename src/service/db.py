@@ -13,7 +13,7 @@ def init(db_path, create_tables=True):
     """
     global DATEBASE_PATH
     DATEBASE_PATH = db_path
-    dbo.init(db_path)
+    dbo.init(db_path, timeout=60)
 
     if create_tables:
         with dbo:
@@ -47,6 +47,12 @@ def init(db_path, create_tables=True):
                 Comment,
                 Note,
                 NoteHistorical,
+                PhotoAlbum,
+                PhotoAlbumHistorical,
+                PhotoPicture,
+                PhotoPictureHistorical,
+                Favorite,
+                FavoriteHistorical,
             ])
 
 
@@ -134,6 +140,26 @@ class User(BaseModel):
     version = IntegerField(help_text='当前版本')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
 
+    @classmethod
+    def get(cls, *args, **kwargs):
+        try:
+            return super().get(*args, **kwargs)
+        except User.DoesNotExist:
+            if 'allow_anonymous' in kwargs and kwargs['allow_anonymous']:
+                return cls.get_anonymous()
+            else:
+                raise
+
+    @classmethod
+    def get_anonymous(cls):
+        anonymous = cls()
+        anonymous.id = 0
+        anonymous.name = '[佚名]'
+        return anonymous
+
+    def is_anonymous(self):
+        return self.id == 0
+
 
 class UserHistorical(User):
     """
@@ -176,13 +202,17 @@ class Account(BaseModel):
     is_invalid = BooleanField(default=False, help_text='是否失效')
 
     @classmethod
-    def getDefault(cls):
-        return cls.select().where(
-            cls.is_invalid == False,
-            cls.user is not None
-        ).order_by(
-            cls.is_activated.desc()
-        ).get()
+    def get_default(cls):
+        try:
+            return cls.select().where(
+                cls.user != None
+            ).order_by(
+                cls.is_activated.desc()
+            ).get()
+        except cls.DoesNotExist:
+            if cls.select().exists():
+                raise User.DoesNotExist
+            raise
 
 
 class BlockUser(BaseModel):
@@ -625,7 +655,7 @@ class Comment(BaseModel):
             (('target_type', 'target_douban_id', 'douban_id'), True),
         )
     target_type = CharField(help_text='类型')
-    target_douban_id = IntegerField(help_text='评论对象的豆瓣ID')
+    target_douban_id = CharField(help_text='评论对象的豆瓣ID')
     douban_id = CharField(help_text='豆瓣ID')
     user = ForeignKeyField(User, help_text='用户')
     text = TextField(null=True, help_text='评论文本')
@@ -633,3 +663,117 @@ class Comment(BaseModel):
     content = TextField(null=True, help_text='原始HTML')
     created = CharField(null=True, help_text='创建时间')
     updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoAlbum(BaseModel):
+    """
+    相册
+    """
+    class Meta:
+        table_name = 'photo_album'
+
+    _attrs_to_compare_ = [
+        'title',
+        'desc',
+        'cover',
+        'photos_count',
+        'last_updated',
+        'views_count',
+        'like_count',
+        'rec_count',
+    ]
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    user = ForeignKeyField(User, help_text='用户')
+    title = CharField(null=True, help_text='豆瓣ID')
+    desc = TextField(help_text='描述', null=True)
+    cover = CharField(null=True, help_text='封面图片')
+    photos_count = IntegerField(null=True, help_text='照片数')
+    last_updated = CharField(null=True, help_text='更新时间')
+    url = CharField(null=True, help_text='URL')
+    views_count = IntegerField(null=True, help_text='浏览人数')
+    like_count = IntegerField(null=True, help_text='喜欢人数')
+    rec_count = IntegerField(null=True, help_text='推荐人数')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoAlbumHistorical(Note):
+    """
+    相册历史数据
+    """
+    class Meta:
+        table_name = 'photo_album_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    photo_album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
+
+
+class PhotoPicture(BaseModel):
+    """
+    照片
+    """
+    class Meta:
+        table_name = 'photo_picture'
+
+    _attrs_to_compare_ = [
+        'desc',
+        'picture',
+        'views_count',
+        'like_count',
+        'rec_count',
+        'comments_count',
+    ]
+
+    photo_album = ForeignKeyField(PhotoAlbum, field=PhotoAlbum.id)
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    desc = TextField(help_text='描述', null=True)
+    url = CharField(null=True, help_text='URL')
+    picture = CharField(null=True, help_text='照片')
+    views_count = IntegerField(null=True, help_text='浏览人数')
+    like_count = IntegerField(null=True, help_text='喜欢人数')
+    rec_count = IntegerField(null=True, help_text='推荐人数')
+    comments_count = IntegerField(null=True, help_text='评论人数')
+    version = IntegerField(help_text='当前版本')
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class PhotoPictureHistorical(Note):
+    """
+    照片历史数据
+    """
+    class Meta:
+        table_name = 'photo_picture_historical'
+    
+    douban_id = CharField(help_text='豆瓣ID')
+    photo_picture = ForeignKeyField(PhotoPicture, field=PhotoPicture.id)
+
+
+class Favorite(BaseModel):
+    """
+    我的喜欢
+    """
+    class Meta:
+        indexes = (
+            (('user', 'target_type'), False),
+        )
+
+    douban_id = CharField(unique=True, help_text='豆瓣ID')
+    user = ForeignKeyField(User, help_text='用户')
+    target_type = CharField(help_text='类型')
+    target_douban_id = CharField(help_text='喜欢对象的豆瓣ID')
+    created = CharField(help_text='添加时间的文字描述')
+    tags = TextField(help_text='标签', null=True)
+    url = CharField(help_text='对象URL', null=True)
+    updated_at = DateTimeField(help_text='抓取时间', default=datetime.datetime.now())
+
+
+class FavoriteHistorical(Favorite):
+    """
+    我的喜欢历史记录
+    """
+    class Meta:
+        table_name = 'favorite_historical'
+
+    douban_id = CharField(help_text='豆瓣ID')
+    deleted_at = DateTimeField(help_text='删除时间', default=datetime.datetime.now())
