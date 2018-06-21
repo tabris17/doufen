@@ -1,4 +1,4 @@
-{% extends "../../themes/main.html" %} 
+{% extends "../my.html" %} 
 
 {% block title %}我喜欢的日记{% end %}
 
@@ -48,9 +48,11 @@
                 </p>
                 <p>
                     <small>{{ row.created }}</small>
-                    {% set author = get_user(row) %}
-                    {% if author %}
-                    <small>作者：<a href="https://www.douban.com/people/{{ author.unique_name }}/" class="external-link">{{ author.name }}</a></small>
+                    {% try %}
+                    {% if row.user_id > 0 and row.user %}
+                    <small>作者：<a href="https://www.douban.com/people/{{ row.user.unique_name }}/" class="external-link">{{ row.user.name }}</a></small>
+                    {% end %}
+                    {% except %}
                     {% end %}
                 </p>
                 <p class="text-break">

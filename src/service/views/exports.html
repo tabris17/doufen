@@ -1,0 +1,83 @@
+{% extends "themes/main.html" %} 
+
+{% block title %}导出 Excel{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        let $exportButton = $('#btn-export')
+        $exportButton.click(() => {
+            const { dialog, BrowserWindow } = system.require('electron').remote
+            let savedFilename = dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+                title: '导出',
+                filters: [ { name:'Excel 文件', extensions: ['xlsx'] } ],
+                buttonLabel: '保存'
+            })
+            if (!savedFilename) {
+                return
+            }
+
+            let exportItems = []
+            $('#export-items input[name="item"]:checked').each((_, checkbox)=>{
+                exportItems.push(checkbox.value)
+            })
+            $exportButton.attr('disabled', 'disabled')
+            $.ajax({
+                url: '{{ reverse_url("exports") }}',
+                method: 'POST',
+                data: {
+                    filename: savedFilename,
+                    items: exportItems.join(',')
+                }
+            }).then((data, status, $xhr) => {
+                $exportButton.removeAttr('disabled')
+                window.alert('导出成功')
+            }, ($xhr, status, error) => {
+                window.alert('导出失败：' + error, '错误')
+                location.reload()
+            })
+        })
+    })
+</script>
+{% end %}
+
+{% block main %}
+<div class="container">
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <a class="button" onclick="history.back()">
+                    <span class="icon">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    <span>返回</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+
+    <nav class="panel" id="export-items">
+        <p class="panel-heading">选择导出项目</p>
+        <label class="panel-block">
+            <input type="checkbox" name="item" value="friend" checked> 友邻
+        </label>
+        <label class="panel-block">
+            <input type="checkbox" name="item" value="movie" checked> 电影
+        </label>
+        <label class="panel-block">
+            <input type="checkbox" name="item" value="book" checked> 图书
+        </label>
+        <label class="panel-block">
+            <input type="checkbox" name="item" value="music" checked> 音乐
+        </label>
+        <label class="panel-block">
+            <input type="checkbox" name="item" value="broadcast" checked> 广播
+        </label>
+        <div class="panel-block">
+            <button class="button is-link is-outlined is-fullwidth" id="btn-export">导出</button>
+        </div>
+    </nav>
+
+</div>
+{% end %}

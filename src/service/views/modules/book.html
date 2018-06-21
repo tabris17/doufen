@@ -18,7 +18,7 @@
             <dl class="is-horizontal is-label-size-4">
                 {% if book.author %}
                 {% set author = ast.literal_eval(book.author) %}
-                {% if len(book.author) %}
+                {% if len(author) %}
                 <dt class="has-text-left">作者</dt>
                 <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
                 {% end %}

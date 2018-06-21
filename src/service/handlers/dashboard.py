@@ -1,8 +1,10 @@
 # encoding: utf-8
 import json
-from .handlers import BaseRequestHandler
+
 from db import Account
 from tasks import ALL_TASKS
+
+from .handlers import BaseRequestHandler
 
 
 class Index(BaseRequestHandler):

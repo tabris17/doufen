@@ -32,4 +32,9 @@
         <li><a {% if active_page == 'doulist' %}class="is-active"{% else %} href=""{% end %}>豆列</a></li>
         -->
     </ul>
+    <p class="menu-label is-size-5">工具</p>
+    <ul class="menu-list">
+        <li><a href="{{ reverse_url('exports') }}">导出 Excel</a></li>
+        <li><a href="{{ reverse_url('search') }}">搜索</a></li>
+    </ul>
 </aside>

@@ -194,14 +194,6 @@ class Favorite(BaseRequestHandler):
             raise tornado.web.HTTPError(404)
         target_type = categories[category]
 
-        def get_user(subject):
-            if subject.user_id == 0:
-                return
-            try:
-                return subject.user
-            except db.User.DoesNotExist:
-                pass
-
         if category == 'note':
             query = db.Favorite.select(
                 db.Favorite,
@@ -228,5 +220,5 @@ class Favorite(BaseRequestHandler):
         elif category == 'picture':
             query.join(db.PhotoAlbum, db.JOIN.INNER)
 
-        self.list(query, 'my/favorite/{0}.html'.format(category), get_user=get_user)
+        self.list(query, 'my/favorite/{0}.html'.format(category))
 
