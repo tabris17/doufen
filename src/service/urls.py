@@ -4,6 +4,8 @@ import handlers.settings
 import handlers.settings.accounts
 import handlers.dashboard
 import handlers.my
+import handlers.exports
+import handlers.search
 
 
 patterns = [
@@ -48,4 +50,6 @@ patterns = [
     (r'/user/([^/]+)', handlers.User, None, 'user'),
     (r'/photo/([^/]+)', handlers.PhotoPicture, None, 'photo'),
     (r'/photo/album/([^/]+)', handlers.PhotoAlbum, None, 'photo.album'),
+    (r'/exports/', handlers.exports.Index, None, 'exports'),
+    (r'/search', handlers.search.Index, None, 'search'),
 ]

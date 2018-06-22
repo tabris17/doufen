@@ -19,10 +19,9 @@ class TestTask(tasks.LikeTask):
     """
 
     def run(self):
-        item_list = self.fetch_like_list(self.account.user.alt + 'likes/note/')
-        notes = [self.fetch_note(detail['target_douban_id'])
-                 for detail in item_list]
-        self.save_like_list(item_list)
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
 
 
 #task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))

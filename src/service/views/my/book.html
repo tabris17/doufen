@@ -1,6 +1,8 @@
-{% extends "../themes/main.html" %} 
+{% extends "my.html" %} 
 
 {% block title %}{{ '我读过的书' if status == 'done' else '我想读的书' if status == 'wish' else '我在读的书' }}{% end %}
+
+{% block search_key %}{% try %}{{ search if search else '' }}{% except NameError %}{% end %}{% end %}
 
 {% block main %}
 {% import ast %}
@@ -24,6 +26,20 @@
                 </div>
             </nav>
             {% end %}
+
+            {% try %}{% if search %}
+            <nav class="level">
+                <div class="level-left">
+                    <p class="level-item title">搜索“{{ search }}”的结果</p>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <a href="?s=">返回全部结果</a>
+                    </p>
+                </div>
+            </nav>
+            {% end %}{% except NameError %}{% end %}
+
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
             <article class="media box" style="min-height: 220px;">
@@ -44,7 +60,7 @@
                         <dl class="is-horizontal is-label-size-4">
                             {% if row.book.author %}
                             {% set author = ast.literal_eval(row.book.author) %}
-                            {% if len(row.book.author) %}
+                            {% if len(author) %}
                             <dt class="has-text-left">作者</dt>
                             <dd class="has-text-grey-light">{{ ' / '.join(author) }}</dd>
                             {% end %}

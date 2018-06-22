@@ -76,7 +76,10 @@ class Application(tornado.web.Application):
         向所有在线客户端发送广播
         """
         for client in self._clients:
-            client.write_message(message)
+            try:
+                client.write_message(message)
+            except:
+                pass
 
 
 class Server:

@@ -33,6 +33,9 @@
                 <div class="navbar-item has-dropdown is-hoverable">
                     <a class="navbar-link">工具</a>
                     <div class="navbar-dropdown">
+                        <a class="navbar-item" href="{{ reverse_url('exports') }}">导出 Excel</a>
+                        <!--<a class="navbar-item" href="{{ reverse_url('search') }}">搜索</a>-->
+                        <hr class="navbar-divider is-hidden-tablet-only is-hidden-mobile">
                         <a class="navbar-item" href="{{ reverse_url('dashboard') }}">控制台</a>
                         <a class="navbar-item" href="{{ reverse_url('settings') }}">设置</a>
                     </div>
@@ -52,18 +55,7 @@
             </div>
 
             <div class="navbar-end">
-                {% block search %}
-                <div class="navbar-item">
-                    <div class="field">
-                        <p class="control has-icons-left">
-                            <input class="input" type="search" placeholder="搜索">
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-search"></i>
-                            </span>
-                        </p>
-                    </div>
-                </div>
-                {% end %}
+                {% block search %}{% end %}
                 {% block login %}
                 <div class="navbar-item">
                     <a class="button is-info" href="{{ reverse_url('settings.accounts.login') }}">登录</a>

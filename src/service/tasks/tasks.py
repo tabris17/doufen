@@ -1679,6 +1679,7 @@ class LikeTask(Task):
                 url = next_page.attr('href')
             else:
                 break
+        item_list.reverse()
         return item_list
 
     @dbo.atomic()

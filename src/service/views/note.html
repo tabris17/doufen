@@ -33,6 +33,12 @@
         </h1>
         <p>
             <small>{{ note.created }}</small>
+            {% try %}
+            {% if note.user_id > 0 and note.user %}
+            <small>作者：<a href="https://www.douban.com/people/{{ note.user.unique_name }}/" class="external-link">{{ note.user.name }}</a></small>
+            {% end %}
+            {% except %}
+            {% end %}
         </p>
         <div class="container note">
             {%raw content %}

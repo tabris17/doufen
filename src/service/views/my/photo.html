@@ -1,6 +1,8 @@
-{% extends "../themes/main.html" %} 
+{% extends "my.html" %} 
 
 {% block title %}我的相册{% end %}
+
+{% block search_key %}{% try %}{{ search if search else '' }}{% except NameError %}{% end %}{% end %}
 
 {% block main %}
 <div class="container">
@@ -23,6 +25,20 @@
                 </div>
             </nav>
             {% end %}
+
+            {% try %}{% if search %}
+            <nav class="level">
+                <div class="level-left">
+                    <p class="level-item title">搜索“{{ search }}”的结果</p>
+                </div>
+                <div class="level-right">
+                    <p class="level-item">
+                        <a href="?s=">返回全部结果</a>
+                    </p>
+                </div>
+            </nav>
+            {% end %}{% except NameError %}{% end %}
+
             {% module Template('themes/paginator.html', page=page, total_pages=total_pages, page_capacity=10) %}
             {% for row in rows %}
             <article class="media box">

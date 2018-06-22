@@ -32,10 +32,13 @@ class BaseRequestHandler(RequestHandler):
         """
         获取当前用户，没有则返回None
         """
-        try:
-            return db.Account.get_default().user
-        except (db.Account.DoesNotExist, db.User.DoesNotExist):
-            pass
+        if not hasattr(self, '_current_user'):
+            try:
+                self._current_user = db.Account.get_default().user
+            except (db.Account.DoesNotExist, db.User.DoesNotExist):
+                self._current_user = None
+
+        return self._current_user
 
     def write_error(self, status_code, **kwargs):
         if status_code == 404:
