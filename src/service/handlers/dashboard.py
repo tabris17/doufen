@@ -18,6 +18,7 @@ class Index(BaseRequestHandler):
 
         if not accounts.count():
             self.redirect(self.reverse_url('settings.accounts.login'))
+            return
         
         self.render('dashboard.html', workers=workers,
                     pedding_tasks=pedding_tasks, accounts=accounts, all_tasks=ALL_TASKS.keys())

@@ -1,10 +1,12 @@
 {% if total_pages > 1 %}
+{% import re %}
+{% set paging_uri = lambda page, query: re.sub(r'(^page|(?<=&)page)=(\d+$|\d+(?=&))', 'page={0}'.format(page), query) if re.search(r'(^page|(?<=&)page)=(\d+$|\d+(?=&))', query) else query + '&page={0}'.format(page) %}
 <nav class="pagination is-centered" role="navigation" aria-label="pagination" style="margin-bottom: 1rem;">
     {% if page > 1 %}
-    <a class="pagination-previous" href="?page={{ page - 1 }}">上一页</a>
+    <a class="pagination-previous" href="?{{ paging_uri(page - 1, request.query) }}">上一页</a>
     {% end %}
     {% if page < total_pages %}
-    <a class="pagination-next" href="?page={{ page + 1 }}">下一页</a>
+    <a class="pagination-next" href="?{{ paging_uri(page + 1, request.query) }}">下一页</a>
     {% end %}
     {% import math %}
     {% set _relative_begin_page = page - int(math.floor((page_capacity - 1) / 2)) if total_pages - int(page_capacity / 2) > page else total_pages - page_capacity + 1 %}
@@ -15,7 +17,7 @@
         {% if page == 1 %}
         <li><a class="pagination-link is-current">1</a></li>
         {% else %}
-        <li><a class="pagination-link" href="?page=1">1</a></li>
+        <li><a class="pagination-link" href="?{{ paging_uri(1, request.query) }}">1</a></li>
         {% end %}
         {% if begin_page > 2 %}
         <li><span class="pagination-ellipsis">&hellip;</span></li>
@@ -24,7 +26,7 @@
         {% if i == page %}
         <li><a class="pagination-link is-current">{{ i }}</a></li>
         {% else %}
-        <li><a class="pagination-link" href="?page={{ i }}">{{ i }}</a></li>
+        <li><a class="pagination-link" href="?{{ paging_uri(i, request.query) }}">{{ i }}</a></li>
         {% end %}
         {% end %}
         {% if end_page <= total_pages - 1 %}
@@ -33,7 +35,7 @@
         {% if page == total_pages %}
         <li><a class="pagination-link is-current">{{ total_pages }}</a></li>
         {% else %}
-        <li><a class="pagination-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+        <li><a class="pagination-link" href="?{{ paging_uri(total_pages, request.query) }}">{{ total_pages }}</a></li>
         {% end %}
     </ul>
 </nav>

@@ -2,7 +2,7 @@
     "name": "doufen-app",
     "productName": "豆坟",
     "description": "A GUI shell for doufen platform",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "main": "main.js",
     "author": "四不象(tabris17)",
     "commandName": "doufen",

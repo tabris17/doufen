@@ -27,12 +27,16 @@
         <h1>
             <a href="{{ album.url }}" class="external-link">{{ album.title }}</a>
         </h1>
+        {% if album.last_updated %}
         <p>
             <small>{{ album.last_updated }}</small>
         </p>
+        {% end %}
         <p>
             <span>{{ album.photos_count }}张照片</span>
+            {% if album.views_count %}
             <span style="margin-left: 10px;">{{ album.views_count }}人浏览</span>
+            {% end %}
             {% if album.like_count %}
             <span style="margin-left: 10px;">喜欢({{ album.like_count }})</span>
             {% end %}
