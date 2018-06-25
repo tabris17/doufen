@@ -44,7 +44,7 @@
 <article class="media{% if boxed %} box{% end %}">
     <figure class="media-left">
         <p class="image is-48x48">
-            <img src="{{ broadcast.user.avatar if broadcast.user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
+            <img src="{{ broadcast.user.avatar if broadcast.user and broadcast.user.avatar else 'https://img1.doubanio.com/icon/user_normal.jpg' }}">
         </p>
     </figure>
     <div class="media-content">
