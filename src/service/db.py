@@ -145,7 +145,10 @@ class User(BaseModel):
         try:
             return super().get(*args, **kwargs)
         except User.DoesNotExist:
-            if 'allow_anonymous' in kwargs and kwargs['allow_anonymous']:
+            def is_query_anonymouse():
+                expression = args[0]
+                return isinstance(expression.lhs, AutoField) and expression.op == '=' and expression.rhs == 0
+            if 'allow_anonymous' in kwargs and kwargs['allow_anonymous'] or is_query_anonymouse():
                 return cls.get_anonymous()
             else:
                 raise

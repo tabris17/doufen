@@ -1,4 +1,4 @@
-# encoding: utf-8
+#encoding: utf-8
 import logging
 
 import db
@@ -11,6 +11,17 @@ logging.basicConfig(
     datefmt='%m-%d %H:%M'
 )
 db.init('var/data/graveyard.db')
+
+
+class DownloadPictureTask(tasks.LikeTask):
+    """
+    下载图片任务
+    """
+
+    def run(self):
+        if self._image_local_cache:
+            while self.fetch_attachment():
+                pass
 
 
 class TestTask(tasks.LikeTask):
@@ -30,7 +41,9 @@ class TestTask(tasks.LikeTask):
 #task = tasks.NoteTask(db.Account.get_by_id(1))
 #task = tasks.LikeTask(db.Account.get_by_id(1))
 #task = tasks.ReviewTask(db.Account.get_by_id(1))
-task = TestTask(db.Account.get_by_id(1))
+#task = DownloadPictureTask(db.Account.get_by_id(1))
+#task = TestTask(db.Account.get_by_id(1))
+task = tasks.BroadcastTask(db.Account.get_by_id(1))
 
 result = task(
     requests_per_minute=30,
