@@ -113,7 +113,7 @@ function main(args) {
         console.debug = console.log
     } else {
         console.debug = (...args) => {}
-        childProcess.spawn('service')
+        childProcess.spawn('service', ['-q'])
     }
 
     let serviceUrl = url.format({
