@@ -9,9 +9,11 @@ DEFAULT_DATEBASE = 'var/data/graveyard.db'
 DEFAULT_CACHE_PATH = 'var/cache'
 DEFAULT_LOG_PATH = 'var/log'
 DEFAULT_DEBUG_MODE = False
+DEFAULT_SILENT_MODE = False
 
 settings = {
     'debug': DEFAULT_DEBUG_MODE,
+    'quiet': DEFAULT_SILENT_MODE,
     'cache': DEFAULT_CACHE_PATH,
     'log': DEFAULT_LOG_PATH,
     'database': DEFAULT_DATEBASE,

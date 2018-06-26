@@ -9,7 +9,7 @@ import db
 import version
 from server import Server
 from worker import Worker
-from setting import settings, DEFAULT_SERVICE_PORT, DEFAULT_DATEBASE, DEFAULT_CACHE_PATH, DEFAULT_SERVICE_HOST, DEFAULT_LOG_PATH
+from setting import settings, DEFAULT_SERVICE_PORT, DEFAULT_DATEBASE, DEFAULT_CACHE_PATH, DEFAULT_SERVICE_HOST, DEFAULT_LOG_PATH, DEFAULT_DEBUG_MODE, DEFAULT_SILENT_MODE
 
 
 def parse_args(args):
@@ -23,7 +23,7 @@ def parse_args(args):
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + version.__version__)
     parser.add_argument('-d', '--debug', action='store_true',
-                        default=False, help='print debug information')
+                        default=DEFAULT_DEBUG_MODE, help='print debug information')
     parser.add_argument('-p', '--port', type=int, default=DEFAULT_SERVICE_PORT,
                         metavar='port', help='specify the port to listen')
     parser.add_argument('-s', '--save', default=DEFAULT_DATEBASE,
@@ -32,10 +32,13 @@ def parse_args(args):
                         metavar='cache', dest='cache', help='specify the cache path')
     parser.add_argument('-l', '--log', default=DEFAULT_LOG_PATH,
                         metavar='log', dest='log', help='specify the log files path')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        default=DEFAULT_SILENT_MODE, help='switch on silent mode')
+                        
     return parser.parse_args(args)
 
 
-def startup():
+def init_env():
     db_path = os.path.dirname(settings.get('database'))
     if not os.path.exists(db_path):
         os.makedirs(db_path)
@@ -47,6 +50,24 @@ def startup():
     log_path = settings.get('log')
     if not os.path.exists(log_path):
         os.makedirs(log_path)
+
+
+def init_logger():
+    logging_handlers = [
+        logging.handlers.TimedRotatingFileHandler(
+            os.path.join(settings.get('log'), 'service.log'),
+            when='D'
+        )
+    ]
+    if not settings.get('quiet'):
+        logging_handlers.append(logging.StreamHandler())
+
+    logging.basicConfig(
+        level=logging.DEBUG if settings.get('debug') else logging.INFO,
+        format='[%(asctime)s] (%(pathname)s:%(lineno)s) [%(levelname)s] %(name)s: %(message)s',
+        datefmt='%m-%d %H:%M',
+        handlers=logging_handlers
+    )
 
 
 def main(args):
@@ -61,22 +82,11 @@ def main(args):
         'database': parsed_args.database,
         'port': parsed_args.port,
         'debug': parsed_args.debug,
+        'quiet': parsed_args.quiet,
     })
 
-    startup()
-
-    logging.basicConfig(
-        level=logging.DEBUG if settings.get('debug') else logging.INFO,
-        format='[%(asctime)s] (%(pathname)s:%(lineno)s) [%(levelname)s] %(name)s: %(message)s',
-        datefmt='%m-%d %H:%M',
-        handlers=[
-            logging.StreamHandler(),
-            logging.handlers.TimedRotatingFileHandler(
-                os.path.join(settings.get('log'), 'service.log'),
-                when='D'
-            )
-        ]
-    )
+    init_env()
+    init_logger()
     
     db.init(parsed_args.database)
 

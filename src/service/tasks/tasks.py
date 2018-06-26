@@ -127,8 +127,12 @@ class Task:
                 return response
             except requests.exceptions.HTTPError as e:
                 if response.status_code == 403:
-                    db.Account.update(is_invalid=True).where(db.Account.id == self.account.id).execute()
-                    raise Exception('登录凭证失效，请重新登录')
+                    if url.startswith('https://www.douban.com/note/'):
+                        # 仅个人可见的日记是特例
+                        return response
+                    else:
+                        db.Account.update(is_invalid=True).where(db.Account.id == self.account.id).execute()
+                        raise Exception('登录凭证失效，请重新登录')
                 logging.error('fetch URL "{0}" error, response code: {1}'.format(url, response.status_code))
                 break
             except Exception as e:
