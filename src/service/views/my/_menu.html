@@ -21,6 +21,7 @@
     <ul class="menu-list">
         <li><a {% if active_page == 'music/done' %}class="is-active"{% else %} href="{{ reverse_url('my.music', 'done') }}"{% end %}>听过</a></li>
         <li><a {% if active_page == 'music/wish' %}class="is-active"{% else %} href="{{ reverse_url('my.music', 'wish') }}"{% end %}>想听</a></li>
+        <li><a {% if active_page == 'music/doing' %}class="is-active"{% else %} href="{{ reverse_url('my.music', 'doing') }}"{% end %}>在听</a></li>
     </ul>
     <p class="menu-label is-size-5">我的……</p>
     <ul class="menu-list">

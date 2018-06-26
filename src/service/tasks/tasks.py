@@ -1123,12 +1123,6 @@ class InterestsTask(Task):
         })
 
     def _run(self, subject_name, table, table_historical, fetch_subject):
-        '''
-        self._request_session.headers.update({
-            'Cookie': 'bid=bF6dBPLThxI; frodotk="b1a226a7436be60f14e673f5ca43b22d"; ue="tabris17.cn@hotmail.com"; dbcl2="1832573:JjPMLZuUzTg"; ck=QwA1; ',
-            'Referer': 'https://m.douban.com/',
-        })
-        '''
         self._frodotk_referer_patch()
         account_user = self.account
 
