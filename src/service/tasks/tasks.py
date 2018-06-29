@@ -218,11 +218,11 @@ class Task:
         """
         douban_id = detail['id']
         detail['douban_id'] = douban_id
-        detail['unique_name'] = detail['uid']
+        detail['unique_name'] = 'site/{0}'.format(detail['uid']) if detail['type'] == 'site' else detail['uid']
         detail['version'] = 1
         detail['updated_at'] = datetime.datetime.now()
         del detail['id']
-        del detail['uid']
+        del detail['uid']    
 
         try:
             user = db.User.safe_create(**detail)
