@@ -71,6 +71,24 @@
         $('.preview').click(function () {
             $modalPreview.find('img.preview').attr('src', $(this).find('img').attr('src'))
         })
+
+        $('.action-backup').click(function() {
+            let task = $(this).data('task')
+            $.ajax({
+                url: '{{ reverse_url("dashboard.tasks.add") }}',
+                method: 'POST',
+                data: {
+                    'tasks': JSON.stringify({
+                        tasks: [task],
+                        accounts: [{{current_user.id}}]
+                    }),
+                }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('新建任务失败' + error, '错误')
+            })
+        })
     })
 </script>
 {% end %}
