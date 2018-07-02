@@ -1247,7 +1247,7 @@ class BroadcastTask(Task):
                     self._conflict_count = 0
         return broadcasts
 
-    def fetch_statuses_list(self, now):
+    def fetch_statuses_list(self, now, integral=False):
         url = self.account.user.alt + 'statuses?p={0}'
         page = 1
         timeline_in_page = []
@@ -1471,7 +1471,7 @@ class BroadcastTask(Task):
             timeline_in_page.extend(status_objects)
             page += 1
 
-            if self._broadcast_incremental_backup and self._conflict_count >= self._MAX_CONFLICT_ALLOWED:
+            if not integral and self._broadcast_incremental_backup and self._conflict_count >= self._MAX_CONFLICT_ALLOWED:
                 logging.info('增量备份完成')
                 break
 
@@ -1498,7 +1498,7 @@ class BroadcastTask(Task):
     def run(self):
         now = datetime.datetime.now()
         timeline = []
-        timeline.extend(self.fetch_statuses_list(now))
+        timeline.extend(self.fetch_statuses_list(now, db.Timeline.select().where(db.Timeline.user == self.account.user).count() == 0))
         timeline.reverse()
         self.save_timeline(timeline, now)
         if self._image_local_cache:

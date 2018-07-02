@@ -30,9 +30,7 @@ class TestTask(tasks.LikeTask):
     """
 
     def run(self):
-        if self._image_local_cache:
-            while self.fetch_attachment():
-                pass
+        print(db.Timeline.select().where(db.Timeline.user == self.account.user).count())
 
 
 #task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
@@ -42,8 +40,8 @@ class TestTask(tasks.LikeTask):
 #task = tasks.LikeTask(db.Account.get_by_id(1))
 #task = tasks.ReviewTask(db.Account.get_by_id(1))
 #task = DownloadPictureTask(db.Account.get_by_id(1))
-#task = TestTask(db.Account.get_by_id(1))
-task = tasks.BroadcastTask(db.Account.get_by_id(1))
+task = TestTask(db.Account.get_by_id(1))
+#task = tasks.BroadcastTask(db.Account.get_by_id(1))
 
 result = task(
     requests_per_minute=30,
