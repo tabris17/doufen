@@ -23,7 +23,7 @@
                 </div>
                 <div class="level-right">
                     <p class="level-item">
-                        <!--<a class="button" href="">查看历史记录</a>-->
+                        <a class="button action-backup" data-task="备份我的广播">备份</a>
                     </p>
                 </div>
             </nav>
@@ -70,6 +70,24 @@
         let $modalPreview = $('#modal-preview')
         $('.preview').click(function () {
             $modalPreview.find('img.preview').attr('src', $(this).find('img').attr('src'))
+        })
+
+        $('.action-backup').click(function() {
+            let task = $(this).data('task')
+            $.ajax({
+                url: '{{ reverse_url("dashboard.tasks.add") }}',
+                method: 'POST',
+                data: {
+                    'tasks': JSON.stringify({
+                        tasks: [task],
+                        accounts: [{{current_user.id}}]
+                    }),
+                }
+            }).then((data, status, $xhr) => {
+                location.reload()
+            }, ($xhr, status, error) => {
+                window.alert('新建任务失败' + error, '错误')
+            })
         })
     })
 </script>

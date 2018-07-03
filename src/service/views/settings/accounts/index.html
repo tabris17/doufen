@@ -32,6 +32,7 @@
                     {% if not row.is_activated %}
                     <p class="has-text-centered"><a class="action-activate button is-small is-success" style="margin-top: 10px;" data-id="{{ row.id }}">切换</a></p>
                     {% end %}
+                    <p class="has-text-centered"><a class="button is-small" style="margin-top: 10px;" href="{{ reverse_url('dashboard') }}#account={{ row.id }}">备份</a></p>
                 </figure>
                 <div class="media-content">
                     <div class="content">

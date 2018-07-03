@@ -68,7 +68,7 @@
                 </table>
                 {% end %}
                 <p class="has-text-centered">
-                    <a class="button is-primary action-open" data-target="#modal-add-task">新建</a>
+                    <a class="button is-primary action-open" data-target="#modal-add-task" id="button-new-task">新建</a>
                     <a class="button action-reload">刷新</a>
                 </p>
             </div>
@@ -132,6 +132,8 @@
     system.on('loaded', () => {
         const { ipcRenderer } = system.require('electron')
         const logger = system.getSharedData('logger')
+        const querystring = system.require('querystring')
+
         let $logOutputTextarea = $('#log-output')
 
         ipcRenderer.on('worker-status-change', (event) => {
@@ -186,7 +188,12 @@
                 window.alert('新建任务失败' + error, '错误')
             })
         })
-
+        
+        hashArguments = querystring.parse(location.hash.slice(1))
+        if (hashArguments.account) {
+            $('#button-new-task').click()
+            $('#select-account').val(hashArguments.account)
+        }
     })
 </script>
 {% end %}

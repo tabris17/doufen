@@ -218,11 +218,11 @@ class Task:
         """
         douban_id = detail['id']
         detail['douban_id'] = douban_id
-        detail['unique_name'] = detail['uid']
+        detail['unique_name'] = 'site/{0}'.format(detail['uid']) if detail['type'] == 'site' else detail['uid']
         detail['version'] = 1
         detail['updated_at'] = datetime.datetime.now()
         del detail['id']
-        del detail['uid']
+        del detail['uid']    
 
         try:
             user = db.User.safe_create(**detail)
@@ -1123,12 +1123,6 @@ class InterestsTask(Task):
         })
 
     def _run(self, subject_name, table, table_historical, fetch_subject):
-        '''
-        self._request_session.headers.update({
-            'Cookie': 'bid=bF6dBPLThxI; frodotk="b1a226a7436be60f14e673f5ca43b22d"; ue="tabris17.cn@hotmail.com"; dbcl2="1832573:JjPMLZuUzTg"; ck=QwA1; ',
-            'Referer': 'https://m.douban.com/',
-        })
-        '''
         self._frodotk_referer_patch()
         account_user = self.account
 
@@ -1253,7 +1247,7 @@ class BroadcastTask(Task):
                     self._conflict_count = 0
         return broadcasts
 
-    def fetch_statuses_list(self, now):
+    def fetch_statuses_list(self, now, integral=False):
         url = self.account.user.alt + 'statuses?p={0}'
         page = 1
         timeline_in_page = []
@@ -1477,7 +1471,7 @@ class BroadcastTask(Task):
             timeline_in_page.extend(status_objects)
             page += 1
 
-            if self._broadcast_incremental_backup and self._conflict_count >= self._MAX_CONFLICT_ALLOWED:
+            if not integral and self._broadcast_incremental_backup and self._conflict_count >= self._MAX_CONFLICT_ALLOWED:
                 logging.info('增量备份完成')
                 break
 
@@ -1504,7 +1498,7 @@ class BroadcastTask(Task):
     def run(self):
         now = datetime.datetime.now()
         timeline = []
-        timeline.extend(self.fetch_statuses_list(now))
+        timeline.extend(self.fetch_statuses_list(now, db.Timeline.select().where(db.Timeline.user == self.account.user).count() == 0))
         timeline.reverse()
         self.save_timeline(timeline, now)
         if self._image_local_cache:
