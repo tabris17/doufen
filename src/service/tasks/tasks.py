@@ -593,7 +593,7 @@ class Task:
             comments = self.fetch_note_comments(url, dom, note_douban_id)
 
             views_count = note_container('.note-footer-stat-pv').text()[0:-3]
-            like_count = note_container('.sns-bar-fav .fav-num').text()
+            like_count = note_container('.sns-bar .action-react .react-num').text()
             rec_count = note_container('.rec-sec .rec-num').text()
             user_id = _strip_username(note_container('.note-author'))
             detail = {
