@@ -24,13 +24,11 @@ class DownloadPictureTask(tasks.LikeTask):
                 pass
 
 
-class TestTask(tasks.LikeTask):
+class TestTask(tasks.BroadcastTask):
     """
     测试任务
     """
-
-    def run(self):
-        print(db.Timeline.select().where(db.Timeline.user == self.account.user).count())
+    pass
 
 
 #task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))

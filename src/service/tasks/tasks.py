@@ -1457,9 +1457,10 @@ class BroadcastTask(Task):
             reshared_details = []
             for status_wrapper in statuses_in_page:
                 status_detail, reshared_detail = parse_status(status_wrapper)
-                status_details.append(status_detail)
-                if reshared_detail:
-                    reshared_details.append(reshared_detail)
+                if status_detail:
+                    status_details.append(status_detail)
+                    if reshared_detail:
+                        reshared_details.append(reshared_detail)
 
             reshared_objects = self.save_status_list(reshared_details)
             reshared_mapping = {_.douban_id: _ for _ in reshared_objects}
