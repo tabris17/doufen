@@ -623,7 +623,7 @@ class Task:
 
         try:
             album = db.PhotoAlbum.safe_create(**album_detail)
-            logging.debug('create photot album: ' + album.title)
+            logging.debug('create photo album: {0}'.format(album.title))
         except db.IntegrityError:
             album = db.PhotoAlbum.get(db.PhotoAlbum.douban_id == album_detail['douban_id'])
             if not album.equals(album_detail):
@@ -675,8 +675,8 @@ class Task:
                 'type': 'image',
                 'url': cover,
             })
-        btn_fav = dom('.btn-fav')
-        douban_id = kwargs['douban_id'] if 'douban_id' in kwargs else btn_fav.attr('data-object_id')
+        btn_rec = dom('.rec>a')
+        douban_id = kwargs['douban_id'] if 'douban_id' in kwargs else btn_rec.attr('data-object_id')
         last_updated = kwargs['last_updated'] if 'last_updated' in kwargs else None
 
         if re.match(
@@ -707,7 +707,7 @@ class Task:
 
             detail = {
                 'douban_id': douban_id,
-                'title': btn_fav.attr('data-name'),
+                'title': btn_rec.attr('data-name'),
                 'desc': album_info_div.text(),
                 'user': user,
                 'last_updated': last_updated,
@@ -758,7 +758,7 @@ class Task:
             response.url
         ):
             user = kwargs['user'] if 'user' in kwargs else self.fetch_user(_strip_username(dom('#db-usr-profile>.pic>a')))
-            like_count =  dom('.fav-num').text()
+            like_count = dom('.action-react .react-num').text()
             rec_count = dom('.rec-num').text()
 
             try:
@@ -768,7 +768,7 @@ class Task:
 
             detail = {
                 'douban_id': douban_id,
-                'title': btn_fav.attr('data-name'),
+                'title': btn_rec.attr('data-name'),
                 'desc': dom('#content .article>.description').text(),
                 'user': user,
                 'last_updated': last_updated,
