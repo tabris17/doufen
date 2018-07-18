@@ -28,7 +28,8 @@ class TestTask(tasks.BroadcastTask):
     """
     测试任务
     """
-    pass
+    def run(self):
+        self.fetch_photo_album(1671066229)
 
 
 #task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
