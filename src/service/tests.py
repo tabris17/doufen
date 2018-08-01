@@ -35,11 +35,11 @@ class TestTask(tasks.BroadcastTask):
 #task = tasks.FollowingFollowerTask(db.Account.get_by_id(1))
 #task = tasks.BroadcastCommentTask(db.Account.get_by_id(1))
 #task = tasks.PhotoAlbumTask(db.Account.get_by_id(1))
-#task = tasks.NoteTask(db.Account.get_by_id(1))
+task = tasks.NoteTask(db.Account.get_by_id(1))
 #task = tasks.LikeTask(db.Account.get_by_id(1))
 #task = tasks.ReviewTask(db.Account.get_by_id(1))
 #task = DownloadPictureTask(db.Account.get_by_id(1))
-task = TestTask(db.Account.get_by_id(1))
+#task = TestTask(db.Account.get_by_id(1))
 #task = tasks.BroadcastTask(db.Account.get_by_id(1))
 
 result = task(

@@ -1,6 +1,6 @@
 {
     "name": "doufen-platform",
-    "version": "0.4.4",
+    "version": "0.4.7",
     "description": "",
     "scripts": {
         "start": "echo please use '\"'npm run app'\"' and '\"'npm run service'\"'",

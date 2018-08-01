@@ -35,6 +35,14 @@ class Index(BaseRequestHandler):
         workbook.save(filename)
         self.write('OK')
 
+    def _textify_starts(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            return ''
+
+        return ('★' * value) + '☆' * (5 - value)
+
     def _export_movie(self, workbook):
         def fill_thead(ws):
             ws.cell(row=1, column=1, value='ID')
@@ -52,9 +60,10 @@ class Index(BaseRequestHandler):
             ws.cell(row=1, column=13, value='豆瓣评分')
             ws.cell(row=1, column=14, value='评分人数')
             ws.cell(row=1, column=15, value='链接')
-            ws.cell(row=1, column=16, value='我的评价')
-            ws.cell(row=1, column=17, value='评价时间')
-            ws.cell(row=1, column=18, value='标签')
+            ws.cell(row=1, column=16, value='我的评分')
+            ws.cell(row=1, column=17, value='我的短评')
+            ws.cell(row=1, column=18, value='评价时间')
+            ws.cell(row=1, column=19, value='标签')
 
         def fill_my_movie(ws, row, my_movie):
             movie = my_movie.movie
@@ -87,12 +96,13 @@ class Index(BaseRequestHandler):
             ws.cell(row=row, column=15, value=movie.alt)
             if my_movie.rating:
                 my_rating = ast.literal_eval(my_movie.rating)
-                ws.cell(row=row, column=16, value=my_rating['value'])
-            ws.cell(row=row, column=17, value=my_movie.create_time)
+                ws.cell(row=row, column=16, value=self._textify_starts(my_rating['value']))
+            ws.cell(row=row, column=17, value=my_movie.comment)
+            ws.cell(row=row, column=18, value=my_movie.create_time)
             if my_movie.tags:
                 tags = ast.literal_eval(my_movie.tags)
                 if len(tags):
-                    ws.cell(row=row, column=18, value=' / '.join(tags))
+                    ws.cell(row=row, column=19, value=' / '.join(tags))
 
         worksheet = workbook.create_sheet('看过的电影')
         fill_thead(worksheet)
@@ -139,9 +149,10 @@ class Index(BaseRequestHandler):
             ws.cell(row=1, column=10, value='豆瓣评分')
             ws.cell(row=1, column=11, value='评分人数')
             ws.cell(row=1, column=12, value='链接')
-            ws.cell(row=1, column=13, value='我的评价')
-            ws.cell(row=1, column=14, value='评价时间')
-            ws.cell(row=1, column=15, value='标签')
+            ws.cell(row=1, column=13, value='我的评分')
+            ws.cell(row=1, column=14, value='我的短评')
+            ws.cell(row=1, column=15, value='评价时间')
+            ws.cell(row=1, column=16, value='标签')
 
         def fill_my_music(ws, row, my_music):
             music = my_music.music
@@ -168,12 +179,13 @@ class Index(BaseRequestHandler):
             ws.cell(row=row, column=12, value=music.alt)
             if my_music.rating:
                 my_rating = ast.literal_eval(my_music.rating)
-                ws.cell(row=row, column=13, value=my_rating['value'])
-            ws.cell(row=row, column=14, value=my_music.create_time)
+                ws.cell(row=row, column=13, value=self._textify_starts(my_rating['value']))
+            ws.cell(row=row, column=14, value=my_music.comment)
+            ws.cell(row=row, column=15, value=my_music.create_time)
             if my_music.tags:
                 tags = ast.literal_eval(my_music.tags)
                 if len(tags):
-                    ws.cell(row=row, column=15, value=' / '.join(tags))
+                    ws.cell(row=row, column=16, value=' / '.join(tags))
                 
 
         worksheet = workbook.create_sheet('听过的唱片')
@@ -215,9 +227,10 @@ class Index(BaseRequestHandler):
             ws.cell(row=1, column=14, value='豆瓣评分')
             ws.cell(row=1, column=15, value='评分人数')
             ws.cell(row=1, column=16, value='链接')
-            ws.cell(row=1, column=17, value='我的评价')
-            ws.cell(row=1, column=18, value='评价时间')
-            ws.cell(row=1, column=19, value='标签')
+            ws.cell(row=1, column=17, value='我的评分')
+            ws.cell(row=1, column=18, value='我的短评')
+            ws.cell(row=1, column=19, value='评价时间')
+            ws.cell(row=1, column=20, value='标签')
 
         def fill_my_book(ws, row, my_book):
             book = my_book.book
@@ -247,12 +260,13 @@ class Index(BaseRequestHandler):
             ws.cell(row=row, column=16, value=book.alt)
             if my_book.rating:
                 my_rating = ast.literal_eval(my_book.rating)
-                ws.cell(row=row, column=17, value=my_rating['value'])
-            ws.cell(row=row, column=18, value=my_book.create_time)
+                ws.cell(row=row, column=17, value=self._textify_starts(my_rating['value']))
+            ws.cell(row=row, column=18, value=my_book.comment)
+            ws.cell(row=row, column=19, value=my_book.create_time)
             if my_book.tags:
                 tags = ast.literal_eval(my_book.tags)
                 if len(tags):
-                    ws.cell(row=row, column=19, value=' / '.join(tags))
+                    ws.cell(row=row, column=20, value=' / '.join(tags))
 
         worksheet = workbook.create_sheet('读过的书')
         fill_thead(worksheet)
