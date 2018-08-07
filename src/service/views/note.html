@@ -9,7 +9,7 @@
 {% block main %}
 {% from pyquery import PyQuery %}
 <div class="container">
-    <nav class="level">
+    <nav class="level no-print">
         <div class="level-left">
             <div class="level-item">
                 <a class="button" onclick="history.back()">
@@ -23,12 +23,13 @@
         <div class="level-right">
             <p class="level-item">
                 <!--<a class="button" href="">查看历史记录</a>-->
+                <a class="button action-save-as">另存为</a>
             </p>
         </div>
     </nav>
 
     <article class="content">
-        <h1>
+        <h1 data-title="{{ note.title }}" id="note-title">
             <a href="{{ note.url }}" class="external-link">{{ note.title }}</a>
         </h1>
         <p>
@@ -43,6 +44,10 @@
         <div class="container note">
             {%raw content %}
         </div>
+        <script>
+            let noteImages = document.querySelectorAll('.container.note img')
+            for (let i = 0; i < noteImages.length; i++) { let img = noteImages[i]; img.className = 'load-from-cache'; img.dataset['src'] = img.src; }
+        </script>
         <p>
             {% if note.views_count %}
             <span style="margin-right: 10px;">{{ note.views_count }}人浏览</span>
@@ -80,4 +85,44 @@
     {% end %}
 
 </div>
+{% end %}
+
+{% block body_extra %}
+<script>
+    system.on('loaded', () => {
+        $('.action-save-as').click(() => {
+            const { dialog, shell } = system.require('electron').remote
+            let webContents = system.require('electron').remote.getCurrentWebContents()
+            let filename = dialog.showSaveDialog({
+                title: '另存为',
+                buttonLabel: '保存',
+                filters: [{name: 'PDF 文件', extensions: ['pdf']}],
+                defaultPath: $('#note-title').data('title') + '.pdf'
+            })
+            webContents.printToPDF(
+                {
+                    pageSize: 'A4',
+                    printBackground: true
+                }, 
+                (err, data) => {
+                    if (err) {
+                        window.alert('生成PDF失败：' + err, '错误')
+                        return
+                    }
+                    const fs = system.require('fs')
+                    fs.writeFile(filename, data, (err) => {
+                        if (err) {
+                            window.alert('写入文件失败：' + err, '错误')
+                            return
+                        }
+                        if (! window.confirm('成功生成PDF。是否要打开？', '成功')) {
+                            return
+                        }
+                        shell.openExternal('file://' + filename)
+                    })
+                }
+            )
+        })
+    })
+</script>
 {% end %}
