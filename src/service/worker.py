@@ -1,5 +1,6 @@
 # encoding: utf-8
 import logging
+import traceback
 from enum import Enum
 from inspect import isgeneratorfunction
 from logging.handlers import QueueHandler
@@ -30,9 +31,10 @@ class Worker:
         工作进程发生异常
         """
 
-        def __init__(self, name, exception):
+        def __init__(self, name, exception, traceback):
             self.name = name
             self.exception = exception
+            self.traceback = traceback
 
     class ReturnDone:
         """
@@ -124,11 +126,11 @@ class Worker:
     def _done(self, result):
         self.queue_out.put(Worker.ReturnDone(self._name, result))
         
-    def _error(self, exception):
+    def _error(self, exception, traceback):
         #import traceback
         #exception_text = traceback.format_exc()
         exception_text = str(exception)
-        self.queue_out.put(Worker.ReturnError(self._name, exception_text))
+        self.queue_out.put(Worker.ReturnError(self._name, exception_text, traceback))
 
     def _heartbeat(self, sequence):
         self.queue_out.put(Worker.ReturnHeartbeat(self._name, sequence))
@@ -154,7 +156,7 @@ class Worker:
                 self._heartbeat(heartbeat_sequence)
                 heartbeat_sequence += 1
             except Exception as e:
-                self._error(e)
+                self._error(e, traceback.format_exc())
             except KeyboardInterrupt:
                 break
 
