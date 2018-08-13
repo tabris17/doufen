@@ -211,7 +211,7 @@ class Server:
                         'target': str(ret.task),
                     }))
                 elif isinstance(ret, Worker.ReturnError):
-                    logging.error('"{0}" error: {1}'.format(ret.name, ret.exception))
+                    logging.error('"{0}" error: {1}\n{2}'.format(ret.name, ret.exception, ret.traceback))
                     self._workers[ret.name].toggle_task()
                     self.application.broadcast(json.dumps({
                         'sender': 'worker',
