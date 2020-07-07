@@ -22,7 +22,7 @@
     "homepage": "https://github.com/tabris17/doufen#readme",
     "dependencies": {},
     "devDependencies": {
-        "electron": "^1.8.4",
+        "electron": "^7.2.4",
         "electron-builder": "^20.8.0"
     }
 }
