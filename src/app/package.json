@@ -19,7 +19,7 @@
         "jquery": "^3.3.1",
         "mustache": "^2.3.0",
         "showdown": "^1.8.6",
-        "ws": "^5.1.1"
+        "ws": "^7.4.5"
     },
     "build": {
         "appId": "doufen.app",
